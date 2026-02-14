@@ -28,6 +28,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -44,6 +45,20 @@ jobs:
       - name: Generate App Key
         run: php artisan key:generate
 
+      # Node / Vite
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install NPM Dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Build Vite Assets
+        run: npm run build
+
+      # Database + Tests
       - name: Prepare Database
         run: |
           php artisan config:clear
