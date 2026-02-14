@@ -28,7 +28,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -39,13 +38,18 @@ jobs:
       - name: Copy .env
         run: cp .env.example .env
 
+      - name: Force APP_URL for CI
+        run: |
+          echo "APP_URL=http://localhost" >> .env
+          echo "APP_ENV=testing" >> .env
+          echo "APP_DEBUG=false" >> .env
+
       - name: Install Composer Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Generate App Key
         run: php artisan key:generate
 
-      # Node / Vite
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -58,7 +62,6 @@ jobs:
       - name: Build Vite Assets
         run: npm run build
 
-      # Database + Tests
       - name: Prepare Database
         run: |
           php artisan config:clear
