@@ -119,6 +119,12 @@ class DashboardController extends Controller
     // 📌 Stats AJAX (cartes auto-refresh)
     public function stats()
     {
+        \Log::info('AJAX Stats called', [
+        'authenticated' => auth()->check(),
+        'user_id' => auth()->id(),
+        'session_id' => session()->getId(),
+        'ip' => request()->ip()
+    ]);
         $today = Carbon::today();
 
         return response()->json([

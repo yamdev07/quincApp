@@ -415,6 +415,17 @@
         color: var(--success);
     }
 
+    .badge-critical {
+        background-color: #ef4444;
+        color: white;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
     /* Tabs */
     .tabs {
         display: flex;
@@ -488,6 +499,12 @@
 @endsection
 
 @section('content')
+<!-- Débogage silencieux -->
+@php
+    $isAuthenticated = auth()->check();
+@endphp
+<!-- Auth status: {{ $isAuthenticated ? 'Connected as ' . auth()->user()->email : 'Not connected' }} -->
+
 <div class="dashboard-container">
     <!-- Header Section -->
     <div class="dashboard-header">
@@ -500,7 +517,7 @@
                 <i class="bi bi-plus-circle"></i>
                 Nouvelle vente
             </a>
-            @if(in_array(strtolower(auth()->user()->role), ['admin', 'super admin']))
+            @if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'super admin']))
                 <a href="{{ route('users.index') }}" class="btn" style="margin-left: 10px;">
                     <i class="bi bi-people"></i>
                     Gestion des employés
@@ -534,7 +551,7 @@
         </div>
         
         <div class="stat-card stock p-5 rounded-xl shadow-md 
-            {{ ($lowStockProducts->count() ?? 0) > 0 ? 'bg-red-100 border-2 border-red-500 animate-pulse' : 'bg-white' }}">
+            {{ ($lowStockCount ?? 0) > 0 ? 'bg-red-100 border-2 border-red-500 animate-pulse' : 'bg-white' }}">
             <div class="stat-header flex justify-between items-center mb-4">
                 <div class="stat-title text-gray-600 font-semibold uppercase text-sm">Alertes stock</div>
                 <div class="stat-icon w-10 h-10 flex items-center justify-center rounded bg-red-200 text-red-600">
@@ -542,7 +559,7 @@
                 </div>
             </div>
             <div class="stat-value text-3xl font-bold text-gray-800" id="lowStockCount">
-                {{ $lowStockProducts->count() ?? 0 }}
+                {{ $lowStockCount ?? 0 }}
             </div>
             <div class="stat-description text-gray-500 mt-1">Produits à réapprovisionner</div>
         </div>
@@ -575,7 +592,7 @@
             </div>
             <div class="chart-area">
                 <!-- Loading State -->
-                <div class="chart-loading" id="chartLoading">
+                <div class="chart-loading" id="chartLoading" style="display: none;">
                     <div class="spinner"></div>
                     <p>Chargement des données...</p>
                 </div>
@@ -583,9 +600,9 @@
                 <!-- Error State -->
                 <div class="chart-error" id="chartError" style="display: none;">
                     <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
-                    <p>Impossible de charger les données du graphique</p>
-                    <button onclick="loadChartData()" class="btn" style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.375rem;">
-                        Réessayer
+                    <p>Session expirée ou problème de connexion</p>
+                    <button onclick="window.location.reload()" class="btn" style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.375rem;">
+                        Rafraîchir la page
                     </button>
                 </div>
                 
@@ -611,7 +628,7 @@
                     <h3 class="sidebar-card-title">Statut du stock</h3>
                 </div>
                 <div class="sidebar-card-value" id="stockStatus">
-                    @if(($lowStockProducts->count() ?? 0) === 0)
+                    @if(($lowStockCount ?? 0) === 0)
                         <div style="color: var(--success); font-size: 2.5rem;">✓</div>
                         <div style="color: var(--success); font-weight: 600;">Tout va bien</div>
                     @else
@@ -657,14 +674,14 @@
 
     <!-- Navigation Tabs -->
     <div class="tabs">
-        <a href="#" class="tab active" onclick="switchTab('recent-sales')">Ventes récentes</a>
-        <a href="#" class="tab" onclick="switchTab('low-stock')">Stock faible</a>
+        <a href="#" class="tab active" onclick="switchTab('recent-sales', event)">Ventes récentes</a>
+        <a href="#" class="tab" onclick="switchTab('low-stock', event)">Stock faible</a>
     </div>
 
     <!-- Tables Section -->
     <div class="tables-section">
         <!-- Recent Sales Table -->
-        <div class="table-card">
+        <div class="table-card" id="recentSalesCard">
             <div class="table-header">
                 <h3 class="table-title">Dernières transactions</h3>
             </div>
@@ -679,8 +696,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Data will be loaded via AJAX -->
-                       @forelse($recentSales as $sale)
+                        @forelse($recentSales ?? [] as $sale)
                             <tr>
                                 <td>
                                     @if($sale->items->count() > 0)
@@ -708,7 +724,7 @@
         </div>
 
         <!-- Low Stock Table -->
-        <div class="table-card">
+        <div class="table-card" id="lowStockCard" style="display: none;">
             <div class="table-header">
                 <h3 class="table-title">Stock faible</h3>
             </div>
@@ -722,11 +738,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Data will be loaded via AJAX -->
-                        @forelse($lowStockProducts as $product)
+                        @forelse($lowStockProducts ?? [] as $product)
                             <tr>
                                 <td><strong>{{ $product->name }}</strong></td>
-                                <td><span class="badge badge-low">{{ $product->stock }}</span></td>
+                                <td>
+                                    <span class="badge {{ $product->stock <= 2 ? 'badge-critical' : 'badge-low' }}">
+                                        {{ $product->stock }}
+                                    </span>
+                                </td>
                                 <td>{{ number_format($product->sale_price, 0, ',', ' ') }} FCFA</td>
                             </tr>
                         @empty
@@ -743,235 +762,230 @@
     </div>
 </div>
 @endsection
-
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-/*=========================================
-=   VARIABLES GLOBALES
-=========================================*/
-let salesChart = null;
-let currentPeriod = 7;
-let isLoading = false;
+// ✅ IIFE + Guard : empêche l'exécution multiple avec Livewire
+(function() {
+    if (window.__dashboardInitDone) return;
+    window.__dashboardInitDone = true;
 
-/*=========================================
-=   CHARGER DONNÉES DU GRAPHIQUE
-=========================================*/
-async function loadChartData(period = currentPeriod) {
-    if (isLoading) return;
+    // ✅ Variables globales sécurisées
+    const DASHBOARD = {
+        chart: null,
+        period: 7,
+        loading: false,
+        refreshTimer: null,
+        get csrf() {
+            return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+        }
+    };
 
-    isLoading = true;
-    currentPeriod = period;
-
-    const loadingElement = document.getElementById('chartLoading');
-    const errorElement = document.getElementById('chartError');
-
-    loadingElement.style.display = 'flex';
-    errorElement.style.display = 'none';
-
-    try {
-        const response = await fetch(`/ajax/dashboard/chart-data?period=${period}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        if (!response.ok) throw new Error("Erreur réseau");
-
-        const data = await response.json();
-
-        loadingElement.style.display = 'none';
-
-        if (salesChart) salesChart.destroy();
-        createChart(data);
-
-    } catch (e) {
-        console.error("Erreur graphique :", e);
-        loadingElement.style.display = 'none';
-        errorElement.style.display = 'flex';
+    // ✅ Headers AJAX avec gestion CSRF dynamique
+    function headers() {
+        return {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': DASHBOARD.csrf,
+            'Accept': 'application/json'
+        };
     }
 
-    isLoading = false;
-}
+    // ✅ Formatage utilitaires
+    const fmt = {
+        money: v => Number(v||0).toLocaleString('fr-FR') + ' FCFA',
+        date: d => d ? new Date(d).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '-'
+    };
 
-/*=========================================
-=   CRÉATION DU GRAPH
-=========================================*/
-function createChart(data) {
-    const ctx = document.getElementById('salesChart').getContext('2d');
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
 
-    salesChart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: data.dates ?? [],
-            datasets: [{
-                label: "Ventes (FCFA)",
-                data: data.totals ?? [],
-                borderColor: "#2563eb",
-                backgroundColor: "rgba(37, 99, 235, 0.12)",
-                fill: true,
-                tension: 0.35,
-                borderWidth: 2,
-                pointRadius: 3,
-                pointHoverRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            interaction: { intersect: false, mode: "index" },
-            scales: {
-                x: { grid: { display: false } },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: (v) =>
-                            v >= 1_000_000 ? (v/1_000_000) + "M" :
-                            v >= 1_000 ? (v/1_000) + "k" :
-                            v
+    // ✅ Chargement graphique avec gestion session
+    async function loadChart(period = DASHBOARD.period) {
+        if (DASHBOARD.loading) return;
+        DASHBOARD.loading = true;
+        DASHBOARD.period = period;
+
+        const loading = document.getElementById('chartLoading');
+        const error = document.getElementById('chartError');
+        const canvas = document.getElementById('salesChart');
+
+        if(loading) loading.style.display = 'flex';
+        if(error) error.style.display = 'none';
+        if(canvas) canvas.style.opacity = '0.3';
+
+        try {
+            const res = await fetch(`/ajax/dashboard/chart-data?period=${period}`, {
+                headers: headers(),
+                credentials: 'same-origin' // ✅ Plus fiable que 'include' avec Laravel
+            });
+
+            // ✅ Gestion explicite des erreurs auth
+            if (res.status === 401 || res.status === 419) {
+                throw new Error('AUTH');
+            }
+            if (!res.ok) throw new Error('NETWORK');
+
+            const data = await res.json();
+
+            if(loading) loading.style.display = 'none';
+            if(canvas) canvas.style.opacity = '1';
+
+            // ✅ Destruction propre du graphique existant
+            if (DASHBOARD.chart?.destroy) {
+                try { DASHBOARD.chart.destroy(); } catch(e) {}
+            }
+
+            // ✅ Création nouveau graphique
+            DASHBOARD.chart = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: data.dates || [],
+                    datasets: [{
+                        label: 'Ventes',
+                        data: data.totals || [],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37,99,235,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { callback: v => v >= 1000000 ? (v/1e6)+'M' : v >= 1000 ? (v/1000)+'k' : v }
+                        }
                     }
                 }
+            });
+
+        } catch(e) {
+            console.error('Chart error:', e);
+            if(loading) loading.style.display = 'none';
+            if(error) {
+                error.style.display = 'flex';
+                error.querySelector('p').textContent = e.message === 'AUTH' 
+                    ? '⚠️ Session expirée' 
+                    : 'Erreur de chargement';
+            }
+            if(canvas) canvas.style.opacity = '1';
+            
+            // ✅ Redirection auto si session expirée
+            if (e.message === 'AUTH') {
+                setTimeout(() => window.location.href = '/login', 2500);
             }
         }
-    });
-}
-
-/*=========================================
-=   STATS AJAX
-=========================================*/
-async function loadStats() {
-    try {
-        const response = await fetch('/ajax/dashboard/stats', {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        document.getElementById('salesToday').textContent = data.salesToday ?? 0;
-
-        document.getElementById('totalRevenue').textContent = 
-            data.totalRevenue 
-                ? Number(data.totalRevenue).toLocaleString("fr-FR") + " FCFA"
-                : "0 FCFA";
-
-        document.getElementById('lowStockCount').textContent = data.lowStockCount ?? 0;
-        document.getElementById('activeClients').textContent = data.activeClients ?? 0;
-
-        document.getElementById('averageSale').textContent = 
-            data.averageSale 
-                ? Math.round(data.averageSale).toLocaleString("fr-FR") + " FCFA"
-                : "0 FCFA";
-
-        // Statut du stock
-        document.getElementById('stockStatus').innerHTML =
-            data.lowStockCount == 0
-                ? `<div style="color:#10b981;font-size:2.5rem;">✓</div><div style="color:#10b981;font-weight:600;">Tout va bien</div>`
-                : `<div style="color:#ef4444;font-size:2.5rem;">!</div><div style="color:#ef4444;font-weight:600;">Attention requise</div>`;
-
-    } catch (e) {
-        console.error("Erreur stats :", e);
+        DASHBOARD.loading = false;
     }
-}
 
-/*=========================================
-=   VENTES RÉCENTES AJAX
-=========================================*/
-async function loadRecentSales() {
-    try {
-        const response = await fetch('/ajax/dashboard/recent-sales', {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        const data = await response.json();
-        const tbody = document.querySelector('#recentSalesTable tbody');
-
-        if (!data || data.length === 0) {
-            // Garde le HTML initial si aucune donnée
-            return;
-        }
-
-        tbody.innerHTML = data.map(sale => `
-            <tr>
-                <td><strong>${sale.product_name ?? "Produit inconnu"}</strong></td>
-                <td>${sale.client_name ?? "Client inconnu"}</td>
-                <td><strong>${Number(sale.total_price ?? 0).toLocaleString("fr-FR")} FCFA</strong></td>
-                <td>${sale.date ?? "-"}</td>
-            </tr>
-        `).join("");
-
-    } catch (e) {
-        console.error("Erreur ventes :", e);
+    // ✅ Stats AJAX
+    async function loadStats() {
+        try {
+            const res = await fetch('/ajax/dashboard/stats', { headers: headers(), credentials: 'same-origin' });
+            if (res.status === 401 || res.status === 419) return;
+            if (!res.ok) return;
+            const d = await res.json();
+            set('salesToday', d.salesToday ?? 0);
+            set('totalRevenue', fmt.money(d.totalRevenue));
+            set('lowStockCount', d.lowStockCount ?? 0);
+            set('activeClients', d.activeClients ?? 0);
+            set('averageSale', fmt.money(Math.round(d.averageSale ?? 0)));
+            
+            // ✅ Mise à jour statut stock
+            const stockEl = document.getElementById('stockStatus');
+            if(stockEl) {
+                stockEl.innerHTML = (d.lowStockCount ?? 0) === 0
+                    ? '<div style="color:#10b981;font-size:2.5rem">✓</div><div style="color:#10b981;font-weight:600">OK</div>'
+                    : '<div style="color:#ef4444;font-size:2.5rem">!</div><div style="color:#ef4444;font-weight:600">Alerte</div>';
+            }
+        } catch(e) { console.error('Stats error:', e); }
     }
-}
 
-/*=========================================
-=   STOCK FAIBLE AJAX
-=========================================*/
-async function loadLowStock() {
-    try {
-        const response = await fetch('/ajax/dashboard/low-stock', {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        const data = await response.json();
-        const tbody = document.querySelector('#lowStockTable tbody');
-
-        if (!data || data.length === 0) {
-            // Garde le HTML initial si aucune donnée
-            return;
-        }
-
-        tbody.innerHTML = data.map(product => `
-            <tr>
-                <td><strong>${product.name ?? "Produit inconnu"}</strong></td>
-                <td><span class="badge badge-low">${Number(product.stock ?? 0)}</span></td>
-                <td>${Number(product.sale_price ?? 0).toLocaleString("fr-FR")} FCFA</td>
-            </tr>
-        `).join("");
-
-    } catch (e) {
-        console.error("Erreur stock :", e);
+    // ✅ Ventes récentes
+    async function loadRecentSales() {
+        try {
+            const res = await fetch('/ajax/dashboard/recent-sales', { headers: headers(), credentials: 'same-origin' });
+            if (res.status === 401 || res.status === 419 || !res.ok) return;
+            const data = await res.json();
+            const tbody = document.querySelector('#recentSalesTable tbody');
+            if(!tbody || !data.length) return;
+            tbody.innerHTML = data.map(s => `
+                <tr>
+                    <td><strong>${s.product_name||'Vente'}</strong></td>
+                    <td>${s.client_name||'Client'}</td>
+                    <td><strong>${fmt.money(s.total_price)}</strong></td>
+                    <td>${fmt.date(s.created_at)}</td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error('Sales error:', e); }
     }
-}
 
-/*=========================================
-=   ONGLET TABLES
-=========================================*/
-function switchTab(tab, event) {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    event.target.classList.add("active");
+    // ✅ Stock faible
+    async function loadLowStock() {
+        try {
+            const res = await fetch('/ajax/dashboard/low-stock', { headers: headers(), credentials: 'same-origin' });
+            if (res.status === 401 || res.status === 419 || !res.ok) return;
+            const data = await res.json();
+            const tbody = document.querySelector('#lowStockTable tbody');
+            if(!tbody || !data.length) return;
+            tbody.innerHTML = data.map(p => `
+                <tr>
+                    <td><strong>${p.name}</strong></td>
+                    <td><span class="badge ${p.stock<=2?'badge-critical':'badge-low'}">${p.stock}</span></td>
+                    <td>${fmt.money(p.sale_price)}</td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error('Stock error:', e); }
+    }
 
-    if (tab === "recent-sales") {
-        document.querySelector("#recentSalesTable").closest('.table-card').style.display = "block";
-        document.querySelector("#lowStockTable").closest('.table-card').style.display = "none";
+    // ✅ Onglets
+    window.switchTab = function(tab, e) {
+        if(e) e.preventDefault();
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        if(e?.target) e.target.classList.add('active');
+        document.getElementById('recentSalesCard').style.display = tab === 'recent-sales' ? 'block' : 'none';
+        document.getElementById('lowStockCard').style.display = tab === 'low-stock' ? 'block' : 'none';
+    };
+
+    // ✅ Initialisation
+    function init() {
+        const periodSel = document.getElementById('chartPeriod');
+        if(periodSel) periodSel.onchange = e => loadChart(e.target.value);
+        
+        setTimeout(() => { loadChart(); loadStats(); loadRecentSales(); loadLowStock(); }, 150);
+        
+        if(DASHBOARD.refreshTimer) clearInterval(DASHBOARD.refreshTimer);
+        DASHBOARD.refreshTimer = setInterval(() => {
+            if(document.visibilityState === 'visible') { loadStats(); loadRecentSales(); loadLowStock(); }
+        }, 30000);
+    }
+
+    // ✅ Nettoyage Livewire
+    function cleanup() {
+        if(DASHBOARD.chart?.destroy) { try { DASHBOARD.chart.destroy(); } catch(e) {} }
+        DASHBOARD.chart = null;
+        setTimeout(init, 100);
+    }
+
+    // ✅ Écouteurs Livewire v3
+    document.addEventListener('livewire:navigated', cleanup);
+    
+    // ✅ Démarrage
+    if(document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        document.querySelector("#recentSalesTable").closest('.table-card').style.display = "none";
-        document.querySelector("#lowStockTable").closest('.table-card').style.display = "block";
+        init();
     }
-}
 
-/*=========================================
-=   EVENTS & INIT
-=========================================*/
-document.getElementById('chartPeriod').addEventListener('change', (e) => {
-    loadChartData(e.target.value);
-});
+    // ✅ Gestion visibilité page
+    document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'visible') { loadStats(); loadRecentSales(); loadLowStock(); }
+    });
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadChartData();
-    loadStats();
-    loadRecentSales();
-    loadLowStock();
-
-    // Rafraîchissement auto toutes les 30 secondes
-    setInterval(() => {
-        loadStats();
-        loadRecentSales();
-        loadLowStock();
-    }, 30000);
-});
+})(); // ✅ Fin IIFE
 </script>
-
-
 @endsection
