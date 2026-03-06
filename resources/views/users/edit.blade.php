@@ -1,164 +1,585 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier un employé')
+@section('title', 'Modifier un employé — QuincaApp')
+
+@section('styles')
+<style>
+    :root {
+        --orange:        #f97316;
+        --orange-dark:   #ea580c;
+        --orange-pale:   #fff7ed;
+        --orange-soft:   #fed7aa;
+        --bg:            #f1f5f9;
+        --card:          #ffffff;
+        --border:        #e2e8f0;
+        --border-light:  #f1f5f9;
+        --text:          #0f172a;
+        --text-2:        #475569;
+        --text-3:        #94a3b8;
+        --success:       #16a34a;
+        --danger:        #dc2626;
+        --info:          #2563eb;
+        --shadow-sm:     0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+        --shadow-md:     0 4px 16px rgba(15,23,42,.08);
+        --shadow-orange: 0 8px 24px rgba(249,115,22,.25);
+        --radius:        20px;
+        --radius-sm:     12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Page */
+    .se-page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 32px 24px 64px;
+    }
+
+    /* Header */
+    .se-header {
+        margin-bottom: 28px;
+        animation: fadeUp 0.35s ease both;
+    }
+
+    .se-header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .se-header-l {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .se-hex {
+        width: 46px;
+        height: 46px;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-orange);
+    }
+    .se-hex svg {
+        width: 22px;
+        height: 22px;
+        stroke: #fff;
+        fill: none;
+    }
+
+    .se-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        color: var(--text);
+    }
+    .se-title span {
+        color: var(--orange);
+        font-weight: 800;
+    }
+    .se-sub {
+        font-size: 13px;
+        color: var(--text-3);
+        margin-top: 4px;
+    }
+
+    /* Boutons */
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-2);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-back svg {
+        width: 15px;
+        height: 15px;
+        stroke: currentColor;
+        fill: none;
+    }
+    .btn-back:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 24px;
+        background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+        border: none;
+        border-radius: 40px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: var(--shadow-orange);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-primary svg {
+        width: 16px;
+        height: 16px;
+        stroke: #fff;
+        fill: none;
+    }
+    .btn-primary::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.5s;
+    }
+    .btn-primary:hover::after { transform: translateX(100%); }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(249,115,22,0.4);
+    }
+
+    .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 24px;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: 40px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-2);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-secondary svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+    }
+    .btn-secondary:hover {
+        border-color: var(--text-2);
+        color: var(--text);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Card */
+    .se-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        animation: fadeUp 0.35s 0.07s ease both;
+        transition: border-color 0.2s;
+    }
+    .se-card:hover {
+        border-color: var(--orange-soft);
+    }
+
+    .se-card-header {
+        padding: 20px 24px;
+        background: #fafbfd;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .se-card-header svg {
+        width: 20px;
+        height: 20px;
+        stroke: var(--orange);
+        fill: none;
+    }
+    .se-card-header h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .se-card-body {
+        padding: 32px;
+    }
+
+    /* Form */
+    .se-form-group {
+        margin-bottom: 24px;
+    }
+
+    .se-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-2);
+        margin-bottom: 8px;
+        letter-spacing: 0.3px;
+    }
+
+    .se-field-wrapper {
+        position: relative;
+    }
+
+    .se-ico {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+    .se-ico svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--text-3);
+        fill: none;
+        transition: stroke 0.15s;
+    }
+    .se-field-wrapper:focus-within .se-ico svg {
+        stroke: var(--orange);
+    }
+
+    .se-input, .se-select {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        color: var(--text);
+        font-family: inherit;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .se-input:focus, .se-select:focus {
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+    }
+    .se-input.error, .se-select.error {
+        border-color: var(--danger);
+        background: #fef2f2;
+    }
+
+    .se-error {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--danger);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .se-error svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+    }
+
+    /* Password section */
+    .se-password-section {
+        background: #fafbfd;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        padding: 20px;
+        margin: 32px 0 24px;
+    }
+
+    .se-password-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .se-password-header svg {
+        width: 20px;
+        height: 20px;
+        stroke: var(--orange);
+        fill: none;
+    }
+    .se-password-header h3 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .se-password-header p {
+        font-size: 12px;
+        color: var(--text-3);
+        margin-top: 4px;
+    }
+
+    .se-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    @media (max-width: 580px) {
+        .se-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Footer */
+    .se-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        margin-top: 24px;
+    }
+    .se-footer-left {
+        font-size: 12px;
+        color: var(--text-3);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .se-footer-left svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+    }
+
+    .se-footer-actions {
+        display: flex;
+        gap: 12px;
+    }
+</style>
+@endsection
 
 @section('content')
-<div class="container mx-auto py-8 px-4">
-    <div class="max-w-2xl mx-auto">
-        <!-- En-tête -->
-        <div class="mb-8">
-            <button
-                onclick="window.location='{{ route('users.index') }}'"
-                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-800 mb-4"
-            >
-                <i class="fas fa-arrow-left mr-2"></i>
-                Retour à la liste
-            </button>
+<div class="se-page">
 
-            <h1 class="text-3xl font-bold text-gray-800">Modifier l'employé</h1>
-            <p class="text-gray-600 mt-2">Mettez à jour les informations de {{ $user->name }}</p>
+    {{-- HEADER --}}
+    <div class="se-header">
+        <div class="se-header-top">
+            <a href="{{ route('users.index') }}" class="btn-back">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour à la liste
+            </a>
+            <div class="se-header-l">
+                <div class="se-hex">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="se-title">
+                        Modifier <span>{{ $user->name }}</span>
+                    </div>
+                    <div class="se-sub">Mettez à jour les informations de l'employé</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- FORM CARD --}}
+    <div class="se-card">
+        <div class="se-card-header">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <h2>Informations personnelles</h2>
         </div>
 
-        <!-- Carte du formulaire -->
-        <div class="glass-card rounded-xl shadow-lg overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-800">Informations personnelles</h2>
-            </div>
-
-            <form action="{{ route('users.update', $user->id) }}" method="POST" class="p-6 space-y-6">
+        <div class="se-card-body">
+            <form action="{{ route('users.update', $user->id) }}" method="POST">
                 @csrf
                 @method('PUT')
 
-                <!-- Nom -->
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-user text-gray-400"></i>
-                        </div>
+                {{-- Nom --}}
+                <div class="se-form-group">
+                    <label for="name" class="se-label">Nom complet</label>
+                    <div class="se-field-wrapper">
+                        <span class="se-ico">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </span>
                         <input type="text" 
                                id="name" 
                                name="name" 
                                value="{{ old('name', $user->name) }}" 
                                required
-                               class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 @error('name') border-red-500 @enderror"
+                               class="se-input @error('name') error @enderror"
                                placeholder="Entrez le nom complet">
                     </div>
                     @error('name')
-                        <p class="mt-1 text-sm text-red-600 flex items-center">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
+                        <p class="se-error">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                             {{ $message }}
                         </p>
                     @enderror
                 </div>
 
-                <!-- Email -->
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-envelope text-gray-400"></i>
-                        </div>
+                {{-- Email --}}
+                <div class="se-form-group">
+                    <label for="email" class="se-label">Adresse email</label>
+                    <div class="se-field-wrapper">
+                        <span class="se-ico">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </span>
                         <input type="email" 
                                id="email" 
                                name="email" 
                                value="{{ old('email', $user->email) }}" 
                                required
-                               class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 @error('email') border-red-500 @enderror"
+                               class="se-input @error('email') error @enderror"
                                placeholder="Entrez l'adresse email">
                     </div>
                     @error('email')
-                        <p class="mt-1 text-sm text-red-600 flex items-center">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
+                        <p class="se-error">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                             {{ $message }}
                         </p>
                     @enderror
                 </div>
 
-                <!-- Rôle -->
-                <div>
-                    <label for="role" class="block text-sm font-medium text-gray-700 mb-2">Rôle</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-user-tag text-gray-400"></i>
-                        </div>
+                {{-- Rôle --}}
+                <div class="se-form-group">
+                    <label for="role" class="se-label">Rôle</label>
+                    <div class="se-field-wrapper">
+                        <span class="se-ico">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </span>
                         <select id="role" 
                                 name="role"
-                                class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 @error('role') border-red-500 @enderror">
+                                class="se-select @error('role') error @enderror">
                             <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Administrateur</option>
-                            <option value="magasinier" {{ old('role', $user->role) == 'magasinier' ? 'selected' : '' }}>Magasinier</option>
+                            <option value="manager" {{ old('role', $user->role) == 'manager' ? 'selected' : '' }}>Manager</option>
                             <option value="caissier" {{ old('role', $user->role) == 'caissier' ? 'selected' : '' }}>Caissier</option>
                         </select>
                     </div>
                     @error('role')
-                        <p class="mt-1 text-sm text-red-600 flex items-center">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
+                        <p class="se-error">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                             {{ $message }}
                         </p>
                     @enderror
                 </div>
 
-                <!-- Section mot de passe -->
-                <div class="pt-6 border-t border-gray-200">
-                    <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-4 py-3 rounded-lg mb-4">
-                        <h3 class="text-lg font-medium text-gray-800 flex items-center">
-                            <i class="fas fa-key mr-2 text-blue-500"></i>
-                            Modifier le mot de passe
-                        </h3>
-                        <p class="text-sm text-gray-600 mt-1">Laissez ces champs vides pour conserver le mot de passe actuel</p>
+                {{-- Section mot de passe --}}
+                <div class="se-password-section">
+                    <div class="se-password-header">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <div>
+                            <h3>Modifier le mot de passe</h3>
+                            <p>Laissez ces champs vides pour conserver le mot de passe actuel</p>
+                        </div>
                     </div>
 
-                    <!-- Nouveau mot de passe -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-lock text-gray-400"></i>
-                                </div>
+                    <div class="se-grid-2">
+                        {{-- Nouveau mot de passe --}}
+                        <div class="se-form-group">
+                            <label for="password" class="se-label">Nouveau mot de passe</label>
+                            <div class="se-field-wrapper">
+                                <span class="se-ico">
+                                    <svg viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </span>
                                 <input type="password" 
                                        id="password" 
                                        name="password" 
-                                       class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 @error('password') border-red-500 @enderror"
+                                       class="se-input @error('password') error @enderror"
                                        placeholder="Nouveau mot de passe">
                             </div>
                             @error('password')
-                                <p class="mt-1 text-sm text-red-600 flex items-center">
-                                    <i class="fas fa-exclamation-circle mr-1"></i>
+                                <p class="se-error">
+                                    <svg viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
                                     {{ $message }}
                                 </p>
                             @enderror
                         </div>
 
-                        <!-- Confirmation mot de passe -->
-                        <div>
-                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Confirmation</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-lock text-gray-400"></i>
-                                </div>
+                        {{-- Confirmation --}}
+                        <div class="se-form-group">
+                            <label for="password_confirmation" class="se-label">Confirmer le mot de passe</label>
+                            <div class="se-field-wrapper">
+                                <span class="se-ico">
+                                    <svg viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </span>
                                 <input type="password" 
                                        id="password_confirmation" 
                                        name="password_confirmation" 
-                                       class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                       class="se-input"
                                        placeholder="Confirmer le mot de passe">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex flex-col sm:flex-row justify-between items-center pt-6 border-t border-gray-200 gap-4">
-                    <div class="text-sm text-gray-500">
+                {{-- Footer --}}
+                <div class="se-footer">
+                    <div class="se-footer-left">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         Dernière modification : {{ $user->updated_at->format('d/m/Y à H:i') }}
                     </div>
-                    <div class="flex space-x-3">
-                        <a href="{{ route('users.index') }}" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center">
-                            <i class="fas fa-times mr-2"></i>
+                    <div class="se-footer-actions">
+                        <a href="{{ route('users.index') }}" class="btn-secondary">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                             Annuler
                         </a>
-                        <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg shadow hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center">
-                            <i class="fas fa-save mr-2"></i>
+                        <button type="submit" class="btn-primary">
+                            <svg viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                             Mettre à jour
                         </button>
                     </div>
@@ -167,14 +588,4 @@
         </div>
     </div>
 </div>
-
-@push('styles')
-<style>
-    .glass-card {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-</style>
-@endpush
 @endsection
