@@ -1,139 +1,173 @@
-# 🛒 Application de Gestion de Quincaillerie
+# 🛒 Hardware Store Management System
 
-Une application web professionnelle permettant de gérer efficacement les produits, ventes, achats, fournisseurs, clients et stocks d'une quincaillerie.  
-Développée pour offrir une interface simple, rapide et intuitive, elle facilite le suivi des opérations quotidiennes et améliore la productivité.
+![Laravel](https://img.shields.io/badge/Laravel-10-red)
+![PHP](https://img.shields.io/badge/PHP-8.x-blue)
+![MySQL](https://img.shields.io/badge/MySQL-Database-orange)
+![License](https://img.shields.io/badge/License-MIT-green)
 
----
+![CI](https://github.com/yamdev07/QuincApp/actions/workflows/ci.yml/badge.svg)
 
-## ✨ Fonctionnalités principales
+A **professional hardware store management system** designed to manage products, sales, suppliers, customers and stock efficiently.
 
-### 🔹 Gestion des Produits
-- Ajout, modification et suppression de produits  
-- Catégorisation des articles  
-- Gestion des prix d’achat et de vente  
-- Suivi des niveaux de stock  
-- Alertes de stock faible
-
-### 🔹 Gestion des Ventes
-- Enregistrement rapide des ventes  
-- Calcul automatique du total  
-- Gestion des paiements (comptant / crédit)  
-- Historique complet des transactions  
-- Impression de facture
-
-### 🔹 Gestion des Achats
-- Enregistrement des commandes auprès des fournisseurs  
-- Suivi des réceptions  
-- Mise à jour automatique des stocks
-
-### 🔹 Gestion des Clients
-- Ajout de clients  
-- Suivi des dettes et paiements  
-- Historique des achats par client
-
-### 🔹 Gestion des Fournisseurs
-- Base de données des fournisseurs  
-- Historique des commandes
-
-### 🔹 Tableau de Bord (Dashboard)
-- Vue d’ensemble des ventes du jour  
-- Recettes totales  
-- Produits en rupture  
-- Meilleures ventes  
-- Activités récentes
+The application helps small and medium hardware stores **track inventory, manage sales, and monitor business performance in real time**.
 
 ---
 
-## 🧰 Technologies utilisées
+# ✨ Features
 
-- **Backend :** Laravel  
-- **Frontend :** Blade / Bootstrap / JavaScript  
-- **Base de données :** MySQL  
-- **Authentification :** Laravel Auth / Roles & Permissions  
-- **Autres packages :**  
-  - Spatie Laravel Permission (optionnel)  
+## 📦 Product Management
+- Create, update and delete products
+- Product categorization
+- Purchase and selling price management
+- Stock tracking
+- Low stock alerts
 
 ---
 
-## 🏗️ Installation & Configuration
+## 💰 Sales Management
+- Fast sales registration
+- Automatic total calculation
+- Cash / credit payments
+- Full transaction history
+- Invoice generation
 
-1. Cloner le projet
+---
+
+## 🛒 Purchase Management
+- Supplier order creation
+- Delivery tracking
+- Automatic stock update
+
+---
+
+## 👥 Customer Management
+- Customer profiles
+- Debt tracking
+- Payment history
+- Purchase history per customer
+
+---
+
+## 🏢 Supplier Management
+- Supplier database
+- Order history
+
+---
+
+## 📊 Dashboard
+- Daily sales overview
+- Total revenue
+- Low stock products
+- Best selling products
+- Recent activities
+
+---
+
+# 🧰 Tech Stack
+
+| Layer | Technology |
+|------|------------|
+Backend | Laravel |
+Frontend | Blade / Bootstrap / JavaScript |
+Database | MySQL |
+Auth | Laravel Authentication |
+Permissions | Spatie Laravel Permission |
+
+---
+
+# ⚙️ Installation
+
+## 1 Clone the project
+
 ```bash
-git clone https://github.com/username/quincaillerie-app.git
-cd quincaillerie-app
+git clone https://github.com/yamdev07/QuincApp.git
+cd QuincApp
 ````
----
-Installer les dépendances
+
+## 2 Install dependencies
 ````
 composer install
 npm install
 npm run build
 ````
----
-Configurer l’environnement
+
+## 3 Configure environment
 ````
 cp .env.example .env
 php artisan key:generate
 ````
----
-- Configurer la base de données et les paramètres SMTP dans .env.
+- [ ] Configure database credentials in .env.
 
-- Lancer les migrations et seeders
+## 4 Run migrations
 ````
 php artisan migrate --seed
-````
-
-Lancer le serveur
-````
+5 Start the server
 php artisan serve
 ````
----
-👥 Gestion des rôles et permissions
 
-Admin : Accès total
+Application available at
 
-Caissier : Gère les ventes
+http://127.0.0.1:8000
 
-Gestionnaire de stock : Gère les produits et stocks
+## 🔐 Roles & Permissions
 
-Comptes par défaut (si seed activé) :
+- Role	Permissions
+- Admin	Full access
+- Cashier	Sales management
+- Stock Manager	Inventory management
 
-Rôle	Email	Mot de passe
-Admin	admin@example.com
-	password
-    
-## 📂 Structure du projet
+### Default account (if seeder enabled)
+
+- Email: admin@example.com
+- Password: password
+ 
+## 📁 Project Structure
 ````
-- app/
-- resources/
-  - views/
-  - ...
-- routes/
-  - web.php
-- database/
-  - migrations/
-  - seeders/
-- public/
+app/
+resources/
+   views/
+routes/
+   web.php
+database/
+   migrations/
+   seeders/
+public/
+
 ````
----
-🎯 Objectif du projet
 
-Offrir une solution complète et facile d'utilisation pour petites et moyennes quincailleries :
+## 🚀 Roadmap
 
-Meilleure gestion du stock
+Planned improvements:
 
-Rapidité à la caisse
+- Multi-tenant architecture
 
-Transparence des ventes
+- Subscription system (Free / Premium plans)
 
-Aide à la décision via dashboard
+- POS interface for faster checkout
 
----
-🤝 Contributions
----
-Fork & Pull Requests bienvenues.
+- Mobile responsive dashboard
 
-Auteurs
----
+- Advanced analytics
 
-Yoann yamd
+## 🤝 Contributing
+
+- [ ] Contributions are welcome.
+
+- [ ] Fork the project
+
+- [ ] Create a feature branch
+
+- [ ] Commit your changes
+
+- [ ] Open a Pull Request
+
+## 📜 License
+
+This project is licensed under the MIT License
+
+## 👨‍💻 Author
+
+Yoann Yamd
+
+## GitHub:
+https://github.com/yamdev07
