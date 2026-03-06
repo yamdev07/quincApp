@@ -1,1028 +1,1733 @@
 <!-- resources/views/products/index.blade.php -->
 @extends('layouts.app')
 
-@section('title', 'Produits')
+@section('title', 'Produits — QuincaApp')
+
+@section('styles')
+<style>
+    :root {
+        --orange:        #f97316;
+        --orange-dark:   #ea580c;
+        --orange-pale:   #fff7ed;
+        --orange-soft:   #fed7aa;
+        --bg:            #f1f5f9;
+        --card:          #ffffff;
+        --border:        #e2e8f0;
+        --border-light:  #f1f5f9;
+        --text:          #0f172a;
+        --text-2:        #475569;
+        --text-3:        #94a3b8;
+        --success:       #16a34a;
+        --danger:        #dc2626;
+        --info:          #2563eb;
+        --purple:        #7c3aed;
+        --pink:          #db2777;
+        --shadow-sm:     0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+        --shadow-md:     0 4px 16px rgba(15,23,42,.08);
+        --shadow-orange: 0 8px 24px rgba(249,115,22,.25);
+        --radius:        20px;
+        --radius-sm:     12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Page */
+    .sp-page {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 32px 24px 64px;
+    }
+
+    /* Header */
+    .sp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 16px;
+        animation: fadeUp 0.35s ease both;
+    }
+
+    .sp-header-l {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .sp-hex {
+        width: 46px;
+        height: 46px;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-orange);
+    }
+    .sp-hex svg {
+        width: 22px;
+        height: 22px;
+        stroke: #fff;
+        fill: none;
+    }
+
+    .sp-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        color: var(--text);
+    }
+    .sp-title span {
+        color: var(--orange);
+        font-weight: 800;
+    }
+    .sp-sub {
+        font-size: 13px;
+        color: var(--text-3);
+        margin-top: 4px;
+    }
+
+    /* Boutons */
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 22px;
+        background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+        border: none;
+        border-radius: 40px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: var(--shadow-orange);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-primary svg {
+        width: 16px;
+        height: 16px;
+        stroke: #fff;
+        fill: none;
+    }
+    .btn-primary::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.5s;
+    }
+    .btn-primary:hover::after { transform: translateX(100%); }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(249,115,22,0.4);
+    }
+
+    .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-2);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-secondary svg {
+        width: 15px;
+        height: 15px;
+        stroke: currentColor;
+        fill: none;
+    }
+    .btn-secondary:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: transparent;
+        border: 1.5px solid var(--border);
+        border-radius: 40px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-2);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-outline svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+    }
+    .btn-outline:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+        background: var(--orange-pale);
+    }
+
+    /* Alertes */
+    .sp-alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        border-radius: var(--radius-sm);
+        margin-bottom: 24px;
+        animation: fadeUp 0.35s 0.07s ease both;
+        border-left: 4px solid;
+    }
+    .sp-alert svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+        flex-shrink: 0;
+    }
+    .sp-alert-success {
+        background: #f0fdf4;
+        border-color: var(--success);
+        color: #166534;
+    }
+    .sp-alert-info {
+        background: #eff6ff;
+        border-color: var(--info);
+        color: #1e40af;
+    }
+    .sp-alert-warning {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #92400e;
+    }
+    .sp-alert-error {
+        background: #fef2f2;
+        border-color: var(--danger);
+        color: #991b1b;
+    }
+
+    /* Card */
+    .sp-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 24px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .sp-card:hover {
+        border-color: var(--orange-soft);
+    }
+
+    .sp-card-header {
+        padding: 18px 24px;
+        background: #fafbfd;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .sp-card-header-l {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .sp-card-ico {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: var(--orange-pale);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .sp-card-ico svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--orange);
+        fill: none;
+    }
+    .sp-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .sp-card-body {
+        padding: 24px;
+    }
+
+    /* Stats Grid */
+    .sp-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    @media (max-width: 1100px) { .sp-stats { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 580px)  { .sp-stats { grid-template-columns: 1fr; } }
+
+    .sp-stat {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px 22px;
+        box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        animation: fadeUp 0.35s ease both;
+    }
+    .sp-stat:nth-child(2) { animation-delay:0.07s; }
+    .sp-stat:nth-child(3) { animation-delay:0.14s; }
+    .sp-stat:nth-child(4) { animation-delay:0.21s; }
+    .sp-stat:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--orange-soft);
+    }
+
+    .sp-stat::before {
+        content: '';
+        position: absolute;
+        top: 14px;
+        bottom: 14px;
+        left: 0;
+        width: 4px;
+        border-radius: 0 4px 4px 0;
+    }
+    .sp-stat.c-a::before { background: var(--info); }
+    .sp-stat.c-b::before { background: var(--success); }
+    .sp-stat.c-c::before { background: var(--purple); }
+    .sp-stat.c-d::before { background: var(--orange); }
+
+    .sp-stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+    .sp-stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-3);
+    }
+    .sp-stat-ico {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .c-a .sp-stat-ico { background: #eff6ff; color: var(--info); }
+    .c-b .sp-stat-ico { background: #f0fdf4; color: var(--success); }
+    .c-c .sp-stat-ico { background: #f5f3ff; color: var(--purple); }
+    .c-d .sp-stat-ico { background: var(--orange-pale); color: var(--orange); }
+    .sp-stat:hover .sp-stat-ico {
+        background: var(--orange-pale);
+        color: var(--orange);
+    }
+    .sp-stat-ico svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+    }
+    .sp-stat-val {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        line-height: 1;
+        margin-bottom: 2px;
+        color: var(--text);
+    }
+    .sp-stat-unit {
+        font-size: 12px;
+        color: var(--text-3);
+    }
+    .sp-stat-foot {
+        font-size: 11px;
+        color: var(--text-3);
+        margin-top: 4px;
+    }
+
+    /* Search Bar */
+    .sp-search {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .sp-search-wrapper {
+        flex: 1;
+        position: relative;
+        min-width: 250px;
+    }
+    .sp-search-ico {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+    .sp-search-ico svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--text-3);
+        fill: none;
+    }
+    .sp-search-input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        color: var(--text);
+        font-family: inherit;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .sp-search-input:focus {
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+    }
+    .sp-search-clear {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-3);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .sp-search-clear:hover {
+        color: var(--danger);
+        background: #f1f5f9;
+    }
+
+    /* Filter chips */
+    .sp-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0;
+    }
+    .sp-filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: #f1f5f9;
+        border: 1px solid var(--border-light);
+        border-radius: 40px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-2);
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .sp-filter-chip svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+    }
+    .sp-filter-chip:hover {
+        background: var(--orange-pale);
+        border-color: var(--orange-soft);
+        color: var(--orange);
+    }
+    .sp-filter-chip.active {
+        background: var(--orange-pale);
+        border-color: var(--orange);
+        color: var(--orange);
+        font-weight: 600;
+    }
+
+    .sp-filter-select {
+        padding: 6px 14px;
+        background: #f1f5f9;
+        border: 1px solid var(--border-light);
+        border-radius: 40px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-2);
+        outline: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .sp-filter-select:hover {
+        background: var(--orange-pale);
+        border-color: var(--orange-soft);
+        color: var(--orange);
+    }
+
+    .sp-filter-info {
+        margin-top: 12px;
+        padding: 12px 16px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .sp-filter-info-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #1e40af;
+    }
+    .sp-filter-info-left svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+    }
+
+    /* Table */
+    .sp-table-wrap {
+        overflow-x: auto;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-light);
+    }
+    .sp-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .sp-table thead th {
+        padding: 14px 16px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #fff;
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+    }
+    .sp-table tbody td {
+        padding: 14px 16px;
+        font-size: 13px;
+        color: var(--text-2);
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+    }
+    .sp-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .sp-table tbody tr {
+        transition: background 0.15s;
+    }
+    .sp-table tbody tr:hover td {
+        background: var(--orange-pale);
+    }
+
+    /* ID Badge */
+    .sp-id {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: var(--text-2);
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+    }
+    tr:hover .sp-id {
+        background: var(--orange-pale);
+        color: var(--orange);
+    }
+    .sp-id.cumulated { background: #f5f3ff; color: var(--purple); }
+    .sp-id.merged { background: #fce7f3; color: var(--pink); }
+
+    /* Product */
+    .sp-product {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .sp-product-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .sp-product-avatar.cumulated { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+    .sp-product-avatar.merged { background: linear-gradient(135deg, #f472b6, #db2777); }
+    .sp-product-info {
+        flex: 1;
+    }
+    .sp-product-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .sp-product-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 40px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+    .badge-cumulated {
+        background: #f5f3ff;
+        color: var(--purple);
+        border: 1px solid #ddd6fe;
+    }
+    .badge-merged {
+        background: #fce7f3;
+        color: var(--pink);
+        border: 1px solid #fbcfe8;
+    }
+    .sp-product-ref {
+        font-size: 11px;
+        color: var(--text-3);
+    }
+
+    /* Price */
+    .sp-price {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+    }
+    .sp-price-sub {
+        font-size: 11px;
+        color: var(--text-3);
+    }
+
+    /* Stock */
+    .sp-stock {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .stock-high {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+    .stock-medium {
+        background: #fef9c3;
+        color: #854d0e;
+        border: 1px solid #fde047;
+    }
+    .stock-low {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    /* Status */
+    .sp-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .status-simple {
+        background: #f1f5f9;
+        color: var(--text-2);
+        border: 1px solid var(--border);
+    }
+    .status-multiple {
+        background: #f5f3ff;
+        color: var(--purple);
+        border: 1px solid #ddd6fe;
+        cursor: pointer;
+    }
+    .status-cumulated {
+        background: #f5f3ff;
+        color: var(--purple);
+        border: 1px solid #ddd6fe;
+    }
+    .status-merged {
+        background: #fce7f3;
+        color: var(--pink);
+        border: 1px solid #fbcfe8;
+    }
+
+    /* Actions */
+    .sp-actions {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+    }
+    .sp-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+        background: var(--card);
+    }
+    .sp-btn svg {
+        width: 15px;
+        height: 15px;
+        stroke: currentColor;
+        fill: none;
+    }
+    .sp-btn:hover {
+        transform: scale(1.08);
+        box-shadow: var(--shadow-sm);
+    }
+    .sp-btn-view {
+        border-color: #bfdbfe;
+        color: var(--info);
+    }
+    .sp-btn-view:hover {
+        background: var(--info);
+        border-color: var(--info);
+        color: #fff;
+    }
+    .sp-btn-edit {
+        border-color: var(--orange-soft);
+        color: var(--orange);
+    }
+    .sp-btn-edit:hover {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: #fff;
+    }
+    .sp-btn-delete {
+        border-color: #fecaca;
+        color: var(--danger);
+    }
+    .sp-btn-delete:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
+    }
+    .sp-btn-uncumulate {
+        border-color: #ddd6fe;
+        color: var(--purple);
+    }
+    .sp-btn-uncumulate:hover {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+    }
+
+    /* Empty state */
+    .sp-empty {
+        padding: 64px 24px;
+        text-align: center;
+    }
+    .sp-empty-ico {
+        width: 72px;
+        height: 72px;
+        background: #f1f5f9;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+    }
+    .sp-empty-ico svg {
+        width: 32px;
+        height: 32px;
+        stroke: var(--text-3);
+        fill: none;
+    }
+    .sp-empty h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+    }
+    .sp-empty p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 20px;
+    }
+
+    /* Tooltip */
+    .sp-tooltip {
+        position: relative;
+    }
+    .sp-tooltip:hover .sp-tooltip-content {
+        display: block;
+    }
+    .sp-tooltip-content {
+        display: none;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 8px;
+        background: #1e293b;
+        color: #fff;
+        font-size: 11px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        white-space: nowrap;
+        z-index: 20;
+    }
+    .sp-tooltip-content::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: #1e293b transparent transparent transparent;
+    }
+
+    /* Pagination */
+    .sp-pagination {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 22px;
+        box-shadow: var(--shadow-sm);
+        margin-top: 20px;
+    }
+    .sp-pagination nav { width: 100%; }
+    .sp-pagination .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        list-style: none;
+        flex-wrap: wrap;
+    }
+    .sp-pagination .page-item .page-link {
+        padding: 7px 14px;
+        border-radius: 9px;
+        border: 1.5px solid var(--border);
+        color: var(--text-2);
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.18s;
+        display: block;
+        background: var(--card);
+    }
+    .sp-pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+        border-color: var(--orange);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+    }
+    .sp-pagination .page-item .page-link:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+        background: var(--orange-pale);
+    }
+
+    /* Modal */
+    .sp-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+    .sp-modal.show {
+        display: flex;
+        animation: fadeUp 0.2s ease;
+    }
+    .sp-modal-content {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        width: 100%;
+        max-width: 640px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        animation: slideIn 0.3s ease;
+    }
+    .sp-modal-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+        color: #fff;
+        border-radius: var(--radius) var(--radius) 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .sp-modal-header h3 {
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .sp-modal-header h3 svg {
+        width: 22px;
+        height: 22px;
+        stroke: #fff;
+        fill: none;
+    }
+    .sp-modal-close {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    .sp-modal-close:hover {
+        background: rgba(255,255,255,0.2);
+    }
+    .sp-modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+    .sp-modal-footer {
+        padding: 20px 24px;
+        border-top: 1px solid var(--border);
+        background: #fafbfd;
+        border-radius: 0 0 var(--radius) var(--radius);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* Product selection */
+    .sp-product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 4px;
+    }
+    .sp-product-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        transition: all 0.2s;
+    }
+    .sp-product-item:hover {
+        background: var(--orange-pale);
+        border-color: var(--orange-soft);
+    }
+    .sp-product-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--orange);
+    }
+    .sp-product-item label {
+        flex: 1;
+        cursor: pointer;
+    }
+    .sp-product-item-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 2px;
+    }
+    .sp-product-item-desc {
+        font-size: 11px;
+        color: var(--text-3);
+        display: flex;
+        gap: 8px;
+    }
+
+    .sp-preview {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        margin: 16px 0;
+    }
+    .sp-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .sp-preview-item {
+        font-size: 13px;
+        color: #166534;
+    }
+    .sp-preview-item strong {
+        font-weight: 700;
+        color: #14532d;
+    }
+</style>
+@endsection
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-    <div class="container mx-auto px-4 max-w-7xl">
-        <!-- Bouton Retour -->
-        <div class="mb-4">
-            <button onclick="window.history.back()" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-2.5 px-5 rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 group">
-                <i class="bi bi-arrow-left-circle text-xl group-hover:-translate-x-1 transition-transform duration-200"></i>
-                <span>Retour</span>
+<div class="sp-page">
+
+    {{-- HEADER --}}
+    <div class="sp-header">
+        <div class="sp-header-l">
+            <div class="sp-hex">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+            </div>
+            <div>
+                <div class="sp-title">
+                    Gestion des <span>produits</span>
+                </div>
+                <div class="sp-sub">Gérez votre inventaire et vos produits en toute simplicité</div>
+            </div>
+        </div>
+        <div class="sp-header-actions" style="display: flex; gap: 8px;">
+            <button onclick="openMergeModal()" class="btn-outline">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                </svg>
+                Fusionner
             </button>
-        </div>
-
-        <!-- Header Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border border-gray-100">
-            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                <div>
-                    <h2 class="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent flex items-center gap-3">
-                        <span class="text-4xl">📦</span>
-                        Gestion des produits
-                    </h2>
-                    <p class="text-gray-500 mt-1 text-sm">Gérez votre inventaire et vos produits en toute simplicité</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <!-- Bouton Rapport Stocks Groupés -->
-                    <a href="{{ route('reports.grouped-stocks') }}" 
-                       class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 px-5 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 group">
-                        <i class="bi bi-layer-forward text-xl group-hover:rotate-12 transition-transform duration-300"></i>
-                        <span>Stocks groupés</span>
+            @auth
+                @if(Auth::user()->role === 'admin')
+                    <a href="{{ route('products.create') }}" class="btn-primary">
+                        <svg viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nouveau produit
                     </a>
-                    
-                    <!-- Bouton pour fusionner des produits -->
-                    <button type="button" onclick="openMergeModal()"
-                       class="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-5 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 group">
-                        <i class="bi bi-plus-circle-dotted text-xl group-hover:rotate-90 transition-transform duration-300"></i>
-                        <span>Fusionner</span>
-                    </button>
-                    
-                    @auth
-                        @if(Auth::user()->role === 'admin')
-                            <a href="{{ route('products.create') }}" class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 group">
-                                <i class="bi bi-plus-circle text-xl group-hover:rotate-90 transition-transform duration-300"></i>
-                                <span>Nouveau produit</span>
-                            </a>
-                        @endif
-                    @endauth
-                </div>
-            </div>
-        </div>
-
-        <!-- Barre de Recherche -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border border-gray-100">
-            <form action="{{ route('products.index') }}" method="GET" id="searchForm">
-                <div class="relative">
-                    <div class="flex items-center gap-4">
-                        <div class="relative flex-1">
-                            <i class="bi bi-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input 
-                                type="text" 
-                                name="search" 
-                                id="searchInput" 
-                                value="{{ request('search', '') }}" 
-                                placeholder="Rechercher un produit par nom, prix ou stock..." 
-                                class="w-full pl-12 pr-10 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
-                                autocomplete="off"
-                            >
-                            @if(request('search'))
-                                <button 
-                                    type="button" 
-                                    id="clearSearch" 
-                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    onclick="clearSearch()"
-                                >
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            @endif
-                        </div>
-                        <button 
-                            type="submit"
-                            id="searchButton"
-                            class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
-                        >
-                            <i class="bi bi-search"></i>
-                            <span>Rechercher</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Filtres rapides -->
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <a href="{{ route('products.index') }}" 
-                           class="px-4 py-2 rounded-lg {{ !request('filter') && !request('search') ? 'bg-blue-100 text-blue-800 border border-blue-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            Tous les produits
-                        </a>
-                        <a href="{{ route('products.index', ['filter' => 'low_stock']) }}" 
-                           class="px-4 py-2 rounded-lg {{ request('filter') == 'low_stock' ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="bi bi-exclamation-triangle mr-1"></i> Stock faible (≤ 10)
-                        </a>
-                        <a href="{{ route('products.index', ['filter' => 'out_of_stock']) }}" 
-                           class="px-4 py-2 rounded-lg {{ request('filter') == 'out_of_stock' ? 'bg-orange-100 text-orange-800 border border-orange-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="bi bi-x-circle mr-1"></i> Rupture de stock
-                        </a>
-                        <a href="{{ route('products.index', ['filter' => 'available']) }}" 
-                           class="px-4 py-2 rounded-lg {{ request('filter') == 'available' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="bi bi-check-circle mr-1"></i> Disponibles
-                        </a>
-                        
-                        <!-- Filtre pour produits avec multiples lots -->
-                        <a href="{{ route('products.index', ['filter' => 'multiple_batches']) }}" 
-                           class="px-4 py-2 rounded-lg {{ request('filter') == 'multiple_batches' ? 'bg-purple-100 text-purple-800 border border-purple-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="bi bi-layer-forward mr-1"></i> Multiples lots
-                        </a>
-                        
-                        <!-- Filtre pour produits cumulés -->
-                        <a href="{{ route('products.index', ['filter' => 'cumulated']) }}" 
-                           class="px-4 py-2 rounded-lg {{ request('filter') == 'cumulated' ? 'bg-pink-100 text-pink-800 border border-pink-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="bi bi-plus-circle-dotted mr-1"></i> Produits cumulés
-                        </a>
-                        
-                        <!-- Filtre pour produits non-cumulés -->
-                        <a href="{{ route('products.index', ['filter' => 'non_cumulated']) }}" 
-                           class="px-4 py-2 rounded-lg {{ request('filter') == 'non_cumulated' ? 'bg-cyan-100 text-cyan-800 border border-cyan-300' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="bi bi-box mr-1"></i> Produits simples
-                        </a>
-                        
-                        <!-- Tri -->
-                        <select name="sort_by" 
-                                onchange="this.form.submit()" 
-                                class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border-0 focus:ring-0">
-                            <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>Tri par date</option>
-                            <option value="name" {{ request('sort_by') == 'name' ? 'selected' : '' }}>Nom (A-Z)</option>
-                            <option value="stock" {{ request('sort_by') == 'stock' ? 'selected' : '' }}>Stock (croissant)</option>
-                            <option value="sale_price" {{ request('sort_by') == 'sale_price' ? 'selected' : '' }}>Prix (croissant)</option>
-                            <option value="profit_margin" {{ request('sort_by') == 'profit_margin' ? 'selected' : '' }}>Marge %</option>
-                        </select>
-                        
-                        <!-- Bouton Reset -->
-                        @if(request('search') || request('filter') || request('sort_by') != 'created_at')
-                            <a href="{{ route('products.index') }}" 
-                               class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 flex items-center gap-1">
-                                <i class="bi bi-x-circle"></i>
-                                Réinitialiser
-                            </a>
-                        @endif
-                    </div>
-                    
-                    <!-- Info de recherche -->
-                    @if(request('search') || request('filter') || request('sort_by') != 'created_at')
-                        <div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <i class="bi bi-info-circle text-blue-500"></i>
-                                    <span class="text-sm text-blue-700">
-                                        @if(request('search'))
-                                            Recherche : "<strong>{{ request('search') }}</strong>" • 
-                                        @endif
-                                        @if(request('filter'))
-                                            @php
-                                                $filterLabels = [
-                                                    'low_stock' => 'Stock faible (≤ 10)',
-                                                    'out_of_stock' => 'Rupture de stock',
-                                                    'available' => 'Disponibles',
-                                                    'multiple_batches' => 'Multiples lots',
-                                                    'cumulated' => 'Produits cumulés',
-                                                    'non_cumulated' => 'Produits simples'
-                                                ];
-                                            @endphp
-                                            Filtre : <strong>{{ $filterLabels[request('filter')] ?? request('filter') }}</strong> • 
-                                        @endif
-                                        @if(request('sort_by') != 'created_at')
-                                            @php
-                                                $sortLabels = [
-                                                    'name' => 'Nom (A-Z)',
-                                                    'stock' => 'Stock (croissant)',
-                                                    'sale_price' => 'Prix (croissant)',
-                                                    'profit_margin' => 'Marge %'
-                                                ];
-                                            @endphp
-                                            Tri : <strong>{{ $sortLabels[request('sort_by')] ?? request('sort_by') }}</strong> • 
-                                        @endif
-                                        {{ $products->total() }} résultat(s) trouvé(s)
-                                    </span>
-                                </div>
-                                <a href="{{ route('products.index') }}" 
-                                   class="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">
-                                    <i class="bi bi-x-circle"></i>
-                                    Effacer
-                                </a>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </form>
-        </div>
-
-        <!-- Success Alert -->
-        @if(session('success'))
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 text-green-800 px-6 py-4 rounded-xl relative mb-6 shadow-md animate-fade-in" role="alert">
-                <div class="flex items-center gap-3">
-                    <i class="bi bi-check-circle-fill text-2xl text-green-600"></i>
-                    <div>
-                        <p class="font-semibold">Succès!</p>
-                        <p class="text-sm">{{ session('success') }}</p>
-                    </div>
-                </div>
-                <button class="absolute top-4 right-4 text-green-600 hover:text-green-800 transition-colors" onclick="this.parentElement.remove();">
-                    <i class="bi bi-x-lg text-xl"></i>
-                </button>
-            </div>
-        @endif
-
-        @if(session('info'))
-            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 text-blue-800 px-6 py-4 rounded-xl relative mb-6 shadow-md animate-fade-in" role="alert">
-                <div class="flex items-center gap-3">
-                    <i class="bi bi-info-circle-fill text-2xl text-blue-600"></i>
-                    <div>
-                        <p class="font-semibold">Information</p>
-                        <p class="text-sm">{{ session('info') }}</p>
-                    </div>
-                </div>
-                <button class="absolute top-4 right-4 text-blue-600 hover:text-blue-800 transition-colors" onclick="this.parentElement.remove();">
-                    <i class="bi bi-x-lg text-xl"></i>
-                </button>
-            </div>
-        @endif
-
-        @if(session('warning'))
-            <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-500 text-yellow-800 px-6 py-4 rounded-xl relative mb-6 shadow-md animate-fade-in" role="alert">
-                <div class="flex items-center gap-3">
-                    <i class="bi bi-exclamation-triangle-fill text-2xl text-yellow-600"></i>
-                    <div>
-                        <p class="font-semibold">Attention!</p>
-                        <p class="text-sm">{{ session('warning') }}</p>
-                    </div>
-                </div>
-                <button class="absolute top-4 right-4 text-yellow-600 hover:text-yellow-800 transition-colors" onclick="this.parentElement.remove();">
-                    <i class="bi bi-x-lg text-xl"></i>
-                </button>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 text-red-800 px-6 py-4 rounded-xl relative mb-6 shadow-md animate-fade-in" role="alert">
-                <div class="flex items-center gap-3">
-                    <i class="bi bi-x-circle-fill text-2xl text-red-600"></i>
-                    <div>
-                        <p class="font-semibold">Erreur!</p>
-                        <p class="text-sm">{{ session('error') }}</p>
-                    </div>
-                </div>
-                <button class="absolute top-4 right-4 text-red-600 hover:text-red-800 transition-colors" onclick="this.parentElement.remove();">
-                    <i class="bi bi-x-lg text-xl"></i>
-                </button>
-            </div>
-        @endif
-
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm font-medium">Total produits</p>
-                        <h3 class="text-3xl font-bold mt-1">{{ $totalProductsGlobal }}</h3>
-                        <p class="text-xs text-blue-100 mt-1">
-                            @if(request('search') || request('filter'))
-                                {{ $products->total() }} filtrés
-                            @else
-                                Tous les produits
-                            @endif
-                        </p>
-                    </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <i class="bi bi-box-seam text-3xl"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-green-100 text-sm font-medium">Stock total</p>
-                        <h3 class="text-3xl font-bold mt-1">{{ number_format($totalStockGlobal, 0, ',', ' ') }}</h3>
-                        <p class="text-xs text-green-100 mt-1">
-                            @if(request('search') || request('filter'))
-                                {{ number_format($totalStockFiltered, 0, ',', ' ') }} unités filtrées
-                            @else
-                                Unités totales
-                            @endif
-                        </p>
-                    </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <i class="bi bi-stack text-3xl"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Valeur totale</p>
-                        <h3 class="text-3xl font-bold mt-1">{{ number_format($totalValueGlobal, 0, ',', ' ') }}</h3>
-                        <p class="text-xs text-purple-100 mt-1">
-                            CFA 
-                            @if(request('search') || request('filter'))
-                                • {{ number_format($totalValueFiltered, 0, ',', ' ') }} CFA filtrés
-                            @endif
-                        </p>
-                    </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <i class="bi bi-currency-exchange text-3xl"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- CARTE : Produits avec multiples lots -->
-            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-indigo-100 text-sm font-medium">Multiples lots</p>
-                        <h3 class="text-3xl font-bold mt-1">{{ $productsWithMultipleBatches ?? 0 }}</h3>
-                        <p class="text-xs text-indigo-100 mt-1">
-                            Produits avec plusieurs prix
-                            @if(request('filter') == 'multiple_batches')
-                                <br><span class="opacity-90">Filtrés</span>
-                            @endif
-                        </p>
-                    </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <i class="bi bi-layer-forward text-3xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions Bar -->
-        <div class="bg-white rounded-2xl shadow-md p-4 mb-6 border border-gray-100">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-2">
-                    <i class="bi bi-lightning-charge-fill text-yellow-500 text-xl"></i>
-                    <span class="font-medium text-gray-700">Actions rapides :</span>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('reports.grouped-stocks') }}" 
-                       class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-lg hover:from-indigo-100 hover:to-purple-100 border border-indigo-200 transition-colors">
-                        <i class="bi bi-layer-forward"></i>
-                        <span>Rapport stocks groupés</span>
-                    </a>
-                    <a href="{{ route('reports.products') }}" 
-                       class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 rounded-lg hover:from-blue-100 hover:to-cyan-100 border border-blue-200 transition-colors">
-                        <i class="bi bi-graph-up"></i>
-                        <span>Rapport produits</span>
-                    </a>
-                    <button onclick="openMergeModal()" 
-                       class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 rounded-lg hover:from-purple-100 hover:to-pink-100 border border-purple-200 transition-colors">
-                        <i class="bi bi-plus-circle-dotted"></i>
-                        <span>Fusionner produits</span>
-                    </button>
-                    @auth
-                        @if(Auth::user()->role === 'admin')
-                            <a href="{{ route('products.create') }}" 
-                               class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg hover:from-green-100 hover:to-emerald-100 border border-green-200 transition-colors">
-                                <i class="bi bi-plus-circle"></i>
-                                <span>Ajouter produit</span>
-                            </a>
-                        @endif
-                    @endauth
-                </div>
-            </div>
-        </div>
-
-        <!-- Products Table - Version simplifiée -->
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-gray-800 to-gray-700">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">ID</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">Produit</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">Prix de vente</th>
-                            @if(Auth::user() && Auth::user()->role === 'admin')
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">Prix d'achat</th>
-                            @endif
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">Stock</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">Valeur du stock</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">Statut</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-100 uppercase tracking-wider">Date création</th>
-                            <th class="px-6 py-4 text-center text-xs font-bold text-gray-100 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($products as $product)
-                            @php
-                                $stock = $product->stock ?? 0;
-                                $salePrice = $product->sale_price ?? 0;
-                                $purchasePrice = $product->purchase_price ?? 0;
-                                $totalValue = $stock * $salePrice;
-                                $totalCost = $stock * $purchasePrice;
-                                $profitPerItem = $salePrice - $purchasePrice;
-                                $totalProfit = $profitPerItem * $stock;
-                                
-                                // Classes pour le stock
-                                $stockClass = $stock > 10 ? 'success' : ($stock > 0 ? 'warning' : 'danger');
-                                
-                                // Vérifier si le produit a plusieurs lots
-                                $hasMultipleBatches = $product->has_multiple_batches ?? false;
-                                $batchesCount = $product->stock_summary['number_of_batches'] ?? 1;
-                                
-                                // Vérifier le statut cumulé
-                                $isCumulated = $product->is_cumulated ?? false;
-                                $hasBeenCumulated = $product->has_been_cumulated ?? false;
-                                $cumulatedTo = $product->cumulated_to ?? null;
-                                
-                                // Déterminer le badge de statut
-                                $statusBadge = 'simple';
-                                $statusText = 'Produit simple';
-                                $statusColor = 'gray';
-                                
-                                if ($isCumulated) {
-                                    $statusBadge = 'cumulated';
-                                    $statusText = 'Produit cumulé';
-                                    $statusColor = 'purple';
-                                } elseif ($hasBeenCumulated) {
-                                    $statusBadge = 'merged';
-                                    $statusText = 'Fusionné vers #' . ($cumulatedTo ?? '?');
-                                    $statusColor = 'pink';
-                                } elseif ($hasMultipleBatches) {
-                                    $statusBadge = 'multiple';
-                                    $statusText = $batchesCount . ' lot(s)';
-                                    $statusColor = 'indigo';
-                                }
-                            @endphp
-                            <tr class="hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent transition-all duration-200 group
-                                @if($hasBeenCumulated) opacity-75 hover:opacity-100 @endif">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($isCumulated)
-                                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-semibold text-sm group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
-                                            {{ $product->id ?? 'N/A' }}
-                                        </span>
-                                    @elseif($hasBeenCumulated)
-                                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 text-pink-700 font-semibold text-sm group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
-                                            {{ $product->id ?? 'N/A' }}
-                                            <i class="bi bi-arrow-right-short ml-0.5 text-xs"></i>
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-semibold text-sm group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
-                                            {{ $product->id ?? 'N/A' }}
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        @if($isCumulated)
-                                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center text-white font-bold shadow-md">
-                                                {{ substr($product->name ?? 'N', 0, 1) }}
-                                            </div>
-                                        @elseif($hasBeenCumulated)
-                                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-400 to-rose-600 flex items-center justify-center text-white font-bold shadow-md">
-                                                {{ substr($product->name ?? 'N', 0, 1) }}
-                                            </div>
-                                        @else
-                                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shadow-md">
-                                                {{ substr($product->name ?? 'N', 0, 1) }}
-                                            </div>
-                                        @endif
-                                        <div>
-                                            <p class="font-semibold text-gray-800 flex items-center gap-2">
-                                                {{ $product->name ?? 'N/A' }}
-                                                @if($isCumulated)
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs">
-                                                        <i class="bi bi-plus-circle-dotted"></i>
-                                                        Cumulé
-                                                    </span>
-                                                @endif
-                                                @if($hasBeenCumulated)
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-pink-100 text-pink-700 rounded-full text-xs">
-                                                        <i class="bi bi-arrow-right"></i>
-                                                        Fusionné
-                                                    </span>
-                                                @endif
-                                            </p>
-                                            <p class="text-xs text-gray-500">#{{ $product->id }}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex flex-col">
-                                        <span class="text-lg font-bold text-gray-800">{{ number_format($salePrice, 0, ',', ' ') }}</span>
-                                        <span class="text-xs text-gray-500">CFA</span>
-                                        @if($isCumulated && $product->stock_summary['average_sale_price'] ?? false)
-                                            <div class="text-xs text-purple-600 mt-1">
-                                                <i class="bi bi-graph-up"></i>
-                                                Moyenne: {{ number_format($product->stock_summary['average_sale_price'], 0, ',', ' ') }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                </td>
-                                @if(Auth::user() && Auth::user()->role === 'admin')
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex flex-col">
-                                            <span class="text-lg font-bold text-gray-800">{{ number_format($purchasePrice, 0, ',', ' ') }}</span>
-                                            <span class="text-xs text-gray-500">CFA</span>
-                                            @if($isCumulated && $product->stock_summary['average_purchase_price'] ?? false)
-                                                <div class="text-xs text-purple-600 mt-1">
-                                                    <i class="bi bi-graph-down"></i>
-                                                    Moyenne: {{ number_format($product->stock_summary['average_purchase_price'], 0, ',', ' ') }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </td>
-                                @endif
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex flex-col gap-1">
-                                        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm
-                                            {{ $stockClass === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
-                                            ($stockClass === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 'bg-red-100 text-red-800 border border-red-200') }}">
-                                            <span class="w-2 h-2 rounded-full 
-                                                {{ $stockClass === 'success' ? 'bg-green-500' : 
-                                                ($stockClass === 'warning' ? 'bg-yellow-500' : 'bg-red-500') }} animate-pulse"></span>
-                                            {{ $stock }}
-                                        </span>
-                                        @if($isCumulated && $product->stock_summary['total_quantity_all_batches'] ?? false)
-                                            <div class="text-xs text-gray-500 pl-1">
-                                                <i class="bi bi-stack"></i>
-                                                Cumul: {{ $product->stock_summary['total_quantity_all_batches'] }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex flex-col">
-                                        <!-- Valeur totale du stock -->
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-lg font-bold text-purple-700">
-                                                {{ number_format($totalValue, 0, ',', ' ') }}
-                                            </span>
-                                            <span class="text-xs text-gray-500">CFA</span>
-                                        </div>
-                                        
-                                        <!-- Info détaillée (optionnel) -->
-                                        @if(Auth::user() && Auth::user()->role === 'admin' && $purchasePrice > 0)
-                                            <div class="text-xs text-gray-500 mt-1">
-                                                <div class="flex items-center gap-1">
-                                                    <span class="text-green-600">+{{ number_format($totalProfit, 0, ',', ' ') }} CFA</span>
-                                                    <span class="text-gray-400">•</span>
-                                                    <span>Bénéfice</span>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        
-                                        @if($isCumulated && $product->stock_summary['total_value_current'] ?? false)
-                                            <div class="text-xs text-purple-600 mt-1">
-                                                <i class="bi bi-calculator"></i>
-                                                Valeur totale: {{ number_format($product->stock_summary['total_value_current'], 0, ',', ' ') }} CFA
-                                            </div>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($statusBadge == 'cumulated')
-                                        <div class="flex flex-col gap-1">
-                                            <span class="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full border border-purple-200 text-sm font-medium">
-                                                <i class="bi bi-plus-circle-dotted"></i>
-                                                {{ $statusText }}
-                                            </span>
-                                            @if($product->batch_number ?? false)
-                                                <div class="text-xs text-gray-500 pl-1">
-                                                    <i class="bi bi-tag"></i>
-                                                    {{ $product->batch_number }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @elseif($statusBadge == 'merged')
-                                        <div class="flex flex-col gap-1">
-                                            <span class="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-pink-100 to-rose-100 text-pink-700 rounded-full border border-pink-200 text-sm font-medium">
-                                                <i class="bi bi-arrow-right"></i>
-                                                {{ $statusText }}
-                                            </span>
-                                            <div class="text-xs text-pink-600 pl-1">
-                                                <i class="bi bi-info-circle"></i>
-                                                Non modifiable
-                                            </div>
-                                        </div>
-                                    @elseif($statusBadge == 'multiple')
-                                        <div class="flex items-center gap-2 group/lot relative">
-                                            <span class="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full border border-indigo-200 text-sm font-medium hover:from-indigo-200 hover:to-purple-200 transition-colors cursor-pointer"
-                                                  onclick="window.location.href='{{ route('reports.grouped-stocks') }}?search={{ urlencode($product->name) }}'">
-                                                <i class="bi bi-layer-forward"></i>
-                                                {{ $statusText }}
-                                            </span>
-                                            <!-- Tooltip -->
-                                            <div class="absolute left-0 bottom-full mb-2 hidden group-hover/lot:block z-10">
-                                                <div class="bg-gray-800 text-white text-xs rounded-lg py-2 px-3 shadow-lg">
-                                                    <div class="font-semibold mb-1">{{ $product->name }}</div>
-                                                    <div class="text-gray-300">
-                                                        {{ $batchesCount }} lot(s) différents<br>
-                                                        <span class="text-indigo-300">Cliquez pour voir les détails</span>
-                                                    </div>
-                                                    <div class="absolute -bottom-1 left-4 w-2 h-2 bg-gray-800 rotate-45"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-full border border-gray-200 text-sm">
-                                            <i class="bi bi-box"></i>
-                                            {{ $statusText }}
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                                        <i class="bi bi-calendar3 text-gray-400"></i>
-                                        {{ $product->created_at?->format('d/m/Y') ?? 'N/A' }}
-                                    </div>
-                                    <div class="text-xs text-gray-400 mt-0.5">
-                                        {{ $product->created_at?->format('H:i') ?? '' }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center justify-center gap-3">
-                                        <!-- Bouton Voir -->
-                                        <a href="{{ route('products.show', $product->id) }}" 
-                                        class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 group"
-                                        title="Voir détails">
-                                            <i class="bi bi-eye text-lg group-hover:scale-110 transition-transform"></i>
-                                        </a>
-
-                                        @if(Auth::user() && Auth::user()->role === 'admin')
-                                            @if(!$hasBeenCumulated)
-                                                <!-- Bouton Modifier -->
-                                                <a href="{{ route('products.edit', $product->id) }}" 
-                                                class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-800 rounded-xl shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 group"
-                                                title="Modifier">
-                                                    <i class="bi bi-pencil-square text-lg group-hover:scale-110 transition-transform"></i>
-                                                </a>
-                                            @endif
-
-                                            <!-- Bouton Supprimer -->
-                                            <form action="{{ route('products.destroy', $product->id) }}" 
-                                                method="POST" 
-                                                onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce produit ?')" 
-                                                class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" 
-                                                        class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 group"
-                                                        title="Supprimer"
-                                                        @if($hasBeenCumulated || ($isCumulated && $originalCount > 0)) disabled @endif>
-                                                    <i class="bi bi-trash text-lg group-hover:scale-110 transition-transform"></i>
-                                                </button>
-                                            </form>
-                                            
-                                            <!-- Bouton pour dé-cumuler -->
-                                            @if($isCumulated)
-                                                <form action="{{ route('products.uncumulate', $product->id) }}" 
-                                                      method="POST" 
-                                                      onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir défaire ce cumul ? Les produits originaux seront restaurés.')"
-                                                      class="inline">
-                                                    @csrf
-                                                    <button type="submit" 
-                                                            class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl shadow-md hover:shadow-lg transform hover:scale-110 transition-all duration-200 group"
-                                                            title="Défaire le cumul">
-                                                        <i class="bi bi-arrow-counterclockwise text-lg group-hover:scale-110 transition-transform"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ Auth::user() && Auth::user()->role === 'admin' ? 9 : 8 }}" class="px-6 py-16 text-center">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                            <i class="bi bi-box-seam text-5xl text-gray-400"></i>
-                                        </div>
-                                        <h3 class="text-xl font-semibold text-gray-700 mb-2">
-                                            @if(request('search') || request('filter'))
-                                                Aucun produit ne correspond à vos critères
-                                            @else
-                                                Aucun produit trouvé
-                                            @endif
-                                        </h3>
-                                        <p class="text-gray-500 mb-6">
-                                            @if(request('search') || request('filter'))
-                                                Essayez de modifier vos critères de recherche
-                                            @else
-                                                Commencez par créer votre premier produit
-                                            @endif
-                                        </p>
-                                        @if(request('search') || request('filter'))
-                                            <a href="{{ route('products.index') }}" 
-                                            class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2">
-                                                <i class="bi bi-arrow-counterclockwise"></i>
-                                                <span>Voir tous les produits</span>
-                                            </a>
-                                        @else
-                                            <a href="{{ route('products.create') }}" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2">
-                                                <i class="bi bi-plus-circle"></i>
-                                                <span>Créer le premier produit</span>
-                                            </a>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        <div id="paginationContainer" class="mt-6 bg-white rounded-xl shadow-md p-4">
-            @if($products->hasPages())
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div class="text-sm text-gray-600">
-                        Page {{ $products->currentPage() }} sur {{ $products->lastPage() }} • 
-                        {{ $products->total() }} produit(s) au total
-                        @if(request('search'))
-                            • Recherche : "{{ request('search') }}"
-                        @endif
-                    </div>
-                    <div class="pagination">
-                        {{ $products->appends(request()->except('page'))->links() }}
-                    </div>
-                </div>
-            @else
-                <div class="text-center text-gray-500 py-2">
-                    @if($products->count() > 0)
-                        Tous les produits sont affichés
-                    @else
-                        Aucun produit à afficher
-                    @endif
-                </div>
-            @endif
+                @endif
+            @endauth
         </div>
     </div>
-</div>
 
-<!-- MODAL POUR FUSIONNER DES PRODUITS -->
-<div id="mergeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <!-- En-tête fixe -->
-        <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white flex-shrink-0">
-            <div class="flex items-center justify-between">
-                <h3 class="text-2xl font-bold flex items-center gap-3">
-                    <i class="bi bi-plus-circle-dotted text-3xl"></i>
-                    Fusionner des produits
-                </h3>
-                <button type="button" onclick="closeMergeModal()" class="text-white hover:text-gray-200 text-2xl">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <p class="text-purple-100 mt-2">Sélectionnez les produits à fusionner en un seul produit cumulé</p>
+    {{-- ALERTS --}}
+    @if(session('success'))
+        <div class="sp-alert sp-alert-success">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('success') }}
         </div>
-        
-        <!-- Conteneur scrollable -->
-        <div class="flex-1 overflow-y-auto">
-            <form action="{{ route('products.merge') }}" method="POST" id="mergeForm" class="p-6 space-y-6">
-                @csrf
-                
-                <!-- Sélection des produits -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="bi bi-boxes mr-1"></i>
-                        Produits à fusionner <span class="text-red-500">*</span>
-                    </label>
-                    <div class="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="productsSelection">
-                            @foreach($products as $product)
-                                @if(!($product->has_been_cumulated ?? false))
-                                    <div class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors">
-                                        <input type="checkbox" 
-                                               name="product_ids[]" 
-                                               value="{{ $product->id }}" 
-                                               id="product_{{ $product->id }}"
-                                               onchange="updateMergeSelection()"
-                                               class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                        <label for="product_{{ $product->id }}" class="flex-1 cursor-pointer">
-                                            <div class="font-medium text-gray-800">{{ $product->name }}</div>
-                                            <div class="text-sm text-gray-500 flex items-center gap-2">
-                                                <span>Stock: {{ $product->stock }}</span>
-                                                <span>•</span>
-                                                <span>{{ number_format($product->sale_price, 0, ',', ' ') }} CFA</span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                        @if(!$products->where('has_been_cumulated', false)->count())
-                            <div class="text-center py-8 text-gray-500">
-                                <i class="bi bi-exclamation-triangle text-3xl mb-3"></i>
-                                <p>Aucun produit disponible pour fusion</p>
-                            </div>
+    @endif
+    @if(session('info'))
+        <div class="sp-alert sp-alert-info">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('info') }}
+        </div>
+    @endif
+    @if(session('warning'))
+        <div class="sp-alert sp-alert-warning">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {{ session('warning') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="sp-alert sp-alert-error">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('error') }}
+        </div>
+    @endif
+
+    {{-- STATS CARDS --}}
+    <div class="sp-stats">
+        <div class="sp-stat c-a">
+            <div class="sp-stat-top">
+                <span class="sp-stat-label">Total produits</span>
+                <div class="sp-stat-ico">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                </div>
+            </div>
+            <div class="sp-stat-val">{{ $totalProductsGlobal }}</div>
+            <div class="sp-stat-foot">{{ $products->total() }} filtrés</div>
+        </div>
+
+        <div class="sp-stat c-b">
+            <div class="sp-stat-top">
+                <span class="sp-stat-label">Stock total</span>
+                <div class="sp-stat-ico">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+            </div>
+            <div class="sp-stat-val">{{ number_format($totalStockGlobal, 0, ',', ' ') }}</div>
+            <div class="sp-stat-foot">{{ number_format($totalStockFiltered, 0, ',', ' ') }} filtrés</div>
+        </div>
+
+        <div class="sp-stat c-c">
+            <div class="sp-stat-top">
+                <span class="sp-stat-label">Valeur totale</span>
+                <div class="sp-stat-ico">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="sp-stat-val">{{ number_format($totalValueGlobal, 0, ',', ' ') }}</div>
+            <div class="sp-stat-foot">CFA</div>
+        </div>
+
+        <div class="sp-stat c-d">
+            <div class="sp-stat-top">
+                <span class="sp-stat-label">Multiples lots</span>
+                <div class="sp-stat-ico">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                    </svg>
+                </div>
+            </div>
+            <div class="sp-stat-val">{{ $productsWithMultipleBatches ?? 0 }}</div>
+            <div class="sp-stat-foot">produits</div>
+        </div>
+    </div>
+
+    {{-- SEARCH CARD --}}
+    <div class="sp-card">
+        <div class="sp-card-header">
+            <div class="sp-card-header-l">
+                <div class="sp-card-ico">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <span class="sp-card-title">Recherche et filtres</span>
+            </div>
+        </div>
+        <div class="sp-card-body">
+            <form action="{{ route('products.index') }}" method="GET" id="searchForm">
+                <div class="sp-search">
+                    <div class="sp-search-wrapper">
+                        <span class="sp-search-ico">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
+                        <input type="text" 
+                               name="search" 
+                               id="searchInput" 
+                               value="{{ request('search', '') }}" 
+                               placeholder="Rechercher un produit par nom, prix ou stock..."
+                               class="sp-search-input"
+                               autocomplete="off">
+                        @if(request('search'))
+                            <button type="button" id="clearSearch" class="sp-search-clear" onclick="clearSearch()">
+                                <svg viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">Sélectionnez au moins 2 produits non-cumulés</p>
-                    <div id="selectionCount" class="mt-2 text-sm text-purple-600 hidden">
-                        <i class="bi bi-check-circle"></i>
+                    <button type="submit" class="btn-primary" id="searchButton">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Rechercher
+                    </button>
+                </div>
+
+                <div class="sp-filters">
+                    <a href="{{ route('products.index') }}" 
+                       class="sp-filter-chip {{ !request('filter') && !request('search') ? 'active' : '' }}">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        Tous
+                    </a>
+                    <a href="{{ route('products.index', ['filter' => 'low_stock']) }}" 
+                       class="sp-filter-chip {{ request('filter') == 'low_stock' ? 'active' : '' }}">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Stock faible
+                    </a>
+                    <a href="{{ route('products.index', ['filter' => 'out_of_stock']) }}" 
+                       class="sp-filter-chip {{ request('filter') == 'out_of_stock' ? 'active' : '' }}">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Rupture
+                    </a>
+                    <a href="{{ route('products.index', ['filter' => 'available']) }}" 
+                       class="sp-filter-chip {{ request('filter') == 'available' ? 'active' : '' }}">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Disponibles
+                    </a>
+                    <a href="{{ route('products.index', ['filter' => 'multiple_batches']) }}" 
+                       class="sp-filter-chip {{ request('filter') == 'multiple_batches' ? 'active' : '' }}">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                        </svg>
+                        Multiples lots
+                    </a>
+                    <a href="{{ route('products.index', ['filter' => 'cumulated']) }}" 
+                       class="sp-filter-chip {{ request('filter') == 'cumulated' ? 'active' : '' }}">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                        Cumulés
+                    </a>
+                    <a href="{{ route('products.index', ['filter' => 'non_cumulated']) }}" 
+                       class="sp-filter-chip {{ request('filter') == 'non_cumulated' ? 'active' : '' }}">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        Simples
+                    </a>
+                    
+                    <select name="sort_by" onchange="this.form.submit()" class="sp-filter-select">
+                        <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>Tri par date</option>
+                        <option value="name" {{ request('sort_by') == 'name' ? 'selected' : '' }}>Nom (A-Z)</option>
+                        <option value="stock" {{ request('sort_by') == 'stock' ? 'selected' : '' }}>Stock (croissant)</option>
+                        <option value="sale_price" {{ request('sort_by') == 'sale_price' ? 'selected' : '' }}>Prix (croissant)</option>
+                        <option value="profit_margin" {{ request('sort_by') == 'profit_margin' ? 'selected' : '' }}>Marge %</option>
+                    </select>
+                </div>
+
+                @if(request('search') || request('filter') || request('sort_by') != 'created_at')
+                    <div class="sp-filter-info">
+                        <div class="sp-filter-info-left">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>
+                                @if(request('search'))
+                                    Recherche : "<strong>{{ request('search') }}</strong>" • 
+                                @endif
+                                @if(request('filter'))
+                                    @php
+                                        $filterLabels = [
+                                            'low_stock' => 'Stock faible',
+                                            'out_of_stock' => 'Rupture',
+                                            'available' => 'Disponibles',
+                                            'multiple_batches' => 'Multiples lots',
+                                            'cumulated' => 'Cumulés',
+                                            'non_cumulated' => 'Simples'
+                                        ];
+                                    @endphp
+                                    Filtre : <strong>{{ $filterLabels[request('filter')] ?? request('filter') }}</strong> • 
+                                @endif
+                                <strong>{{ $products->total() }}</strong> résultat(s) trouvé(s)
+                            </span>
+                        </div>
+                        <a href="{{ route('products.index') }}" class="btn-outline" style="padding:4px 12px;">
+                            <svg viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Effacer
+                        </a>
+                    </div>
+                @endif
+            </form>
+        </div>
+    </div>
+
+    {{-- QUICK ACTIONS --}}
+    <div class="sp-card" style="margin-bottom:24px;">
+        <div class="sp-card-body" style="padding:16px 24px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size:13px; font-weight:600; color:var(--text-2);">Actions rapides :</span>
+                </div>
+                <a href="{{ route('reports.grouped-stocks') }}" class="btn-outline">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                    </svg>
+                    Stocks groupés
+                </a>
+                <a href="{{ route('reports.products') }}" class="btn-outline">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Rapport
+                </a>
+                <button onclick="openMergeModal()" class="btn-outline">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                    </svg>
+                    Fusionner
+                </button>
+                @auth
+                    @if(Auth::user()->role === 'admin')
+                        <a href="{{ route('products.create') }}" class="btn-outline">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Nouveau
+                        </a>
+                    @endif
+                @endauth
+            </div>
+        </div>
+    </div>
+
+    {{-- TABLE CARD --}}
+    <div class="sp-card">
+        <div class="sp-table-wrap">
+            <table class="sp-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Produit</th>
+                        <th>Prix vente</th>
+                        @if(Auth::user() && Auth::user()->role === 'admin')
+                            <th>Prix achat</th>
+                        @endif
+                        <th>Stock</th>
+                        <th>Valeur stock</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th style="text-align:center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($products as $product)
+                        @php
+                            $stock = $product->stock ?? 0;
+                            $salePrice = $product->sale_price ?? 0;
+                            $purchasePrice = $product->purchase_price ?? 0;
+                            $totalValue = $stock * $salePrice;
+                            
+                            $stockClass = $stock > 10 ? 'high' : ($stock > 0 ? 'medium' : 'low');
+                            $hasMultipleBatches = $product->has_multiple_batches ?? false;
+                            $isCumulated = $product->is_cumulated ?? false;
+                            $hasBeenCumulated = $product->has_been_cumulated ?? false;
+                            
+                            $idClass = '';
+                            $avatarClass = '';
+                            if ($isCumulated) { $idClass = 'cumulated'; $avatarClass = 'cumulated'; }
+                            elseif ($hasBeenCumulated) { $idClass = 'merged'; $avatarClass = 'merged'; }
+                        @endphp
+                        <tr class="{{ $hasBeenCumulated ? 'opacity-75' : '' }}">
+                            <td>
+                                <span class="sp-id {{ $idClass }}">{{ $product->id }}</span>
+                            </td>
+                            <td>
+                                <div class="sp-product">
+                                    <div class="sp-product-avatar {{ $avatarClass }}">
+                                        {{ substr($product->name ?? '?', 0, 1) }}
+                                    </div>
+                                    <div class="sp-product-info">
+                                        <div class="sp-product-name">
+                                            {{ $product->name }}
+                                            @if($isCumulated)
+                                                <span class="sp-product-badge badge-cumulated">
+                                                    <svg viewBox="0 0 24 24" stroke-width="2" style="width:10px;height:10px;">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" />
+                                                    </svg>
+                                                    Cumulé
+                                                </span>
+                                            @endif
+                                            @if($hasBeenCumulated)
+                                                <span class="sp-product-badge badge-merged">
+                                                    <svg viewBox="0 0 24 24" stroke-width="2" style="width:10px;height:10px;">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    Fusionné
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="sp-product-ref">#{{ $product->id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="sp-price">{{ number_format($salePrice, 0, ',', ' ') }}</div>
+                                <div class="sp-price-sub">CFA</div>
+                            </td>
+                            @if(Auth::user() && Auth::user()->role === 'admin')
+                                <td>
+                                    <div class="sp-price">{{ number_format($purchasePrice, 0, ',', ' ') }}</div>
+                                    <div class="sp-price-sub">CFA</div>
+                                </td>
+                            @endif
+                            <td>
+                                <span class="sp-stock stock-{{ $stockClass }}">
+                                    <span style="width:8px;height:8px;border-radius:50%;background:currentColor;"></span>
+                                    {{ $stock }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="sp-price">{{ number_format($totalValue, 0, ',', ' ') }}</div>
+                                <div class="sp-price-sub">CFA</div>
+                            </td>
+                            <td>
+                                @if($isCumulated)
+                                    <span class="sp-status status-cumulated">
+                                        <svg viewBox="0 0 24 24" stroke-width="2" style="width:12px;height:12px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" />
+                                        </svg>
+                                        Cumulé
+                                    </span>
+                                @elseif($hasBeenCumulated)
+                                    <span class="sp-status status-merged">
+                                        <svg viewBox="0 0 24 24" stroke-width="2" style="width:12px;height:12px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Fusionné
+                                    </span>
+                                @elseif($hasMultipleBatches)
+                                    <div class="sp-tooltip">
+                                        <span class="sp-status status-multiple">
+                                            <svg viewBox="0 0 24 24" stroke-width="2" style="width:12px;height:12px;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                                            </svg>
+                                            {{ $batchesCount ?? 0 }} lot(s)
+                                        </span>
+                                        <div class="sp-tooltip-content">
+                                            Cliquez pour voir les détails
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="sp-status status-simple">
+                                        <svg viewBox="0 0 24 24" stroke-width="2" style="width:12px;height:12px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                        Simple
+                                    </span>
+                                @endif
+                            </td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:4px; font-size:12px; color:var(--text-2);">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    {{ $product->created_at?->format('d/m/Y') ?? 'N/A' }}
+                                </div>
+                                <div style="font-size:11px; color:var(--text-3);">{{ $product->created_at?->format('H:i') ?? '' }}</div>
+                            </td>
+                            <td>
+                                <div class="sp-actions">
+                                    <a href="{{ route('products.show', $product->id) }}" class="sp-btn sp-btn-view" title="Voir">
+                                        <svg viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </a>
+                                    @if(Auth::user() && Auth::user()->role === 'admin')
+                                        @if(!$hasBeenCumulated)
+                                            <a href="{{ route('products.edit', $product->id) }}" class="sp-btn sp-btn-edit" title="Modifier">
+                                                <svg viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </a>
+                                        @endif
+                                        <form action="{{ route('products.destroy', $product->id) }}" method="POST" 
+                                              onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce produit ?')" 
+                                              style="display:inline;">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="sp-btn sp-btn-delete" title="Supprimer" 
+                                                    @if($hasBeenCumulated || ($isCumulated && $originalCount > 0)) disabled @endif>
+                                                <svg viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                        @if($isCumulated)
+                                            <form action="{{ route('products.uncumulate', $product->id) }}" method="POST" 
+                                                  onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir défaire ce cumul ?')"
+                                                  style="display:inline;">
+                                                @csrf
+                                                <button type="submit" class="sp-btn sp-btn-uncumulate" title="Défaire le cumul">
+                                                    <svg viewBox="0 0 24 24" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ Auth::user() && Auth::user()->role === 'admin' ? 9 : 8 }}">
+                                <div class="sp-empty">
+                                    <div class="sp-empty-ico">
+                                        <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                    </div>
+                                    <h3>Aucun produit trouvé</h3>
+                                    <p>
+                                        @if(request('search') || request('filter'))
+                                            Essayez de modifier vos critères de recherche
+                                        @else
+                                            Commencez par créer votre premier produit
+                                        @endif
+                                    </p>
+                                    @if(request('search') || request('filter'))
+                                        <a href="{{ route('products.index') }}" class="btn-outline">
+                                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                            Voir tous
+                                        </a>
+                                    @else
+                                        <a href="{{ route('products.create') }}" class="btn-primary">
+                                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            Créer un produit
+                                        </a>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- PAGINATION --}}
+    @if($products->hasPages() || $products->total() > 0)
+        <div class="sp-pagination">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div style="font-size:13px; color:var(--text-2);">
+                    Page {{ $products->currentPage() }} sur {{ $products->lastPage() }} • 
+                    {{ $products->total() }} produit(s)
+                </div>
+                <div>{{ $products->appends(request()->except('page'))->links() }}</div>
+            </div>
+        </div>
+    @endif
+</div>
+
+{{-- MODAL DE FUSION --}}
+<div id="mergeModal" class="sp-modal">
+    <div class="sp-modal-content">
+        <div class="sp-modal-header">
+            <h3>
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                </svg>
+                Fusionner des produits
+            </h3>
+            <button type="button" onclick="closeMergeModal()" class="sp-modal-close">
+                <svg viewBox="0 0 24 24" stroke-width="2" style="width:20px;height:20px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="sp-modal-body">
+            <form action="{{ route('products.merge') }}" method="POST" id="mergeForm">
+                @csrf
+                
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-size:13px; font-weight:600; color:var(--text-2); margin-bottom:8px;">
+                        Produits à fusionner <span style="color:var(--danger);">*</span>
+                    </label>
+                    <div class="sp-product-grid" id="productsSelection">
+                        @foreach($products as $product)
+                            @if(!($product->has_been_cumulated ?? false))
+                                <div class="sp-product-item">
+                                    <input type="checkbox" 
+                                           name="product_ids[]" 
+                                           value="{{ $product->id }}" 
+                                           id="product_{{ $product->id }}"
+                                           onchange="updateMergeSelection()">
+                                    <label for="product_{{ $product->id }}">
+                                        <div class="sp-product-item-name">{{ $product->name }}</div>
+                                        <div class="sp-product-item-desc">
+                                            <span>Stock: {{ $product->stock }}</span>
+                                            <span>{{ number_format($product->sale_price,0,',',' ') }} CFA</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                    <div id="selectionCount" style="margin-top:8px; font-size:12px; color:var(--purple); display:none;">
                         <span id="selectedCount">0</span> produit(s) sélectionné(s)
                     </div>
                 </div>
-                
-                <!-- Détails du nouveau produit -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h4 class="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="bi bi-info-circle text-blue-600"></i>
+
+                <div style="background: #fafbfd; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:20px; margin-bottom:20px;">
+                    <h4 style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:var(--text); margin-bottom:12px;">
+                        <svg viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px; stroke:var(--orange);">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         Informations du produit fusionné
                     </h4>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Nom du produit fusionné <span class="text-red-500">*</span>
+                            <label style="font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:4px; display:block;">
+                                Nom <span style="color:var(--danger);">*</span>
                             </label>
                             <input type="text" 
                                    name="name" 
                                    id="mergeName"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                   placeholder="Ex: Produit Fusionné"
+                                   style="width:100%; padding:10px; border:1.5px solid var(--border); border-radius:var(--radius-sm);"
+                                   placeholder="Produit fusionné"
                                    required>
                         </div>
-                        
-                        <!-- CATÉGORIE -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Catégorie <span class="text-red-500">*</span>
+                            <label style="font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:4px; display:block;">
+                                Catégorie <span style="color:var(--danger);">*</span>
                             </label>
                             <select name="category_id" 
                                     id="mergeCategorySelect"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    style="width:100%; padding:10px; border:1.5px solid var(--border); border-radius:var(--radius-sm);"
                                     required>
                                 <option value="">Chargement...</option>
                             </select>
                         </div>
-                        
-                        <!-- FOURNISSEUR -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Fournisseur <span class="text-red-500">*</span>
+                            <label style="font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:4px; display:block;">
+                                Fournisseur <span style="color:var(--danger);">*</span>
                             </label>
                             <select name="supplier_id" 
                                     id="mergeSupplierSelect"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    style="width:100%; padding:10px; border:1.5px solid var(--border); border-radius:var(--radius-sm);"
                                     required>
                                 <option value="">Chargement...</option>
                             </select>
                         </div>
-                        
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Référence du lot
+                            <label style="font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:4px; display:block;">
+                                Référence lot
                             </label>
                             <input type="text" 
                                    name="batch_reference" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                   placeholder="Ex: MERGE-2024"
+                                   style="width:100%; padding:10px; border:1.5px solid var(--border); border-radius:var(--radius-sm);"
+                                   placeholder="MERGE-{{ date('Ymd-His') }}"
                                    value="MERGE-{{ date('Ymd-His') }}">
                         </div>
                     </div>
                 </div>
-                
-                <!-- Aperçu du cumul -->
-                <div id="mergePreview" class="hidden">
-                    <h4 class="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="bi bi-eye text-green-600"></i>
-                        Aperçu de la fusion
-                    </h4>
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div class="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span class="text-gray-600">Stock total:</span>
-                                <span id="previewTotalStock" class="font-bold text-green-700 ml-2">0</span>
+
+                <div id="mergePreview" style="display:none;">
+                    <h4 style="font-size:14px; font-weight:600; color:var(--text); margin-bottom:12px;">Aperçu de la fusion</h4>
+                    <div class="sp-preview">
+                        <div class="sp-preview-grid">
+                            <div class="sp-preview-item">
+                                <strong>Stock total:</strong> <span id="previewTotalStock">0</span>
                             </div>
-                            <div>
-                                <span class="text-gray-600">Valeur totale:</span>
-                                <span id="previewTotalValue" class="font-bold text-green-700 ml-2">0 CFA</span>
+                            <div class="sp-preview-item">
+                                <strong>Valeur totale:</strong> <span id="previewTotalValue">0 CFA</span>
                             </div>
-                            <div>
-                                <span class="text-gray-600">Produits à fusionner:</span>
-                                <span id="previewProductCount" class="font-bold text-green-700 ml-2">0</span>
+                            <div class="sp-preview-item">
+                                <strong>Produits:</strong> <span id="previewProductCount">0</span>
                             </div>
-                            <div>
-                                <span class="text-gray-600">Prix moyen:</span>
-                                <span id="previewAvgPrice" class="font-bold text-green-700 ml-2">0 CFA</span>
+                            <div class="sp-preview-item">
+                                <strong>Prix moyen:</strong> <span id="previewAvgPrice">0 CFA</span>
                             </div>
-                        </div>
-                        <div class="mt-3 text-xs text-green-600">
-                            <i class="bi bi-info-circle"></i>
-                            Les produits sélectionnés seront marqués comme "fusionnés" et ne pourront plus être modifiés.
                         </div>
                     </div>
                 </div>
             </form>
         </div>
-        
-        <!-- Actions du modal - Pied fixe -->
-        <div class="border-t border-gray-200 bg-gray-50 p-6 flex-shrink-0">
-            <div class="flex items-center justify-end gap-3">
-                <button type="button" 
-                        onclick="closeMergeModal()"
-                        class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors">
-                    Annuler
-                </button>
-                <button type="submit" 
-                        form="mergeForm"
-                        id="mergeSubmitBtn"
-                        disabled
-                        class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                    <i class="bi bi-plus-circle-dotted mr-2"></i>
-                    Fusionner les produits
-                </button>
-            </div>
+        <div class="sp-modal-footer">
+            <button type="button" onclick="closeMergeModal()" class="btn-outline">
+                Annuler
+            </button>
+            <button type="submit" form="mergeForm" id="mergeSubmitBtn" disabled class="btn-primary">
+                <svg viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                </svg>
+                Fusionner
+            </button>
         </div>
     </div>
 </div>
 
-<style>
-@keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slide-in {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fade-in {
-    animation: fade-in 0.3s ease-out;
-}
-
-.animate-slide-in {
-    animation: slide-in 0.3s ease-out;
-}
-
-.mark {
-    background-color: rgba(255, 230, 0, 0.3);
-    padding: 0.1em 0.2em;
-    border-radius: 0.25em;
-}
-
-.highlight {
-    background-color: rgba(255, 230, 0, 0.5);
-    transition: background-color 0.3s ease;
-}
-
-/* Style pour les tooltips */
-.group\/lot .absolute {
-    min-width: 180px;
-    white-space: nowrap;
-}
-
-/* Modal styles */
-#mergeModal {
-    display: none;
-}
-
-#mergeModal.show {
-    display: flex;
-    animation: fade-in 0.2s ease-out;
-}
-
-#mergeModal > div {
-    animation: slide-in 0.3s ease-out;
-}
-
-/* Style pour produits sélectionnés dans le modal */
-input[name="product_ids[]"]:checked + label > div {
-    @apply font-bold text-purple-700;
-}
-
-input[name="product_ids[]"]:checked + label > div:first-child {
-    @apply underline decoration-purple-300;
-}
-
-/* Scrollbar styling */
-#mergeModal .overflow-y-auto {
-    scrollbar-width: thin;
-    scrollbar-color: #c7d2fe #f3f4f6;
-}
-
-#mergeModal .overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-#mergeModal .overflow-y-auto::-webkit-scrollbar-track {
-    background: #f3f4f6;
-    border-radius: 3px;
-}
-
-#mergeModal .overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #c7d2fe;
-    border-radius: 3px;
-}
-
-#mergeModal .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #a5b4fc;
-}
-</style>
-
 <script>
-// Données des produits pour la fusion
 let productsData = {};
 
-// Initialiser les données des produits
 function initializeMergeData() {
-    console.log('📊 Initialisation des données des produits...');
     productsData = {};
-    
     @foreach($products as $product)
         @if(!($product->has_been_cumulated ?? false))
             productsData[{{ $product->id }}] = {
@@ -1035,353 +1740,144 @@ function initializeMergeData() {
             };
         @endif
     @endforeach
-    
-    console.log(`✅ ${Object.keys(productsData).length} produits disponibles pour fusion`);
 }
 
-// Fonction pour charger les catégories et fournisseurs
 async function loadModalData() {
-    console.log('🔍 Chargement des données pour le modal...');
-    
     const categorySelect = document.getElementById('mergeCategorySelect');
     const supplierSelect = document.getElementById('mergeSupplierSelect');
     
-    // Mettre en état de chargement
-    categorySelect.innerHTML = '<option value="">Chargement...</option>';
-    supplierSelect.innerHTML = '<option value="">Chargement...</option>';
-    
     try {
-        // Charger les catégories
-        console.log('📦 Chargement des catégories...');
-        const categoriesResponse = await fetch('{{ route("api.modal.categories") }}');
-        console.log('📦 Réponse catégories:', categoriesResponse.status);
-        const categoriesData = await categoriesResponse.json();
-        console.log('📦 Données catégories:', categoriesData);
-        
-        if (categoriesData.success && categoriesData.data && categoriesData.data.length > 0) {
+        const catRes = await fetch('{{ route("api.modal.categories") }}');
+        const catData = await catRes.json();
+        if (catData.success && catData.data) {
             categorySelect.innerHTML = '<option value="">Sélectionner une catégorie</option>';
-            categoriesData.data.forEach(category => {
+            catData.data.forEach(cat => {
                 const option = document.createElement('option');
-                option.value = category.id;
-                option.textContent = category.name;
+                option.value = cat.id;
+                option.textContent = cat.name;
                 categorySelect.appendChild(option);
             });
-            console.log(`✅ ${categoriesData.data.length} catégories chargées`);
-        } else {
-            categorySelect.innerHTML = '<option value="">Aucune catégorie disponible</option>';
-            console.warn('⚠️ Aucune catégorie disponible');
         }
-    } catch (error) {
-        console.error('❌ Erreur chargement catégories:', error);
+    } catch (e) {
         categorySelect.innerHTML = '<option value="">Erreur de chargement</option>';
     }
     
     try {
-        // Charger les fournisseurs
-        console.log('🏭 Chargement des fournisseurs...');
-        const suppliersResponse = await fetch('{{ route("api.modal.suppliers") }}');
-        console.log('🏭 Réponse fournisseurs:', suppliersResponse.status);
-        const suppliersData = await suppliersResponse.json();
-        console.log('🏭 Données fournisseurs:', suppliersData);
-        
-        if (suppliersData.success && suppliersData.data && suppliersData.data.length > 0) {
+        const supRes = await fetch('{{ route("api.modal.suppliers") }}');
+        const supData = await supRes.json();
+        if (supData.success && supData.data) {
             supplierSelect.innerHTML = '<option value="">Sélectionner un fournisseur</option>';
-            suppliersData.data.forEach(supplier => {
+            supData.data.forEach(sup => {
                 const option = document.createElement('option');
-                option.value = supplier.id;
-                option.textContent = supplier.name;
+                option.value = sup.id;
+                option.textContent = sup.name;
                 supplierSelect.appendChild(option);
             });
-            console.log(`✅ ${suppliersData.data.length} fournisseurs chargés`);
-        } else {
-            supplierSelect.innerHTML = '<option value="">Aucun fournisseur disponible</option>';
-            console.warn('⚠️ Aucun fournisseur disponible');
         }
-    } catch (error) {
-        console.error('❌ Erreur chargement fournisseurs:', error);
+    } catch (e) {
         supplierSelect.innerHTML = '<option value="">Erreur de chargement</option>';
     }
-    
-    // Après chargement, pré-sélectionner la catégorie et le fournisseur du premier produit sélectionné
-    setTimeout(preselectFirstProduct, 100);
 }
 
-// Pré-sélectionner la catégorie et le fournisseur du premier produit sélectionné
-function preselectFirstProduct() {
-    const checkboxes = document.querySelectorAll('input[name="product_ids[]"]:checked');
-    if (checkboxes.length > 0) {
-        const firstProductId = checkboxes[0].value;
-        const product = productsData[firstProductId];
-        
-        if (product) {
-            console.log('🎯 Pré-sélection pour le produit:', product.name);
-            
-            // Pré-sélectionner la catégorie
-            const categorySelect = document.getElementById('mergeCategorySelect');
-            if (categorySelect && product.categoryId > 0) {
-                console.log('🎯 Recherche catégorie ID:', product.categoryId);
-                for (let i = 0; i < categorySelect.options.length; i++) {
-                    if (categorySelect.options[i].value == product.categoryId) {
-                        categorySelect.value = product.categoryId;
-                        console.log('✅ Catégorie pré-sélectionnée:', categorySelect.options[i].text);
-                        break;
-                    }
-                }
-            }
-            
-            // Pré-sélectionner le fournisseur
-            const supplierSelect = document.getElementById('mergeSupplierSelect');
-            if (supplierSelect && product.supplierId > 0) {
-                console.log('🎯 Recherche fournisseur ID:', product.supplierId);
-                for (let i = 0; i < supplierSelect.options.length; i++) {
-                    if (supplierSelect.options[i].value == product.supplierId) {
-                        supplierSelect.value = product.supplierId;
-                        console.log('✅ Fournisseur pré-sélectionné:', supplierSelect.options[i].text);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Ouvrir le modal
 function openMergeModal() {
-    console.log('🚀 Ouverture du modal de fusion');
-    
-    // Ouvrir le modal
-    const modal = document.getElementById('mergeModal');
-    modal.classList.add('show');
+    document.getElementById('mergeModal').classList.add('show');
     document.body.style.overflow = 'hidden';
-    
-    // Réinitialiser le formulaire
     document.getElementById('mergeForm').reset();
-    
-    // Réinitialiser les sélections
     document.querySelectorAll('input[name="product_ids[]"]').forEach(cb => cb.checked = false);
-    
-    // Initialiser les données
     initializeMergeData();
-    
-    // Charger les catégories et fournisseurs
     loadModalData();
-    
-    // Mettre à jour la sélection
     updateMergeSelection();
 }
 
-// Fermer le modal
 function closeMergeModal() {
-    console.log('❌ Fermeture du modal');
     document.getElementById('mergeModal').classList.remove('show');
     document.body.style.overflow = '';
 }
 
-// Mettre à jour la sélection des produits
 function updateMergeSelection() {
     const checkboxes = document.querySelectorAll('input[name="product_ids[]"]:checked');
     const count = checkboxes.length;
-    const countElement = document.getElementById('selectedCount');
-    const previewElement = document.getElementById('mergePreview');
+    const countEl = document.getElementById('selectedCount');
+    const previewEl = document.getElementById('mergePreview');
     const submitBtn = document.getElementById('mergeSubmitBtn');
-    const selectionCountElement = document.getElementById('selectionCount');
+    const selectionCountEl = document.getElementById('selectionCount');
     
-    // Mettre à jour le compteur
-    if (countElement) {
-        countElement.textContent = count;
-    }
+    if (countEl) countEl.textContent = count;
+    if (previewEl) previewEl.style.display = count >= 2 ? 'block' : 'none';
+    if (submitBtn) submitBtn.disabled = count < 2;
+    if (selectionCountEl) selectionCountEl.style.display = count > 0 ? 'block' : 'none';
     
-    // Afficher/masquer l'aperçu
-    if (previewElement) {
-        if (count >= 2) {
-            previewElement.classList.remove('hidden');
-            updateMergePreview(checkboxes);
-        } else {
-            previewElement.classList.add('hidden');
-        }
-    }
-    
-    // Activer/désactiver le bouton
-    if (submitBtn) {
-        submitBtn.disabled = count < 2;
-    }
-    
-    // Afficher/masquer le compteur
-    if (selectionCountElement) {
-        if (count > 0) {
-            selectionCountElement.classList.remove('hidden');
-        } else {
-            selectionCountElement.classList.add('hidden');
-        }
-    }
-    
-    // Générer un nom par défaut
-    if (count >= 1) {
-        const firstProductId = checkboxes[0].value;
-        const firstProduct = productsData[firstProductId];
-        if (firstProduct && !document.getElementById('mergeName').value) {
-            document.getElementById('mergeName').value = firstProduct.name + ' (Fusionné)';
-        }
-    }
-    
-    // Pré-sélectionner catégorie/fournisseur du premier produit
-    if (count > 0) {
-        preselectFirstProduct();
-    }
+    if (count >= 2) updateMergePreview(checkboxes);
+    if (count >= 1) preselectFirstProduct(checkboxes[0]?.value);
 }
 
-// Mettre à jour l'aperçu
 function updateMergePreview(checkboxes) {
-    let totalStock = 0;
-    let totalValue = 0;
-    let totalSalePrice = 0;
-    let productCount = 0;
+    let totalStock = 0, totalValue = 0, totalSale = 0, count = 0;
     
     checkboxes.forEach(cb => {
-        const productId = cb.value;
-        const product = productsData[productId];
-        if (product) {
-            totalStock += product.stock;
-            totalValue += product.stock * product.salePrice;
-            totalSalePrice += product.salePrice;
-            productCount++;
+        const p = productsData[cb.value];
+        if (p) {
+            totalStock += p.stock;
+            totalValue += p.stock * p.salePrice;
+            totalSale += p.salePrice;
+            count++;
         }
     });
     
-    const avgSalePrice = productCount > 0 ? Math.round(totalSalePrice / productCount) : 0;
-    
-    // Mettre à jour l'aperçu
-    const previewTotalStock = document.getElementById('previewTotalStock');
-    const previewTotalValue = document.getElementById('previewTotalValue');
-    const previewProductCount = document.getElementById('previewProductCount');
-    const previewAvgPrice = document.getElementById('previewAvgPrice');
-    
-    if (previewTotalStock) previewTotalStock.textContent = totalStock;
-    if (previewTotalValue) previewTotalValue.textContent = totalValue.toLocaleString('fr-FR') + ' CFA';
-    if (previewProductCount) previewProductCount.textContent = productCount;
-    if (previewAvgPrice) previewAvgPrice.textContent = avgSalePrice.toLocaleString('fr-FR') + ' CFA';
+    document.getElementById('previewTotalStock').textContent = totalStock;
+    document.getElementById('previewTotalValue').textContent = totalValue.toLocaleString('fr-FR') + ' CFA';
+    document.getElementById('previewProductCount').textContent = count;
+    document.getElementById('previewAvgPrice').textContent = (count ? Math.round(totalSale / count) : 0).toLocaleString('fr-FR') + ' CFA';
 }
 
-// Fonction pour effacer la recherche
-function clearSearch() {
-    window.location.href = "{{ route('products.index') }}";
-}
-
-// Initialiser au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Page produits chargée');
-    initializeMergeData();
-    
-    // Recherche avec délai
-    const searchInput = document.getElementById('searchInput');
-    const searchForm = document.getElementById('searchForm');
-    
-    let searchTimeout;
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-    });
-    
-    // Empêcher l'envoi si moins de 2 caractères
-    searchForm.addEventListener('submit', function(e) {
-        const searchValue = searchInput.value.trim();
-        
-        // Ajouter un indicateur de chargement
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalHtml = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Recherche...';
-        submitBtn.disabled = true;
-        
-        // Réinitialiser après 2 secondes (sécurité)
-        setTimeout(() => {
-            submitBtn.innerHTML = originalHtml;
-            submitBtn.disabled = false;
-        }, 2000);
-    });
-    
-    // Mettre en évidence les résultats de recherche
-    const searchTerm = "{{ request('search', '') }}";
-    if (searchTerm) {
-        highlightSearchResults(searchTerm);
-    }
-    
-    function highlightSearchResults(term) {
-        const elements = document.querySelectorAll('td:not(:last-child)');
-        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        
-        elements.forEach(element => {
-            const originalHtml = element.innerHTML;
-            const highlighted = originalHtml.replace(regex, '<mark class="bg-yellow-200 text-gray-800 px-1 rounded">$1</mark>');
-            element.innerHTML = highlighted;
-        });
-    }
-    
-    // Ajouter un bouton de test debug
-    const debugBtn = document.createElement('button');
-    debugBtn.innerHTML = '🐛 Debug API';
-    debugBtn.className = 'fixed bottom-20 right-4 bg-gray-800 text-white px-3 py-2 rounded-lg text-xs z-50 opacity-50 hover:opacity-100 transition-opacity';
-    debugBtn.onclick = async function() {
-        console.log('=== DEBUG API ===');
-        console.log('API Categories URL:', '{{ route("api.modal.categories") }}');
-        console.log('API Suppliers URL:', '{{ route("api.modal.suppliers") }}');
-        
-        // Test direct des APIs
-        try {
-            const catRes = await fetch('{{ route("api.modal.categories") }}');
-            const catData = await catRes.json();
-            console.log('Catégories API:', catData);
-        } catch (e) {
-            console.error('Erreur catégories:', e);
-        }
-        
-        try {
-            const supRes = await fetch('{{ route("api.modal.suppliers") }}');
-            const supData = await supRes.json();
-            console.log('Fournisseurs API:', supData);
-        } catch (e) {
-            console.error('Erreur fournisseurs:', e);
-        }
-    };
-    document.body.appendChild(debugBtn);
-});
-
-// Validation du formulaire
-document.getElementById('mergeForm')?.addEventListener('submit', function(e) {
-    const checkboxes = this.querySelectorAll('input[name="product_ids[]"]:checked');
-    if (checkboxes.length < 2) {
-        e.preventDefault();
-        alert('Veuillez sélectionner au moins 2 produits à fusionner.');
-        return;
-    }
+function preselectFirstProduct(productId) {
+    const product = productsData[productId];
+    if (!product) return;
     
     const categorySelect = document.getElementById('mergeCategorySelect');
     const supplierSelect = document.getElementById('mergeSupplierSelect');
     
-    if (!categorySelect.value) {
-        e.preventDefault();
-        alert('Veuillez sélectionner une catégorie.');
-        categorySelect.focus();
-        return;
+    if (product.categoryId) {
+        for (let i = 0; i < categorySelect.options.length; i++) {
+            if (categorySelect.options[i].value == product.categoryId) {
+                categorySelect.value = product.categoryId;
+                break;
+            }
+        }
     }
     
-    if (!supplierSelect.value) {
-        e.preventDefault();
-        alert('Veuillez sélectionner un fournisseur.');
-        supplierSelect.focus();
-        return;
+    if (product.supplierId) {
+        for (let i = 0; i < supplierSelect.options.length; i++) {
+            if (supplierSelect.options[i].value == product.supplierId) {
+                supplierSelect.value = product.supplierId;
+                break;
+            }
+        }
     }
     
-    // Afficher un indicateur de chargement
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalHtml = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Fusion en cours...';
-    submitBtn.disabled = true;
+    if (!document.getElementById('mergeName').value) {
+        document.getElementById('mergeName').value = product.name + ' (Fusionné)';
+    }
+}
+
+function clearSearch() {
+    window.location.href = "{{ route('products.index') }}";
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMergeData();
     
-    // Réinitialiser après 10 secondes (sécurité)
-    setTimeout(() => {
-        submitBtn.innerHTML = originalHtml;
-        submitBtn.disabled = false;
-    }, 10000);
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        let timeout;
+        searchInput.addEventListener('input', () => clearTimeout(timeout));
+    }
+    
+    document.getElementById('searchForm')?.addEventListener('submit', function(e) {
+        const btn = this.querySelector('button[type="submit"]');
+        btn.innerHTML = '<svg viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px; animation:spin 1s linear infinite;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Recherche...';
+        btn.disabled = true;
+    });
 });
 </script>
 @endsection
