@@ -20,6 +20,7 @@
         --danger:        #dc2626;
         --info:          #2563eb;
         --purple:        #7c3aed;
+        --violet:        #8b5cf6;
         --shadow-sm:     0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
         --shadow-md:     0 4px 16px rgba(15,23,42,.08);
         --shadow-orange: 0 8px 24px rgba(249,115,22,.25);
@@ -259,7 +260,7 @@
         color: var(--text-2);
     }
 
-    /* Badges rôles */
+    /* Badges rôles - MIS À JOUR */
     .se-role {
         display: inline-block;
         padding: 4px 12px;
@@ -267,6 +268,16 @@
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.3px;
+    }
+    .role-super_admin_global {
+        background: #8b5cf6;
+        color: white;
+        border: 1px solid #a78bfa;
+    }
+    .role-super_admin {
+        background: #f5f3ff;
+        color: #6b21a8;
+        border: 1px solid #c084fc;
     }
     .role-admin {
         background: #fef3c7;
@@ -278,10 +289,15 @@
         color: #1e40af;
         border: 1px solid #bfdbfe;
     }
-    .role-user {
+    .role-cashier {
         background: #dcfce7;
         color: #166534;
         border: 1px solid #bbf7d0;
+    }
+    .role-storekeeper {
+        background: #fff7ed;
+        color: #9a3412;
+        border: 1px solid #fdba74;
     }
 
     /* Actions */
@@ -289,6 +305,7 @@
         display: flex;
         justify-content: center;
         gap: 8px;
+        flex-wrap: wrap;
     }
     .se-btn {
         width: 36px;
@@ -330,6 +347,19 @@
         background: var(--danger);
         border-color: var(--danger);
         color: #fff;
+    }
+
+    /* Badge non modifiable */
+    .se-readonly-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: #f1f5f9;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 11px;
+        color: var(--text-3);
     }
 
     /* Empty state */
@@ -402,6 +432,13 @@
         color: var(--orange);
         background: var(--orange-pale);
     }
+
+    /* Info supplémentaire */
+    .se-info-text {
+        font-size: 12px;
+        color: var(--text-3);
+        margin-top: 4px;
+    }
 </style>
 @endsection
 
@@ -424,12 +461,14 @@
                 <div class="se-sub">Gérez les comptes et les permissions de vos collaborateurs</div>
             </div>
         </div>
-        <a href="{{ route('users.create') }}" class="btn-primary">
-            <svg viewBox="0 0 24 24" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-            Ajouter un employé
-        </a>
+        @if(auth()->user()->canManageUsers())
+            <a href="{{ route('users.create') }}" class="btn-primary">
+                <svg viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Ajouter un employé
+            </a>
+        @endif
     </div>
 
     {{-- ALERTS --}}
@@ -473,6 +512,11 @@
                                     <div class="se-employee-info">
                                         <div class="se-employee-name">{{ $user->name }}</div>
                                         <div class="se-employee-id">ID: {{ $user->id }}</div>
+                                        @if($user->owner_id && $user->owner_id !== $user->id)
+                                            <div class="se-info-text">
+                                                <i class="bi bi-person-workspace"></i> Employé de #{{ $user->owner_id }}
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -481,30 +525,68 @@
                             </td>
                             <td>
                                 @php
-                                    $roleClass = 'role-user';
-                                    if($user->role === 'admin') $roleClass = 'role-admin';
-                                    elseif($user->role === 'manager') $roleClass = 'role-manager';
+                                    $roleClass = match($user->role) {
+                                        'super_admin_global' => 'role-super_admin_global',
+                                        'super_admin' => 'role-super_admin',
+                                        'admin' => 'role-admin',
+                                        'manager' => 'role-manager',
+                                        'cashier' => 'role-cashier',
+                                        'storekeeper' => 'role-storekeeper',
+                                        default => 'role-user'
+                                    };
+                                    
+                                    $roleLabel = match($user->role) {
+                                        'super_admin_global' => 'Super Admin Global',
+                                        'super_admin' => 'Super Admin',
+                                        'admin' => 'Administrateur',
+                                        'manager' => 'Gérant',
+                                        'cashier' => 'Caissier',
+                                        'storekeeper' => 'Magasinier',
+                                        default => ucfirst($user->role)
+                                    };
                                 @endphp
-                                <span class="se-role {{ $roleClass }}">{{ ucfirst($user->role) }}</span>
+                                <span class="se-role {{ $roleClass }}">
+                                    @if($user->role === 'super_admin_global')
+                                        <i class="bi bi-crown-fill" style="margin-right: 2px;"></i>
+                                    @endif
+                                    {{ $roleLabel }}
+                                </span>
+                                @if($user->can_manage_users)
+                                    <div class="se-info-text" style="margin-top: 4px;">
+                                        <i class="bi bi-shield-check"></i> Gère les utilisateurs
+                                    </div>
+                                @endif
                             </td>
                             <td>
-                                <div class="se-actions">
-                                    <a href="{{ route('users.edit', $user->id) }}" class="se-btn se-btn-edit" title="Éditer">
-                                        <svg viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </a>
-                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" 
-                                          onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cet employé ?');" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="se-btn se-btn-delete" title="Supprimer">
-                                            <svg viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </form>
-                                </div>
+                                @if(auth()->user()->canManageUsers())
+                                    <div class="se-actions">
+                                        {{-- Ne pas afficher les actions si c'est super_admin_global et que l'utilisateur n'est pas super_admin_global --}}
+                                        @if($user->role !== 'super_admin_global' || auth()->user()->isSuperAdminGlobal())
+                                            <a href="{{ route('users.edit', $user->id) }}" class="se-btn se-btn-edit" title="Éditer">
+                                                <svg viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </a>
+                                            
+                                            @if(!$user->isSuperAdminGlobal() && $user->id !== auth()->id())
+                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" 
+                                                      onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cet employé ?');" style="display: inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="se-btn se-btn-delete" title="Supprimer">
+                                                        <svg viewBox="0 0 24 24" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @else
+                                            <span class="se-readonly-badge">
+                                                <i class="bi bi-lock"></i> Non modifiable
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     @empty
@@ -518,12 +600,14 @@
                                     </div>
                                     <h3>Aucun employé trouvé</h3>
                                     <p>Commencez par ajouter votre premier employé</p>
-                                    <a href="{{ route('users.create') }}" class="btn-primary" style="display: inline-flex;">
-                                        <svg viewBox="0 0 24 24" stroke-width="2.5" style="width:16px;height:16px;">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                        </svg>
-                                        Ajouter un employé
-                                    </a>
+                                    @if(auth()->user()->canManageUsers())
+                                        <a href="{{ route('users.create') }}" class="btn-primary" style="display: inline-flex;">
+                                            <svg viewBox="0 0 24 24" stroke-width="2.5" style="width:16px;height:16px;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                            </svg>
+                                            Ajouter un employé
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

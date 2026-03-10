@@ -18,10 +18,12 @@ class AdminMiddleware
             return redirect('/login');
         }
 
-        // Vérifie si l'utilisateur est admin
-        // Ici, on suppose que tu as un champ 'is_admin' dans ta table users
-        if (Auth::user()->role !== 'admin') {
-            abort(403, 'Accès refusé');
+        $user = Auth::user();
+        
+        // ✅ Vérifie si l'utilisateur peut gérer les utilisateurs
+        // super_admin_global, super_admin et admin ont tous ce droit
+        if (!$user->isSuperAdminGlobal() && !$user->isSuperAdmin() && !$user->isAdmin()) {
+            abort(403, 'Accès refusé - Vous devez être administrateur.');
         }
 
         return $next($request);

@@ -55,6 +55,11 @@ class User extends Authenticatable
     /**
      * VÉRIFICATIONS DE RÔLE
      */
+    public function isSuperAdminGlobal(): bool
+    {
+        return $this->role === 'super_admin_global';
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';
@@ -90,7 +95,10 @@ class User extends Authenticatable
 
     public function isManagerOrAbove(): bool
     {
-        return $this->isSuperAdmin() || $this->isAdmin() || $this->isManager();
+        return $this->isSuperAdminGlobal() || 
+               $this->isSuperAdmin() || 
+               $this->isAdmin() || 
+               $this->isManager();
     }
 
     /**
@@ -98,12 +106,15 @@ class User extends Authenticatable
      */
     public function canManageUsers(): bool
     {
-        return $this->isSuperAdmin() || $this->can_manage_users;
+        return $this->isSuperAdminGlobal() || 
+               $this->isSuperAdmin() || 
+               ($this->isAdmin() && $this->can_manage_users);
     }
 
     public function canManageStock(): bool
     {
-        return $this->isSuperAdmin() || 
+        return $this->isSuperAdminGlobal() || 
+               $this->isSuperAdmin() || 
                $this->isAdmin() || 
                $this->isManager() || 
                $this->isStorekeeper();
@@ -111,7 +122,8 @@ class User extends Authenticatable
 
     public function canManageSales(): bool
     {
-        return $this->isSuperAdmin() || 
+        return $this->isSuperAdminGlobal() || 
+               $this->isSuperAdmin() || 
                $this->isAdmin() || 
                $this->isManager() || 
                $this->isCashier();
@@ -119,9 +131,23 @@ class User extends Authenticatable
 
     public function canViewReports(): bool
     {
-        return $this->isSuperAdmin() || 
+        return $this->isSuperAdminGlobal() || 
+               $this->isSuperAdmin() || 
                $this->isAdmin() || 
                $this->isManager();
+    }
+
+    /**
+     * PERMISSIONS SPÉCIFIQUES AU SUPER ADMIN GLOBAL
+     */
+    public function canViewAllTenants(): bool
+    {
+        return $this->isSuperAdminGlobal();
+    }
+
+    public function canManageSubscriptions(): bool
+    {
+        return $this->isSuperAdminGlobal();
     }
 
     /**
@@ -129,6 +155,11 @@ class User extends Authenticatable
      */
     public function hasAccessTo($resource): bool
     {
+        // Le super_admin_global a accès à tout
+        if ($this->isSuperAdminGlobal()) {
+            return true;
+        }
+        
         if (!$resource || !$resource->owner_id) {
             return false;
         }
@@ -143,6 +174,10 @@ class User extends Authenticatable
      */
     public function getRootOwnerAttribute()
     {
+        if ($this->isSuperAdminGlobal()) {
+            return null; // Le global n'a pas de propriétaire
+        }
+        
         if ($this->isSuperAdmin()) {
             return $this;
         }
@@ -152,11 +187,28 @@ class User extends Authenticatable
 
     /**
      * Récupère tous les utilisateurs de la même quincaillerie
+     * ou tous les utilisateurs pour le super_admin_global
      */
     public function scopeSameCompany($query)
     {
+        if ($this->isSuperAdminGlobal()) {
+            return $query; // Le super_admin_global voit tout
+        }
+        
         $ownerId = $this->isSuperAdmin() ? $this->id : $this->owner_id;
         return $query->where('owner_id', $ownerId);
+    }
+
+    /**
+     * Récupère tous les tenants (quincailleries) accessibles
+     */
+    public function getAccessibleTenants()
+    {
+        if ($this->isSuperAdminGlobal()) {
+            return \App\Models\Tenant::all();
+        }
+        
+        return \App\Models\Tenant::where('id', $this->tenant_id)->get();
     }
 
     /**
@@ -165,6 +217,7 @@ class User extends Authenticatable
     public function getRoleLabelAttribute(): string
     {
         return match($this->role) {
+            'super_admin_global' => 'Super Admin Global',
             'super_admin' => 'Super Admin',
             'admin' => 'Administrateur',
             'manager' => 'Gérant',
@@ -180,12 +233,22 @@ class User extends Authenticatable
     public function getRoleColorAttribute(): string
     {
         return match($this->role) {
-            'super_admin' => 'purple',
+            'super_admin_global' => 'purple',
+            'super_admin' => 'violet',
             'admin' => 'red',
             'manager' => 'blue',
             'cashier' => 'green',
             'storekeeper' => 'orange',
             default => 'gray'
         };
+    }
+
+    /**
+     * Vérifie si l'utilisateur est le propriétaire global (toi)
+     */
+    public function isGlobalOwner(): bool
+    {
+        // Tu peux définir ton email ici pour identification
+        return $this->email === 'ton@email.com' || $this->isSuperAdminGlobal();
     }
 }

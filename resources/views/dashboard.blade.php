@@ -15,18 +15,18 @@
         --border-soft: #cbd5e1;
         
         /* Noir - textes principaux */
-        --text-primary: #0f172a;  /* noir profond */
+        --text-primary: #0f172a;
         --text-secondary: #334155;
         --text-tertiary: #64748b;
         
         /* Orange - accent principal */
-        --accent: #f97316;         /* orange vif */
-        --accent-dark: #ea580c;     /* orange foncé */
-        --accent-light: #ffedd5;    /* orange très clair */
-        --accent-soft: #fed7aa;     /* orange doux */
+        --accent: #f97316;
+        --accent-dark: #ea580c;
+        --accent-light: #ffedd5;
+        --accent-soft: #fed7aa;
         --accent-gradient: linear-gradient(135deg, #f97316, #ea580c);
         
-        /* Dégradé noir-orange pour certains éléments */
+        /* Dégradé noir-orange */
         --gradient-dark: linear-gradient(145deg, #0f172a, #1e293b);
         
         --badge-low: #b91c1c;
@@ -83,9 +83,10 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-wrap: wrap;
     }
 
-    .greeting-date {
+    .greeting-role {
         background: linear-gradient(135deg, #0f172a, #1e293b);
         color: white;
         padding: 4px 14px;
@@ -95,10 +96,20 @@
         border: 1px solid rgba(249, 115, 22, 0.3);
     }
 
+    .greeting-date {
+        background: var(--accent-light);
+        color: var(--accent-dark);
+        padding: 4px 14px;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 13px;
+    }
+
     .dash-header-right {
         display: flex;
         gap: 12px;
         align-items: center;
+        flex-wrap: wrap;
     }
 
     .btn-primary {
@@ -149,8 +160,27 @@
         color: var(--accent-dark);
     }
 
+    .btn-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 40px;
+        background: transparent;
+        border: 1.5px solid var(--border-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-primary);
+        font-size: 20px;
+        transition: all 0.2s;
+    }
+    .btn-icon:hover {
+        background: var(--accent-light);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
     /* =====================================================
-       CARTES STATISTIQUES - TOUCHES ORANGE
+       CARTES STATISTIQUES
     ===================================================== */
     .stats-grid {
         display: grid;
@@ -246,7 +276,6 @@
         font-weight: 600; 
     }
 
-    /* alerte stock avec orange */
     .stat-card.stock-warning {
         background: linear-gradient(145deg, #fff7ed, #ffedd5);
         border-left: 5px solid var(--accent);
@@ -267,7 +296,6 @@
         }
     }
 
-    /* ----- graphique avec touches orange ----- */
     .chart-card {
         background: var(--bg-card);
         border-radius: 24px;
@@ -325,7 +353,6 @@
     }
     #salesChart { width: 100%; height: 100%; }
 
-    /* overlay chargement/erreur */
     .chart-overlay {
         position: absolute;
         inset: 0;
@@ -348,7 +375,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ----- sidebar info (droite) avec orange ----- */
     .info-sidebar {
         display: flex;
         flex-direction: column;
@@ -418,7 +444,6 @@
         color: var(--text-primary);
     }
 
-    /* quick links avec orange */
     .quick-links-list {
         list-style: none;
         padding: 0;
@@ -452,7 +477,7 @@
     }
 
     /* =====================================================
-       ONGLETS STYLE - ORANGE
+       ONGLETS STYLE
     ===================================================== */
     .tabs-minimal {
         display: flex;
@@ -476,7 +501,7 @@
     }
 
     /* =====================================================
-       TABLES AVES TOUCHES NOIRES/ORANGES
+       TABLES
     ===================================================== */
     .twin-tables {
         display: grid;
@@ -571,7 +596,6 @@
         font-style: italic;
     }
 
-    /* footer sécurité avec orange */
     .security-note {
         margin-top: 40px;
         text-align: center;
@@ -588,33 +612,72 @@
         color: var(--accent);
     }
 
-    /* Éléments supplémentaires orange */
     .text-accent { color: var(--accent); }
     .bg-accent-light { background: var(--accent-light); }
     .border-accent { border-color: var(--accent); }
 
+    /* Info utilisateur supplémentaire */
+    .user-company-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f1f5f9;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 13px;
+    }
+    .user-company-info i {
+        color: var(--accent);
+    }
 </style>
 @endsection
 
 @section('content')
 <div class="dashboard">
 
-    {{-- HEADER --}}
+    {{-- HEADER AVEC INFOS UTILISATEUR --}}
     <div class="dash-header">
         <div class="dash-header-left">
             <h1>Tableau de bord</h1>
             <div class="greeting">
-                <span>👋 {{ auth()->user()->name ?? 'Gestionnaire' }}, content de vous revoir</span>
+                <span>👋 {{ auth()->user()->name }}, content de vous revoir</span>
+                @if(auth()->user()->tenant)
+                    <span class="user-company-info">
+                        <i class="bi bi-building"></i> {{ auth()->user()->tenant->company_name ?? 'Ma Quincaillerie' }}
+                    </span>
+                @endif
+                <span class="greeting-role">
+                    @if(auth()->user()->isSuperAdmin())
+                        <i class="bi bi-crown"></i> Super Admin
+                    @elseif(auth()->user()->isAdmin())
+                        <i class="bi bi-shield"></i> Administrateur
+                    @elseif(auth()->user()->isManager())
+                        <i class="bi bi-person-workspace"></i> Gérant
+                    @elseif(auth()->user()->isCashier())
+                        <i class="bi bi-cart"></i> Caissier
+                    @elseif(auth()->user()->isStorekeeper())
+                        <i class="bi bi-boxes"></i> Magasinier
+                    @endif
+                </span>
                 <span class="greeting-date">{{ now()->locale('fr')->isoFormat('dddd D MMMM') }}</span>
             </div>
         </div>
         <div class="dash-header-right">
-            <a href="{{ route('sales.create') }}" class="btn-primary">
-                <i class="bi bi-plus-circle"></i> Nouvelle vente
-            </a>
-            @if(in_array(auth()->user()->role ?? '', ['admin', 'super admin']))
+            @if(auth()->user()->canManageSales())
+                <a href="{{ route('sales.create') }}" class="btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nouvelle vente
+                </a>
+            @endif
+            
+            @if(auth()->user()->canManageUsers())
                 <a href="{{ route('users.index') }}" class="btn-outline">
                     <i class="bi bi-people"></i> Équipe
+                </a>
+            @endif
+            
+            @if(auth()->user()->isSuperAdminGlobal())
+                <a href="{{ route('super-admin.tenants') }}" class="btn-outline" title="Toutes les quincailleries">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
                 </a>
             @endif
         </div>
@@ -723,12 +786,36 @@
                     <h4>Accès rapide</h4>
                 </div>
                 <ul class="quick-links-list">
-                    <li><a href="{{ route('clients.index') }}"><i class="bi bi-people-fill"></i>Clients</a></li>
-                    <li><a href="{{ route('suppliers.index') }}"><i class="bi bi-truck"></i>Fournisseurs</a></li>
-                    <li><a href="{{ route('products.index') }}"><i class="bi bi-box-seam"></i>Produits</a></li>
-                    <li><a href="{{ route('categories.index') }}"><i class="bi bi-tags-fill"></i>Catégories</a></li>
+                    @if(auth()->user()->canManageSales())
+                        <li><a href="{{ route('clients.index') }}"><i class="bi bi-people-fill"></i>Clients</a></li>
+                    @endif
+                    @if(auth()->user()->canManageStock())
+                        <li><a href="{{ route('suppliers.index') }}"><i class="bi bi-truck"></i>Fournisseurs</a></li>
+                        <li><a href="{{ route('products.index') }}"><i class="bi bi-box-seam"></i>Produits</a></li>
+                        <li><a href="{{ route('categories.index') }}"><i class="bi bi-tags-fill"></i>Catégories</a></li>
+                    @endif
+                    @if(auth()->user()->canViewReports())
+                        <li><a href="{{ route('reports.index') }}"><i class="bi bi-graph-up"></i>Rapports</a></li>
+                    @endif
                 </ul>
             </div>
+            
+            @if(auth()->user()->canManageUsers())
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h4>Équipe</h4>
+                    </div>
+                    <div class="d-flex justify-between align-center">
+                        <div>
+                            <span class="stat-value" style="font-size: 28px;">{{ $employeesCount ?? 0 }}</span>
+                            <span class="stat-desc">employés</span>
+                        </div>
+                        <a href="{{ route('users.index') }}" class="btn-icon">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -825,7 +912,10 @@
     // maj stats simples
     async function refreshStats() {
         try {
-            const res = await fetch('/ajax/dashboard/stats', { headers: getHeaders(), credentials: 'same-origin' });
+            const res = await fetch('/ajax/dashboard/stats', { 
+                headers: getHeaders(), 
+                credentials: 'same-origin' 
+            });
             if (!res.ok) return;
             const d = await res.json();
             document.getElementById('salesToday') && (document.getElementById('salesToday').innerText = d.salesToday ?? 0);
@@ -851,7 +941,10 @@
         if (canvas) canvas.style.opacity = '0.4';
 
         try {
-            const res = await fetch(`/ajax/dashboard/chart-data?period=${period}`, { headers: getHeaders(), credentials: 'same-origin' });
+            const res = await fetch(`/ajax/dashboard/chart-data?period=${period}`, { 
+                headers: getHeaders(), 
+                credentials: 'same-origin' 
+            });
             if (res.status === 401) throw new Error('AUTH');
             if (!res.ok) throw new Error('NETWORK');
 
@@ -915,17 +1008,25 @@
 
     async function loadRecent() {
         try {
-            const res = await fetch('/ajax/dashboard/recent-sales', { headers: getHeaders() });
+            const res = await fetch('/ajax/dashboard/recent-sales', { 
+                headers: getHeaders() 
+            });
             if (!res.ok) return;
             const data = await res.json();
             const tbody = document.querySelector('#recentSalesCard tbody');
-            if (!tbody || !data.length) return;
+            if (!tbody) return;
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-muted-small" style="text-align:center; padding:22px;">Aucune vente récente</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = data.map(s => `
                 <tr>
                     <td><strong>${s.product_name || 'Vente'}</strong></td>
                     <td>${s.client_name || 'Client'}</td>
                     <td><strong class="text-accent">${formatMoney(s.total_price)}</strong></td>
-                    <td>${s.created_at ? new Date(s.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''}</td>
+                    <td>${s.formatted_date || s.created_at ? new Date(s.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''}</td>
                 </tr>
             `).join('');
         } catch (e) {}
@@ -933,11 +1034,19 @@
 
     async function loadLowStock() {
         try {
-            const res = await fetch('/ajax/dashboard/low-stock', { headers: getHeaders() });
+            const res = await fetch('/ajax/dashboard/low-stock', { 
+                headers: getHeaders() 
+            });
             if (!res.ok) return;
             const data = await res.json();
             const tbody = document.querySelector('#lowStockCard tbody');
-            if (!tbody || !data.length) return;
+            if (!tbody) return;
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-muted-small" style="text-align:center;">Aucun produit en alerte</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = data.map(p => `
                 <tr>
                     <td><strong>${p.name}</strong></td>
@@ -970,7 +1079,9 @@
 
         setInterval(() => {
             if (document.visibilityState === 'visible') {
-                refreshStats(); loadRecent(); loadLowStock();
+                refreshStats(); 
+                loadRecent(); 
+                loadLowStock();
             }
         }, 30000);
     });

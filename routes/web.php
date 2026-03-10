@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\SuperAdminController;
 use App\Models\Sale;
 use App\Models\Product;
 use App\Models\Client;
@@ -18,7 +19,7 @@ use App\Models\Client;
 Route::view('/welcome', 'welcome');
 
 // ======================
-// Routes AJAX pour le dashboard (utilisant le DashboardController)
+// Routes AJAX pour le dashboard
 // ======================
 Route::middleware(['auth'])->prefix('ajax/dashboard')->name('ajax.dashboard.')->group(function () {
     Route::get('/chart-data', [DashboardController::class, 'chartData'])->name('chart');
@@ -28,69 +29,79 @@ Route::middleware(['auth'])->prefix('ajax/dashboard')->name('ajax.dashboard.')->
 });
 
 // ======================
-// Routes ADMIN uniquement
+// Routes SUPER ADMIN GLOBAL (toi - le créateur)
+// ======================
+Route::middleware(['auth', 'super_admin_global'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/tenants', [SuperAdminController::class, 'tenants'])->name('tenants');
+    Route::get('/tenants/create', [SuperAdminController::class, 'createTenant'])->name('tenants.create');
+    Route::post('/tenants', [SuperAdminController::class, 'storeTenant'])->name('tenants.store');
+    Route::get('/tenants/{tenant}', [SuperAdminController::class, 'showTenant'])->name('tenants.show');
+    Route::patch('/tenants/{tenant}/toggle', [SuperAdminController::class, 'toggleTenant'])->name('tenants.toggle');
+    Route::delete('/tenants/{tenant}', [SuperAdminController::class, 'destroyTenant'])->name('tenants.destroy');
+});
+
+// ======================
+// Routes ADMIN (super_admin et admin de la quincaillerie)
 // ======================
 
 // 1. CATÉGORIES - CRUD admin
-Route::middleware(['auth', 'adminmiddleware'])->prefix('categories')->group(function () {
-    Route::get('/create', [CategoryController::class, 'create'])->name('categories.create');
-    Route::post('/', [CategoryController::class, 'store'])->name('categories.store');
-    Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
-    Route::put('/{category}', [CategoryController::class, 'update'])->name('categories.update');
-    Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+Route::middleware(['auth', 'admin'])->prefix('categories')->name('categories.')->group(function () {
+    Route::get('/', [CategoryController::class, 'index'])->name('index');
+    Route::get('/create', [CategoryController::class, 'create'])->name('create');
+    Route::post('/', [CategoryController::class, 'store'])->name('store');
+    Route::get('/{category}', [CategoryController::class, 'show'])->name('show');
+    Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
+    Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+    Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+    Route::get('/{category}/products', [CategoryController::class, 'products'])->name('products');
+    Route::get('/{category}/stats', [CategoryController::class, 'detailedStats'])->name('stats');
 });
 
-// 2. PRODUITS - CRUD admin
-Route::middleware(['auth', 'adminmiddleware'])->prefix('products')->group(function () {
-    Route::get('/create', [ProductController::class, 'create'])->name('products.create');
-    Route::post('/', [ProductController::class, 'store'])->name('products.store');
-    Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::put('/{product}', [ProductController::class, 'update'])->name('products.update');
-    Route::delete('/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+// 2. PRODUITS - CRUD admin (avec toutes les actions avancées)
+Route::middleware(['auth', 'admin'])->prefix('admin/products')->name('admin.products.')->group(function () {
+    Route::get('/', [ProductController::class, 'index'])->name('index');
+    Route::get('/create', [ProductController::class, 'create'])->name('create');
+    Route::post('/', [ProductController::class, 'store'])->name('store');
+    Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+    Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+    Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
     
     // Gestion du stock (admin)
-    Route::post('/{product}/restock', [ProductController::class, 'restock'])->name('products.restock');
-    Route::post('/{product}/adjust-stock', [ProductController::class, 'adjustStock'])->name('products.adjust-stock');
-    Route::post('/{product}/quick-sale', [ProductController::class, 'quickSale'])->name('products.quick-sale.admin');
-    
-    // Historique (admin)
-    Route::get('/{product}/history', [ProductController::class, 'history'])->name('products.history.admin');
-    Route::get('/products/global-history', [ProductController::class, 'globalHistory'])->name('products.global-history.admin');
+    Route::post('/{product}/restock', [ProductController::class, 'restock'])->name('restock');
+    Route::post('/{product}/adjust-stock', [ProductController::class, 'adjustStock'])->name('adjust-stock');
     
     // Export (admin)
-    Route::get('/{product}/history/export', [ProductController::class, 'exportHistory'])->name('products.history.export');
-    Route::get('/global-history/export', [ProductController::class, 'exportGlobalHistory'])->name('products.global-history.export');
+    Route::get('/{product}/history/export', [ProductController::class, 'exportHistory'])->name('history.export');
+    Route::get('/global-history/export', [ProductController::class, 'exportGlobalHistory'])->name('global-history.export');
     
     // Gestion des cumuls et fusion (admin uniquement)
-    Route::post('/merge', [ProductController::class, 'mergeProducts'])->name('products.merge');
-    Route::post('/{product}/uncumulate', [ProductController::class, 'uncumulateProduct'])->name('products.uncumulate');
+    Route::post('/merge', [ProductController::class, 'mergeProducts'])->name('merge');
+    Route::post('/{product}/uncumulate', [ProductController::class, 'uncumulateProduct'])->name('uncumulate');
 });
 
 // 3. FOURNISSEURS - CRUD admin
-Route::middleware(['auth', 'adminmiddleware'])->prefix('suppliers')->group(function () {
-    Route::get('/create', [SupplierController::class, 'create'])->name('suppliers.create');
-    Route::post('/', [SupplierController::class, 'store'])->name('suppliers.store');
-    Route::get('/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
-    Route::put('/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
-    Route::delete('/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
-    Route::get('/{supplier}/products', [SupplierController::class, 'products'])->name('suppliers.products');
-    Route::get('/{supplier}/orders', [SupplierController::class, 'orders'])->name('suppliers.orders');
+Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
+    Route::get('/', [SupplierController::class, 'index'])->name('index');
+    Route::get('/create', [SupplierController::class, 'create'])->name('create');
+    Route::post('/', [SupplierController::class, 'store'])->name('store');
+    Route::get('/{supplier}', [SupplierController::class, 'show'])->name('show');
+    Route::get('/{supplier}/edit', [SupplierController::class, 'edit'])->name('edit');
+    Route::put('/{supplier}', [SupplierController::class, 'update'])->name('update');
+    Route::delete('/{supplier}', [SupplierController::class, 'destroy'])->name('destroy');
+    Route::get('/{supplier}/products', [SupplierController::class, 'products'])->name('products');
+    Route::get('/{supplier}/orders', [SupplierController::class, 'orders'])->name('orders');
 });
 
-// 4. Admin Dashboard + Gestion utilisateurs
-Route::middleware(['auth', 'adminmiddleware'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
-
-    Route::prefix('users')->group(function () {
-        Route::get('/', [UserController::class, 'index'])->name('users.index');
-        Route::get('/create', [UserController::class, 'create'])->name('users.create');
-        Route::post('/', [UserController::class, 'store'])->name('users.store');
-        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    });
+// 4. Gestion des utilisateurs (super_admin et admin de la quincaillerie)
+Route::middleware(['auth', 'admin'])->prefix('users')->name('users.')->group(function () {
+    Route::get('/', [UserController::class, 'index'])->name('index');
+    Route::get('/create', [UserController::class, 'create'])->name('create');
+    Route::post('/', [UserController::class, 'store'])->name('store');
+    Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+    Route::put('/{user}', [UserController::class, 'update'])->name('update');
+    Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    Route::get('/statistics', [UserController::class, 'statistics'])->name('statistics');
 });
 
 // ======================
@@ -104,96 +115,96 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.alt');
 
     // ----------------------
-    // VENTES (avec invoice)
+    // VENTES - Accessible à tous les utilisateurs authentifiés
     // ----------------------
-    Route::prefix('sales')->group(function () {
-        Route::get('/', [SaleController::class, 'index'])->name('sales.index');
-        Route::get('/create', [SaleController::class, 'create'])->name('sales.create');
-        Route::post('/', [SaleController::class, 'store'])->name('sales.store');
-        Route::get('/{sale}', [SaleController::class, 'show'])->name('sales.show');
-        Route::get('/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit');
-        Route::put('/{sale}', [SaleController::class, 'update'])->name('sales.update');
-        Route::delete('/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
-        Route::get('/{sale}/invoice', [SaleController::class, 'invoice'])->name('sales.invoice');
-        Route::post('/{sale}/status', [SaleController::class, 'updateStatus'])->name('sales.status');
+    Route::prefix('sales')->name('sales.')->group(function () {
+        Route::get('/', [SaleController::class, 'index'])->name('index');
+        Route::get('/create', [SaleController::class, 'create'])->name('create');
+        Route::post('/', [SaleController::class, 'store'])->name('store');
+        Route::get('/{sale}', [SaleController::class, 'show'])->name('show');
+        Route::get('/{sale}/edit', [SaleController::class, 'edit'])->name('edit');
+        Route::put('/{sale}', [SaleController::class, 'update'])->name('update');
+        Route::delete('/{sale}', [SaleController::class, 'destroy'])->name('destroy');
+        Route::get('/{sale}/invoice', [SaleController::class, 'invoice'])->name('invoice');
+        Route::post('/{sale}/status', [SaleController::class, 'updateStatus'])->name('status');
     });
 
     // ----------------------
-    // CLIENTS
+    // CLIENTS - Accessible à tous les utilisateurs authentifiés
     // ----------------------
-    Route::prefix('clients')->group(function () {
-        Route::get('/', [ClientController::class, 'index'])->name('clients.index');
-        Route::get('/create', [ClientController::class, 'create'])->name('clients.create');
-        Route::post('/', [ClientController::class, 'store'])->name('clients.store');
-        Route::get('/{client}', [ClientController::class, 'show'])->name('clients.show');
-        Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
-        Route::put('/{client}', [ClientController::class, 'update'])->name('clients.update');
-        Route::delete('/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
-        Route::get('/{client}/sales', [ClientController::class, 'sales'])->name('clients.sales');
-        Route::get('/{client}/statistics', [ClientController::class, 'statistics'])->name('clients.statistics');
+    Route::prefix('clients')->name('clients.')->group(function () {
+        Route::get('/', [ClientController::class, 'index'])->name('index');
+        Route::get('/create', [ClientController::class, 'create'])->name('create');
+        Route::post('/', [ClientController::class, 'store'])->name('store');
+        Route::get('/{client}', [ClientController::class, 'show'])->name('show');
+        Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
+        Route::put('/{client}', [ClientController::class, 'update'])->name('update');
+        Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
+        Route::get('/{client}/sales', [ClientController::class, 'sales'])->name('sales');
+        Route::get('/{client}/statistics', [ClientController::class, 'statistics'])->name('statistics');
     });
 
     // ----------------------
-    // FOURNISSEURS - Lecture seule pour tous
+    // FOURNISSEURS - Lecture seule pour les utilisateurs normaux
     // ----------------------
-    Route::prefix('suppliers')->group(function () {
-        Route::get('/', [SupplierController::class, 'index'])->name('suppliers.index');
-        Route::get('/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
+    Route::prefix('suppliers')->name('suppliers.')->group(function () {
+        Route::get('/', [SupplierController::class, 'index'])->name('index');
+        Route::get('/{supplier}', [SupplierController::class, 'show'])->name('show');
+        Route::get('/{supplier}/products', [SupplierController::class, 'products'])->name('products');
     });
 
     // ----------------------
-    // PRODUITS - Lecture seule pour tous les utilisateurs
+    // PRODUITS - Lecture seule pour les utilisateurs normaux
     // ----------------------
-    Route::prefix('products')->group(function () {
-        Route::get('/', [ProductController::class, 'index'])->name('products.index');
-        Route::get('/category/{category}', [ProductController::class, 'byCategory'])->name('products.byCategory');
-        Route::get('/search', [ProductController::class, 'search'])->name('products.search');
-        Route::get('/{product}', [ProductController::class, 'show'])->whereNumber('product')->name('products.show');
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::get('/category/{category}', [ProductController::class, 'byCategory'])->name('byCategory');
+        Route::get('/search', [ProductController::class, 'search'])->name('search');
+        Route::get('/{product}', [ProductController::class, 'show'])->whereNumber('product')->name('show');
         
         // Historique et mouvements (lecture pour tous)
-        Route::get('/{product}/history', [ProductController::class, 'history'])->name('products.history');
-        Route::get('/products/global-history', [ProductController::class, 'globalHistory'])->name('products.global-history');
+        Route::get('/{product}/history', [ProductController::class, 'history'])->name('history');
+        Route::get('/global-history', [ProductController::class, 'globalHistory'])->name('global-history');
         
-        // Actions rapides (pour tous les utilisateurs authentifiés)
-        Route::post('/{product}/quick-sale', [ProductController::class, 'quickSale'])->name('products.quick-sale');
+        // Actions rapides (vente rapide)
+        Route::post('/{product}/quick-sale', [ProductController::class, 'quickSale'])->name('quick-sale');
     });
 
     // ----------------------
-    // CATEGORIES - Lecture seule pour tous les utilisateurs
+    // CATEGORIES - Lecture seule pour les utilisateurs normaux
     // ----------------------
-    Route::prefix('categories')->group(function () {
-        Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
-        Route::get('/{category}', [CategoryController::class, 'show'])->name('categories.show');
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/', [CategoryController::class, 'index'])->name('index');
+        Route::get('/{category}', [CategoryController::class, 'show'])->name('show');
     });
 
     // -----------------------
-    // RAPPORTS ET STATISTIQUES - TOUTE LA SECTION UNIFIÉE
+    // RAPPORTS ET STATISTIQUES - Réservé aux managers et au-dessus
     // ----------------------
-    Route::prefix('reports')->group(function () {
-        Route::get('/sales', [SaleController::class, 'salesReport'])->name('reports.sales');
-        Route::get('/clients', [ClientController::class, 'clientsReport'])->name('reports.clients');
-        Route::get('/products', [ProductController::class, 'productsReport'])->name('reports.products');
-        Route::get('/inventory', [ProductController::class, 'inventoryReport'])->name('reports.inventory');
+    Route::middleware(['manager'])->prefix('reports')->name('reports.')->group(function () {
+        // Page d'accueil des rapports
+        Route::get('/', function() {
+            return view('reports.index');
+        })->name('index');
         
-        // Rapport des stocks groupés
-        Route::get('/grouped-stocks', [ProductController::class, 'groupedStocksReport'])->name('reports.grouped-stocks');
-        
-        // Export des stocks groupés
+        Route::get('/sales', [SaleController::class, 'salesReport'])->name('sales');
+        Route::get('/clients', [ClientController::class, 'clientsReport'])->name('clients');
+        Route::get('/products', [ProductController::class, 'productsReport'])->name('products');
+        Route::get('/inventory', [ProductController::class, 'inventoryReport'])->name('inventory');
+        Route::get('/grouped-stocks', [ProductController::class, 'groupedStocksReport'])->name('grouped-stocks');
         Route::get('/grouped-stocks/export/{format?}', [ProductController::class, 'exportGroupedStocks'])
-            ->name('reports.grouped-stocks.export');
+            ->name('grouped-stocks.export');
     });
 
     // ----------------------
     // API TEMPS RÉEL
     // ----------------------
-    Route::prefix('api')->group(function () {
-        Route::get('/dashboard-stats', [SaleController::class, 'dashboardStats'])->name('api.dashboard.stats');
-        Route::get('/recent-sales', [SaleController::class, 'recentSales'])->name('api.recent.sales');
-        Route::get('/top-products', [ProductController::class, 'topProducts'])->name('api.top.products');
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/dashboard-stats', [SaleController::class, 'dashboardStats'])->name('dashboard.stats');
+        Route::get('/recent-sales', [SaleController::class, 'recentSales'])->name('recent.sales');
+        Route::get('/top-products', [ProductController::class, 'topProducts'])->name('top.products');
+        Route::get('/grouped-stocks-stats', [ProductController::class, 'getQuickStats'])->name('grouped-stocks.stats');
         
-        Route::get('/grouped-stocks-stats', [ProductController::class, 'getQuickStats'])
-            ->name('api.grouped-stocks.stats');
-            
         // Routes pour le modal de fusion
         Route::get('/modal/categories', function () {
             try {
@@ -209,7 +220,7 @@ Route::middleware(['auth'])->group(function () {
                     'data' => []
                 ], 500);
             }
-        })->name('api.modal.categories');
+        })->name('modal.categories');
         
         Route::get('/modal/suppliers', function () {
             try {
@@ -225,7 +236,7 @@ Route::middleware(['auth'])->group(function () {
                     'data' => []
                 ], 500);
             }
-        })->name('api.modal.suppliers');
+        })->name('modal.suppliers');
     });
     
     // ----------------------

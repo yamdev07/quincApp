@@ -36,7 +36,7 @@
             color: var(--text);
         }
 
-        /* Badges de rôle */
+        /* Badges de rôle - MISE À JOUR AVEC SUPER_ADMIN_GLOBAL */
         .role-badge {
             display: inline-flex;
             align-items: center;
@@ -44,6 +44,12 @@
             border-radius: 9999px;
             font-size: 0.75rem;
             font-weight: 600;
+        }
+
+        .role-super_admin_global {
+            background-color: #8b5cf6;
+            color: white;
+            border: 1px solid #a78bfa;
         }
 
         .role-super_admin {
@@ -90,12 +96,15 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .user-info-left {
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .user-avatar {
@@ -142,6 +151,12 @@
         .permission-badge i {
             font-size: 0.7rem;
         }
+
+        /* 👑 Badge spécial pour super_admin_global */
+        .global-crown {
+            color: #8b5cf6;
+            margin-right: 2px;
+        }
     </style>
     
     @yield('styles')
@@ -153,7 +168,7 @@
         <livewire:layout.navigation />
 
         @auth
-            <!-- Barre d'information utilisateur -->
+            <!-- Barre d'information utilisateur - MISE À JOUR -->
             <div class="user-info-bar">
                 <div class="user-info-container">
                     <div class="user-info-left">
@@ -162,9 +177,17 @@
                         </div>
                         <div class="user-details">
                             <span class="user-name">{{ auth()->user()->name }}</span>
-                            <span class="role-badge role-{{ auth()->user()->role }}">
-                                {{ auth()->user()->role_label }}
-                            </span>
+                            
+                            {{-- Badge avec icône spéciale pour super_admin_global --}}
+                            @if(auth()->user()->isSuperAdminGlobal())
+                                <span class="role-badge role-super_admin_global">
+                                    <i class="bi bi-crown-fill global-crown"></i> Super Admin Global
+                                </span>
+                            @else
+                                <span class="role-badge role-{{ auth()->user()->role }}">
+                                    {{ auth()->user()->role_label }}
+                                </span>
+                            @endif
                             
                             @if(auth()->user()->canManageUsers())
                                 <span class="permission-badge">
@@ -189,13 +212,26 @@
                                     <i class="bi bi-graph-up"></i> Rapports
                                 </span>
                             @endif
+
+                            {{-- Indicateur global pour super_admin_global --}}
+                            @if(auth()->user()->isSuperAdminGlobal())
+                                <span class="permission-badge" style="background-color:#8b5cf6; color:white;">
+                                    <i class="bi bi-globe2"></i> Vue globale
+                                </span>
+                            @endif
                         </div>
                     </div>
                     
-                    @if(auth()->user()->tenant)
+                    @if(auth()->user()->tenant && !auth()->user()->isSuperAdminGlobal())
                         <div class="user-company">
                             <i class="bi bi-building"></i>
                             {{ auth()->user()->tenant->company_name ?? 'Ma Quincaillerie' }}
+                        </div>
+                    @endif
+
+                    @if(auth()->user()->isSuperAdminGlobal())
+                        <div class="user-company" style="color:#8b5cf6; font-weight:600;">
+                            <i class="bi bi-globe2"></i> Toutes les quincailleries
                         </div>
                     @endif
                 </div>

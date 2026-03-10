@@ -19,6 +19,8 @@
         --success:       #16a34a;
         --danger:        #dc2626;
         --info:          #2563eb;
+        --purple:        #7c3aed;
+        --violet:        #8b5cf6;
         --shadow-sm:     0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
         --shadow-md:     0 4px 16px rgba(15,23,42,.08);
         --shadow-orange: 0 8px 24px rgba(249,115,22,.25);
@@ -235,6 +237,57 @@
         padding: 32px;
     }
 
+    /* Access denied */
+    .se-access-denied {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        text-align: center;
+        animation: fadeUp 0.35s ease both;
+    }
+    .se-access-denied svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin: 0 auto 16px;
+    }
+    .se-access-denied h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .se-access-denied p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 24px;
+    }
+
+    /* Info alert */
+    .se-info-alert {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .se-info-alert svg {
+        width: 20px;
+        height: 20px;
+        stroke: var(--info);
+        fill: none;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    .se-info-alert p {
+        font-size: 13px;
+        color: #1e40af;
+    }
+
     /* Form */
     .se-form-group {
         margin-bottom: 24px;
@@ -404,6 +457,24 @@
 @section('content')
 <div class="se-page">
 
+    {{-- Vérification d'accès --}}
+    @if(!auth()->user()->canManageUsers())
+        <div class="se-access-denied">
+            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2>Accès refusé</h2>
+            <p>Vous n'avez pas les droits pour créer des employés.</p>
+            <a href="{{ route('users.index') }}" class="btn-secondary">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+        @php return; @endphp
+    @endif
+
     {{-- HEADER --}}
     <div class="se-header">
         <div class="se-header-top">
@@ -429,6 +500,27 @@
             </div>
         </div>
     </div>
+
+    {{-- Info sur les permissions --}}
+    @if(auth()->user()->isSuperAdmin())
+        <div class="se-info-alert">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>
+                <strong>Super Admin</strong> - Vous pouvez créer des administrateurs, gérants, caissiers et magasiniers.
+            </p>
+        </div>
+    @elseif(auth()->user()->isAdmin())
+        <div class="se-info-alert">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <p>
+                <strong>Administrateur</strong> - Vous pouvez créer des gérants, caissiers et magasiniers.
+            </p>
+        </div>
+    @endif
 
     {{-- FORM CARD --}}
     <div class="se-card">
@@ -511,9 +603,28 @@
                                 required
                                 class="se-select @error('role') error @enderror">
                             <option value="">Sélectionnez un rôle</option>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrateur</option>
-                            <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Manager</option>
-                            <option value="caissier" {{ old('role') == 'caissier' ? 'selected' : '' }}>Caissier</option>
+                            
+                            @if(auth()->user()->isSuperAdminGlobal())
+                                {{-- Super admin global peut créer tous les rôles --}}
+                                <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrateur</option>
+                                <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Gérant</option>
+                                <option value="cashier" {{ old('role') == 'cashier' ? 'selected' : '' }}>Caissier</option>
+                                <option value="storekeeper" {{ old('role') == 'storekeeper' ? 'selected' : '' }}>Magasinier</option>
+                            
+                            @elseif(auth()->user()->isSuperAdmin())
+                                {{-- Super admin ne peut pas créer d'autre super admin --}}
+                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrateur</option>
+                                <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Gérant</option>
+                                <option value="cashier" {{ old('role') == 'cashier' ? 'selected' : '' }}>Caissier</option>
+                                <option value="storekeeper" {{ old('role') == 'storekeeper' ? 'selected' : '' }}>Magasinier</option>
+                            
+                            @elseif(auth()->user()->isAdmin())
+                                {{-- Admin ne peut pas créer d'admin --}}
+                                <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Gérant</option>
+                                <option value="cashier" {{ old('role') == 'cashier' ? 'selected' : '' }}>Caissier</option>
+                                <option value="storekeeper" {{ old('role') == 'storekeeper' ? 'selected' : '' }}>Magasinier</option>
+                            @endif
                         </select>
                     </div>
                     @error('role')
