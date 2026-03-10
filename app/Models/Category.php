@@ -2,19 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\TenantScope; // ← AJOUTER
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
-    use HasFactory;
+    use HasFactory, TenantScope; // ← AJOUTER TenantScope
 
     protected $fillable = [
         'name',
         'parent_id',
         'description',
+        // 'owner_id' n'est PAS dans fillable (sera auto-assigné)
     ];
 
+    // ============ RELATIONS ============
+    
     // Relation avec les produits
     public function products()
     {
@@ -32,6 +36,14 @@ class Category extends Model
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
+
+    // 👇 NOUVELLE RELATION : Propriétaire (super_admin)
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    // ============ MÉTHODES EXISTANTES (inchangées) ============
 
     // Récupérer tous les produits de la catégorie et de ses sous-catégories
     public function getAllProducts()
@@ -83,5 +95,66 @@ class Category extends Model
         }
         
         return implode(' → ', $path);
+    }
+
+    // ============ NOUVELLES MÉTHODES UTILES ============
+
+    /**
+     * Récupérer toutes les sous-catégories récursivement
+     */
+    public function getAllDescendants()
+    {
+        $descendants = collect();
+        
+        foreach ($this->children as $child) {
+            $descendants->push($child);
+            $descendants = $descendants->merge($child->getAllDescendants());
+        }
+        
+        return $descendants;
+    }
+
+    /**
+     * Récupérer toutes les catégories de la même quincaillerie
+     */
+    public function scopeSameCompany($query)
+    {
+        if (auth()->check()) {
+            $user = auth()->user();
+            $ownerId = $user->isSuperAdmin() ? $user->id : $user->owner_id;
+            return $query->where('owner_id', $ownerId);
+        }
+        return $query;
+    }
+
+    /**
+     * Récupérer les statistiques de la catégorie
+     */
+    public function getStatsAttribute()
+    {
+        return [
+            'total_products' => $this->getTotalProductsWithDescendants(),
+            'total_subcategories' => $this->children->count(),
+            'total_descendants' => $this->getAllDescendants()->count(),
+            'is_main' => $this->isMainCategory(),
+            'is_sub' => $this->isSubCategory(),
+            'path' => $this->getFullPath(),
+        ];
+    }
+
+    /**
+     * Récupérer les catégories principales (sans parent)
+     */
+    public function scopeMainCategories($query)
+    {
+        return $query->whereNull('parent_id');
+    }
+
+    /**
+     * Récupérer les sous-catégories (avec parent)
+     */
+    public function scopeSubCategories($query)
+    {
+        return $query->whereNotNull('parent_id');
     }
 }

@@ -6,11 +6,37 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * Vérifier que la catégorie appartient à la quincaillerie
+     */
+    private function authorizeCategoryAccess(Category $category)
+    {
+        if (!Auth::user()->hasAccessTo($category)) {
+            abort(403, 'Vous n\'avez pas accès à cette catégorie.');
+        }
+    }
+
+    /**
+     * Vérifier les permissions d'administration
+     */
+    private function authorizeAdmin()
+    {
+        if (!Auth::user()->isSuperAdminOrAdmin()) {
+            abort(403, 'Action réservée aux administrateurs.');
+        }
+    }
+
     // -------------------------
-    // ROUTES PUBLIQUES
+    // ROUTES PUBLIQUES (avec filtre par quincaillerie)
     // -------------------------
 
     // Affiche toutes les catégories principales avec leurs sous-catégories
@@ -22,7 +48,7 @@ class CategoryController extends Controller
             }])
             ->withCount(['products as total_products'])
             ->withSum('products as total_stock', 'stock')
-            ->whereNull('parent_id') // Seulement les catégories principales
+            ->whereNull('parent_id')
             ->orderBy('name')
             ->get();
         
@@ -40,6 +66,8 @@ class CategoryController extends Controller
                 $query->orderBy('name')->with('supplier');
             }])
             ->findOrFail($id);
+        
+        $this->authorizeCategoryAccess($category);
         
         // Toutes les catégories principales pour les menus
         $mainCategories = Category::whereNull('parent_id')
@@ -62,7 +90,7 @@ class CategoryController extends Controller
             'low_stock' => $allProducts->where('stock', '<=', 5)->where('stock', '>', 0)->count(),
             'out_of_stock' => $allProducts->where('stock', '=', 0)->count(),
             'in_stock' => $allProducts->where('stock', '>', 5)->count(),
-            'direct_products' => $category->products->count(), // Produits directs seulement
+            'direct_products' => $category->products->count(),
         ];
         
         // Produits à faible stock (incluant les sous-catégories)
@@ -74,30 +102,43 @@ class CategoryController extends Controller
     }
 
     // -------------------------
-    // ROUTES ADMIN
+    // ROUTES ADMIN (avec vérifications)
     // -------------------------
 
     // Formulaire pour créer une nouvelle catégorie
     public function create()
     {
+        $this->authorizeAdmin();
+        
         $mainCategories = Category::whereNull('parent_id')
             ->orderBy('name')
             ->get();
+            
         return view('categories.create', compact('mainCategories'));
     }
 
     // Enregistre une nouvelle catégorie
     public function store(Request $request)
     {
+        $this->authorizeAdmin();
+        
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:categories,id',
             'description' => 'nullable|string|max:1000',
         ]);
 
+        // Vérifier que la catégorie parente appartient à la même quincaillerie
+        if ($request->parent_id) {
+            $parentCategory = Category::find($request->parent_id);
+            if (!Auth::user()->hasAccessTo($parentCategory)) {
+                return back()->with('error', 'Catégorie parente invalide.');
+            }
+        }
+
         Category::create([
             'name' => $request->name,
-            'parent_id' => $request->parent_id, // null pour catégorie principale
+            'parent_id' => $request->parent_id,
             'description' => $request->description,
         ]);
 
@@ -111,7 +152,10 @@ class CategoryController extends Controller
     // Formulaire pour éditer une catégorie existante
     public function edit($id)
     {
+        $this->authorizeAdmin();
+        
         $category = Category::with('parent')->findOrFail($id);
+        $this->authorizeCategoryAccess($category);
         
         // Récupérer toutes les catégories principales (sauf elle-même et ses enfants)
         $mainCategories = Category::whereNull('parent_id')
@@ -130,13 +174,24 @@ class CategoryController extends Controller
     // Met à jour une catégorie existante
     public function update(Request $request, $id)
     {
+        $this->authorizeAdmin();
+        
         $category = Category::findOrFail($id);
+        $this->authorizeCategoryAccess($category);
 
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'parent_id' => 'nullable|exists:categories,id|different:id', // Ne pas s'auto-référencer
+            'parent_id' => 'nullable|exists:categories,id|different:id',
             'description' => 'nullable|string|max:1000',
         ]);
+
+        // Vérifier que la catégorie parente appartient à la même quincaillerie
+        if ($request->parent_id) {
+            $parentCategory = Category::find($request->parent_id);
+            if (!Auth::user()->hasAccessTo($parentCategory)) {
+                return back()->with('error', 'Catégorie parente invalide.');
+            }
+        }
 
         // Empêcher de créer une boucle dans l'arborescence
         if ($request->parent_id) {
@@ -176,7 +231,10 @@ class CategoryController extends Controller
     // Supprime une catégorie
     public function destroy($id)
     {
+        $this->authorizeAdmin();
+        
         $category = Category::withCount(['products', 'children'])->findOrFail($id);
+        $this->authorizeCategoryAccess($category);
         
         // Vérifier si la catégorie peut être supprimée
         if ($category->products_count > 0) {
@@ -189,10 +247,13 @@ class CategoryController extends Controller
         // Transférer les sous-catégories au parent ou les rendre principales
         if ($category->children_count > 0) {
             if ($category->parent_id) {
-                // Transférer les sous-catégories au parent
+                // Vérifier que le parent appartient à la même quincaillerie
+                $parentCategory = Category::find($category->parent_id);
+                if (!Auth::user()->hasAccessTo($parentCategory)) {
+                    return back()->with('error', 'Impossible de transférer les sous-catégories.');
+                }
                 $category->children()->update(['parent_id' => $category->parent_id]);
             } else {
-                // Rendre les sous-catégories principales
                 $category->children()->update(['parent_id' => null]);
             }
         }
@@ -206,12 +267,21 @@ class CategoryController extends Controller
     // Supprime une catégorie et transfère ses produits et sous-catégories
     public function destroyWithTransfer(Request $request, $id)
     {
+        $this->authorizeAdmin();
+        
         $category = Category::findOrFail($id);
+        $this->authorizeCategoryAccess($category);
         
         $request->validate([
             'new_category_id' => 'required|exists:categories,id|different:id',
             'move_subcategories' => 'sometimes|boolean',
         ]);
+        
+        // Vérifier que la nouvelle catégorie appartient à la même quincaillerie
+        $newCategory = Category::find($request->new_category_id);
+        if (!Auth::user()->hasAccessTo($newCategory)) {
+            return back()->with('error', 'Catégorie de destination invalide.');
+        }
         
         DB::transaction(function () use ($category, $request) {
             // Transférer les produits vers la nouvelle catégorie
@@ -226,26 +296,33 @@ class CategoryController extends Controller
             $category->delete();
         });
         
-        $newCategory = Category::find($request->new_category_id);
-        
         return redirect()->route('categories.index')
             ->with('success', "Catégorie supprimée. Tous les produits ont été transférés vers '{$newCategory->name}'.");
     }
 
     // -------------------------
-    // ROUTES PRODUITS
+    // ROUTES PRODUITS (avec vérifications)
     // -------------------------
 
     // Ajouter un produit à une catégorie
     public function addProduct(Request $request, $id)
     {
+        $this->authorizeAdmin();
+        
         $category = Category::findOrFail($id);
+        $this->authorizeCategoryAccess($category);
         
         $request->validate([
             'product_id' => 'required|exists:products,id',
         ]);
         
         $product = Product::find($request->product_id);
+        
+        // Vérifier que le produit appartient à la même quincaillerie
+        if (!Auth::user()->hasAccessTo($product)) {
+            return back()->with('error', 'Produit invalide.');
+        }
+        
         $product->category_id = $category->id;
         $product->save();
         
@@ -256,14 +333,25 @@ class CategoryController extends Controller
     // Transférer un produit vers une autre catégorie
     public function transferProduct(Request $request, $id, $productId)
     {
+        $this->authorizeAdmin();
+        
         $category = Category::findOrFail($id);
+        $this->authorizeCategoryAccess($category);
+        
         $product = Product::findOrFail($productId);
+        if (!Auth::user()->hasAccessTo($product)) {
+            return back()->with('error', 'Produit invalide.');
+        }
         
         $request->validate([
             'target_category_id' => 'required|exists:categories,id|different:' . $id,
         ]);
         
         $targetCategory = Category::find($request->target_category_id);
+        if (!Auth::user()->hasAccessTo($targetCategory)) {
+            return back()->with('error', 'Catégorie de destination invalide.');
+        }
+        
         $product->category_id = $targetCategory->id;
         $product->save();
         
@@ -278,6 +366,8 @@ class CategoryController extends Controller
             $query->with('supplier')->orderBy('name')->paginate(20);
         }])->findOrFail($id);
         
+        $this->authorizeCategoryAccess($category);
+        
         $allProducts = $category->getAllProducts();
         
         return view('categories.products', compact('category', 'allProducts'));
@@ -287,6 +377,7 @@ class CategoryController extends Controller
     public function detailedStats($id)
     {
         $category = Category::with(['products', 'children.products'])->findOrFail($id);
+        $this->authorizeCategoryAccess($category);
         
         $allProducts = $category->getAllProducts();
         

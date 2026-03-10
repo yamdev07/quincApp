@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\TenantScope; // ← AJOUTER
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, TenantScope; // ← AJOUTER TenantScope
 
     // Les champs qui peuvent être assignés en masse
     protected $fillable = [
@@ -21,7 +22,8 @@ class Product extends Model
         'quantity',      // Quantité totale achetée (historique)
         'stock',         // Stock disponible actuel ← IMPORTANT
         'supplier_id',
-        'category_id'
+        'category_id',
+        // 'owner_id' n'est PAS dans fillable (sera automatiquement assigné par le Trait)
     ];
 
     // Conversion des types de données
@@ -32,6 +34,45 @@ class Product extends Model
         'quantity' => 'integer',
         'stock' => 'integer',
     ];
+
+    // ============ RELATIONS ============
+    
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class)->orderBy('created_at', 'desc');
+    }
+
+    // 👇 NOUVELLE RELATION : Propriétaire (super_admin)
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    // 👇 NOUVELLE RELATION : Utilisateur qui a créé/modifié
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     // ============ ACCESSORS ============
     
@@ -78,33 +119,6 @@ class Product extends Model
         return (($this->sale_price - $this->purchase_price) / $this->purchase_price) * 100;
     }
 
-    // ============ RELATIONS ============
-    
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
-    }
-
-    public function sales()
-    {
-        return $this->hasMany(Sale::class);
-    }
-
-    public function saleItems()
-    {
-        return $this->hasMany(SaleItem::class);
-    }
-
-    public function stockMovements(): HasMany
-    {
-        return $this->hasMany(StockMovement::class)->orderBy('created_at', 'desc');
-    }
-
     // ============ SCOPES ============
     
     // Produits en stock
@@ -146,6 +160,12 @@ class Product extends Model
               ->groupBy('product_id')
               ->having('batch_count', '>', 1);
         });
+    }
+
+    // 👇 NOUVEAU SCOPE : Par propriétaire
+    public function scopeByOwner($query, $ownerId)
+    {
+        return $query->where('owner_id', $ownerId);
     }
 
     // ============ MÉTHODES DE GESTION DE STOCK ============
@@ -202,7 +222,7 @@ class Product extends Model
         return $this;
     }
 
-    // ============ NOUVELLES MÉTHODES POUR STOCKS GROUPÉS ============
+    // ============ MÉTHODES POUR STOCKS GROUPÉS ============
     
     /**
      * Récupère les stocks groupés par lot/prix d'achat
