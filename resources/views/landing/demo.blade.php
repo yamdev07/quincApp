@@ -3,534 +3,924 @@
 
 @section('content')
 <div class="demo-page">
-    {{-- HEADER --}}
-    <section class="demo-header">
+
+    {{-- HERO SECTION --}}
+    <section class="demo-hero">
+        <div class="hero-bg">
+            <div class="hero-bg-grid"></div>
+            <div class="hero-bg-glow"></div>
+        </div>
+        
         <div class="container">
-            <h1>Découvrez <span class="text-gradient">QuincaApp</span> en action</h1>
-            <p>Explorez les fonctionnalités principales de notre logiciel à travers cette démo interactive</p>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    Démo interactive
+                </div>
+                
+                <h1 class="hero-title">
+                    Découvrez <span class="text-gradient">QuincaApp</span>
+                </h1>
+                
+                <p class="hero-description">
+                    Explorez les fonctionnalités principales de notre logiciel à travers cette démo interactive.
+                    Sans inscription, sans engagement.
+                </p>
+            </div>
         </div>
     </section>
 
     {{-- TABS --}}
-    <section class="demo-tabs-section">
+    <section class="demo-tabs">
         <div class="container">
-            <div class="demo-tabs-container">
-                <button class="demo-tab active" data-tab="stock">
-                    <i class="bi bi-box-seam"></i>
-                    Stock
+            <div class="tabs-wrapper">
+                <button class="tab-btn active" data-tab="stock">
+                    <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                    <span>Stock</span>
                 </button>
-                <button class="demo-tab" data-tab="sales">
-                    <i class="bi bi-cart-check"></i>
-                    Ventes
+                
+                <button class="tab-btn" data-tab="sales">
+                    <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="9" cy="21" r="1"/>
+                        <circle cx="20" cy="21" r="1"/>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                    </svg>
+                    <span>Ventes</span>
                 </button>
-                <button class="demo-tab" data-tab="clients">
-                    <i class="bi bi-people"></i>
-                    Clients
+                
+                <button class="tab-btn" data-tab="clients">
+                    <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Clients</span>
                 </button>
-                <button class="demo-tab" data-tab="reports">
-                    <i class="bi bi-graph-up"></i>
-                    Rapports
+                
+                <button class="tab-btn" data-tab="reports">
+                    <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <span>Rapports</span>
                 </button>
+                
+                <div class="tab-slider" id="tabSlider"></div>
             </div>
         </div>
     </section>
 
-    {{-- CONTENU DES TABS --}}
-    <section class="demo-content-section">
+    {{-- PANELS --}}
+    <section class="demo-panels">
         <div class="container">
-            {{-- TAB STOCK --}}
-            <div class="demo-panel active" id="stock-demo">
-                <div class="demo-grid">
-                    <div class="demo-visual">
-                        <div class="demo-mockup large">
-                            <div class="mockup-header">
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-title">Gestion de stock</span>
+            
+            {{-- STOCK PANEL --}}
+            <div class="demo-panel active" id="stock-panel">
+                <div class="panel-grid">
+                    <div class="panel-visual">
+                        <div class="visual-card">
+                            <div class="card-header">
+                                <div class="header-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <span class="header-title">Catalogue produits</span>
                             </div>
-                            <div class="mockup-body">
-                                <div class="stock-table">
-                                    <div class="stock-row header">
-                                        <span>Produit</span>
-                                        <span>Réf.</span>
-                                        <span>Stock</span>
-                                        <span>Prix</span>
+                            
+                            <div class="card-body">
+                                <div class="stock-list">
+                                    <div class="stock-item">
+                                        <div class="item-info">
+                                            <span class="item-icon">🔨</span>
+                                            <div>
+                                                <div class="item-name">Marteau de charpentier</div>
+                                                <div class="item-ref">MT-001</div>
+                                            </div>
+                                        </div>
+                                        <div class="item-stock warning">8</div>
+                                        <div class="item-price">4 500 FCFA</div>
                                     </div>
-                                    <div class="stock-row">
-                                        <span>Marteau</span>
-                                        <span>MT-001</span>
-                                        <span><span class="stock-badge warning">8</span></span>
-                                        <span>4 500 FCFA</span>
+                                    
+                                    <div class="stock-item">
+                                        <div class="item-info">
+                                            <span class="item-icon">🪛</span>
+                                            <div>
+                                                <div class="item-name">Tournevis cruciforme</div>
+                                                <div class="item-ref">TV-023</div>
+                                            </div>
+                                        </div>
+                                        <div class="item-stock success">24</div>
+                                        <div class="item-price">1 200 FCFA</div>
                                     </div>
-                                    <div class="stock-row">
-                                        <span>Tournevis</span>
-                                        <span>TV-023</span>
-                                        <span><span class="stock-badge success">24</span></span>
-                                        <span>1 200 FCFA</span>
+                                    
+                                    <div class="stock-item">
+                                        <div class="item-info">
+                                            <span class="item-icon">🪚</span>
+                                            <div>
+                                                <div class="item-name">Scie égoïne</div>
+                                                <div class="item-ref">SC-045</div>
+                                            </div>
+                                        </div>
+                                        <div class="item-stock critical">2</div>
+                                        <div class="item-price">8 500 FCFA</div>
                                     </div>
-                                    <div class="stock-row">
-                                        <span>Scie</span>
-                                        <span>SC-045</span>
-                                        <span><span class="stock-badge critical">2</span></span>
-                                        <span>8 500 FCFA</span>
-                                    </div>
-                                    <div class="stock-row">
-                                        <span>Clous (kg)</span>
-                                        <span>CL-100</span>
-                                        <span><span class="stock-badge warning">15</span></span>
-                                        <span>1 800 FCFA</span>
+                                    
+                                    <div class="stock-item">
+                                        <div class="item-info">
+                                            <span class="item-icon">📦</span>
+                                            <div>
+                                                <div class="item-name">Clous galvanisés (kg)</div>
+                                                <div class="item-ref">CL-100</div>
+                                            </div>
+                                        </div>
+                                        <div class="item-stock warning">15</div>
+                                        <div class="item-price">1 800 FCFA</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="demo-description">
-                        <span class="demo-badge">📦 Gestion de stock</span>
-                        <h2>Suivez vos produits en temps réel</h2>
-                        <p>Notre système de gestion de stock vous permet de :</p>
-                        <ul class="demo-features-list">
-                            <li><i class="bi bi-check-circle-fill"></i> Visualiser instantanément les niveaux de stock</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Recevoir des alertes quand un produit est bas</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Historique complet des mouvements</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Entrées/sorties en un clic</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Scan code-barres intégré</li>
-                        </ul>
-                        <div class="demo-note">
-                            <i class="bi bi-info-circle"></i>
-                            <span>Les niveaux de stock se mettent à jour automatiquement après chaque vente</span>
+                        
+                        <div class="visual-badge stock-badge-1">
+                            <span class="badge-icon">⚡</span>
+                            Mise à jour en temps réel
                         </div>
+                        
+                        <div class="visual-badge stock-badge-2">
+                            <span class="badge-dot-pulse"></span>
+                            2 alertes stock bas
+                        </div>
+                    </div>
+                    
+                    <div class="panel-content">
+                        <div class="content-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            </svg>
+                            Gestion de stock
+                        </div>
+                        
+                        <h2 class="content-title">
+                            Suivez vos produits <br>
+                            <span class="title-accent">en temps réel</span>
+                        </h2>
+                        
+                        <p class="content-text">
+                            Visualisez instantanément vos niveaux de stock, recevez des alertes automatiques et gardez un historique complet de tous vos mouvements.
+                        </p>
+                        
+                        <ul class="content-features">
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Alertes automatiques
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Historique des mouvements
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Scan code-barres intégré
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Entrées/sorties en 1 clic
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
 
-            {{-- TAB VENTES --}}
-            <div class="demo-panel" id="sales-demo">
-                <div class="demo-grid reverse">
-                    <div class="demo-description">
-                        <span class="demo-badge">🛒 Ventes et facturation</span>
-                        <h2>Simplifiez votre processus de vente</h2>
-                        <p>Créez des factures en quelques secondes :</p>
-                        <ul class="demo-features-list">
-                            <li><i class="bi bi-check-circle-fill"></i> Création rapide de devis et factures</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Gestion des paiements (espèces, carte, mobile money)</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Impression de tickets</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Historique des transactions</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Rendu monnaie automatique</li>
-                        </ul>
-                        <div class="demo-stats">
-                            <div class="demo-stat">
-                                <span class="stat-number">15s</span>
-                                <span class="stat-label">pour créer une facture</span>
+            {{-- SALES PANEL --}}
+            <div class="demo-panel" id="sales-panel">
+                <div class="panel-grid reverse">
+                    <div class="panel-visual">
+                        <div class="visual-card">
+                            <div class="card-header">
+                                <div class="header-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <span class="header-title">Nouvelle vente</span>
                             </div>
-                            <div class="demo-stat">
-                                <span class="stat-number">100%</span>
-                                <span class="stat-label">factures personnalisables</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="demo-visual">
-                        <div class="demo-mockup">
-                            <div class="mockup-header">
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-title">Nouvelle vente</span>
-                            </div>
-                            <div class="mockup-body">
+                            
+                            <div class="card-body">
                                 <div class="sale-preview">
                                     <div class="sale-client">
-                                        <i class="bi bi-person"></i>
-                                        <span>Client: Jean Dupont</span>
+                                        <div class="client-avatar">JD</div>
+                                        <div class="client-details">
+                                            <div class="client-name">Jean Dupont</div>
+                                            <div class="client-status">Client régulier</div>
+                                        </div>
+                                        <span class="client-badge">🎁 Fidèle</span>
                                     </div>
+                                    
                                     <div class="sale-items">
                                         <div class="sale-item">
-                                            <span>Marteau x2</span>
+                                            <span>Marteau ×2</span>
                                             <span>9 000 FCFA</span>
                                         </div>
                                         <div class="sale-item">
-                                            <span>Tournevis x3</span>
+                                            <span>Tournevis ×3</span>
                                             <span>3 600 FCFA</span>
                                         </div>
                                         <div class="sale-item">
-                                            <span>Clous (2kg)</span>
+                                            <span>Clous 2kg</span>
                                             <span>3 600 FCFA</span>
                                         </div>
                                     </div>
+                                    
                                     <div class="sale-total">
                                         <span>Total</span>
                                         <span class="total-amount">16 200 FCFA</span>
                                     </div>
+                                    
                                     <div class="sale-actions">
-                                        <span class="sale-btn">Imprimer</span>
-                                        <span class="sale-btn primary">Valider</span>
+                                        <button class="btn-secondary" disabled>Imprimer</button>
+                                        <button class="btn-primary" disabled>Valider</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="visual-badge sales-badge">
+                            <span class="badge-icon">⚡</span>
+                            15 secondes pour facturer
+                        </div>
+                    </div>
+                    
+                    <div class="panel-content">
+                        <div class="content-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="9" cy="21" r="1"/>
+                                <circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                            </svg>
+                            Ventes & Facturation
+                        </div>
+                        
+                        <h2 class="content-title">
+                            Créez une facture en<br>
+                            <span class="title-accent">15 secondes</span>
+                        </h2>
+                        
+                        <p class="content-text">
+                            Un processus de vente fluide, du panier à l'impression. Gérez tous les modes de paiement et fidélisez vos clients.
+                        </p>
+                        
+                        <ul class="content-features">
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Devis et factures
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Tous modes de paiement
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Impression tickets
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Rendu monnaie auto
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
 
-            {{-- TAB CLIENTS --}}
-            <div class="demo-panel" id="clients-demo">
-                <div class="demo-grid">
-                    <div class="demo-visual">
-                        <div class="demo-mockup">
-                            <div class="mockup-header">
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-title">Fichier clients</span>
+            {{-- CLIENTS PANEL --}}
+            <div class="demo-panel" id="clients-panel">
+                <div class="panel-grid">
+                    <div class="panel-visual">
+                        <div class="visual-card">
+                            <div class="card-header">
+                                <div class="header-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <span class="header-title">Fichier clients</span>
                             </div>
-                            <div class="mockup-body">
-                                <div class="clients-preview">
-                                    <div class="client-card">
-                                        <div class="client-avatar">JD</div>
-                                        <div class="client-info">
+                            
+                            <div class="card-body">
+                                <div class="clients-list">
+                                    <div class="client-row">
+                                        <div class="row-avatar" style="background: linear-gradient(135deg, #f97316, #ea580c)">JD</div>
+                                        <div class="row-info">
                                             <strong>Jean Dupont</strong>
-                                            <span>jean.dupont@email.com</span>
-                                            <span>77 123 45 67</span>
-                                        </div>
-                                        <div class="client-stats">
-                                            <span>12 achats</span>
-                                            <span>145 000 FCFA</span>
+                                            <span>12 achats · 145 000 FCFA</span>
                                         </div>
                                     </div>
-                                    <div class="client-card">
-                                        <div class="client-avatar">MM</div>
-                                        <div class="client-info">
+                                    
+                                    <div class="client-row">
+                                        <div class="row-avatar" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">MM</div>
+                                        <div class="row-info">
                                             <strong>Marie Martin</strong>
-                                            <span>marie.m@email.com</span>
-                                            <span>76 987 65 43</span>
-                                        </div>
-                                        <div class="client-stats">
-                                            <span>8 achats</span>
-                                            <span>89 000 FCFA</span>
+                                            <span>8 achats · 89 000 FCFA</span>
                                         </div>
                                     </div>
-                                    <div class="client-card">
-                                        <div class="client-avatar">PL</div>
-                                        <div class="client-info">
+                                    
+                                    <div class="client-row">
+                                        <div class="row-avatar" style="background: linear-gradient(135deg, #10b981, #059669)">PL</div>
+                                        <div class="row-info">
                                             <strong>Pierre Lambert</strong>
-                                            <span>p.lambert@email.com</span>
-                                            <span>70 456 78 90</span>
-                                        </div>
-                                        <div class="client-stats">
-                                            <span>15 achats</span>
-                                            <span>234 000 FCFA</span>
+                                            <span>15 achats · 234 000 FCFA</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="demo-description">
-                        <span class="demo-badge">👥 Gestion clients</span>
-                        <h2>Fidélisez votre clientèle</h2>
-                        <p>Un fichier client complet et des outils de fidélisation :</p>
-                        <ul class="demo-features-list">
-                            <li><i class="bi bi-check-circle-fill"></i> Historique d'achats détaillé</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Programme de fidélité intégré</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Envoi de promotions par SMS/email</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Statistiques client</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Gestion des dettes et crédits</li>
+                    
+                    <div class="panel-content">
+                        <div class="content-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            Gestion clients
+                        </div>
+                        
+                        <h2 class="content-title">
+                            Fidélisez votre<br>
+                            <span class="title-accent">clientèle</span>
+                        </h2>
+                        
+                        <p class="content-text">
+                            Un CRM simple et puissant. Suivez l'historique d'achats, gérez les crédits et envoyez des promotions ciblées.
+                        </p>
+                        
+                        <ul class="content-features">
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Historique d'achats
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Programme de fidélité
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Envoi de promotions
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Gestion des crédits
+                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            {{-- TAB RAPPORTS --}}
-            <div class="demo-panel" id="reports-demo">
-                <div class="demo-grid reverse">
-                    <div class="demo-description">
-                        <span class="demo-badge">📊 Rapports et analyses</span>
-                        <h2>Prenez des décisions éclairées</h2>
-                        <p>Des rapports détaillés pour analyser votre activité :</p>
-                        <ul class="demo-features-list">
-                            <li><i class="bi bi-check-circle-fill"></i> Chiffre d'affaires (jour/semaine/mois)</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Produits les plus vendus</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Évolution des ventes</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Analyse des marges</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Export Excel/PDF</li>
-                        </ul>
-                    </div>
-                    <div class="demo-visual">
-                        <div class="demo-mockup large">
-                            <div class="mockup-header">
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-dot"></span>
-                                <span class="mockup-title">Tableau de bord</span>
+            {{-- REPORTS PANEL --}}
+            <div class="demo-panel" id="reports-panel">
+                <div class="panel-grid reverse">
+                    <div class="panel-visual">
+                        <div class="visual-card">
+                            <div class="card-header">
+                                <div class="header-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <span class="header-title">Tableau de bord</span>
                             </div>
-                            <div class="mockup-body">
+                            
+                            <div class="card-body">
                                 <div class="reports-preview">
-                                    <div class="report-chart">
-                                        <div class="chart-bar" style="height: 60px;"></div>
-                                        <div class="chart-bar" style="height: 40px;"></div>
-                                        <div class="chart-bar" style="height: 80px;"></div>
-                                        <div class="chart-bar" style="height: 30px;"></div>
-                                        <div class="chart-bar" style="height: 70px;"></div>
-                                        <div class="chart-bar" style="height: 90px;"></div>
-                                        <div class="chart-bar" style="height: 50px;"></div>
+                                    <div class="stats-grid">
+                                        <div class="stat-box">
+                                            <span class="stat-label">Aujourd'hui</span>
+                                            <span class="stat-value">124 500</span>
+                                            <span class="stat-trend up">+12%</span>
+                                        </div>
+                                        <div class="stat-box">
+                                            <span class="stat-label">Ce mois</span>
+                                            <span class="stat-value">2,8M</span>
+                                            <span class="stat-trend up">+8%</span>
+                                        </div>
                                     </div>
-                                    <div class="report-stats">
-                                        <div class="report-stat">
-                                            <span>CA aujourd'hui</span>
-                                            <strong>124 500 FCFA</strong>
-                                        </div>
-                                        <div class="report-stat">
-                                            <span>CA mois</span>
-                                            <strong>2 845 000 FCFA</strong>
-                                        </div>
-                                        <div class="report-stat">
-                                            <span>Meilleure vente</span>
-                                            <strong>Ciment (45 sacs)</strong>
+                                    
+                                    <div class="chart-container">
+                                        <div class="chart-bars">
+                                            <div class="bar" style="height: 55%"></div>
+                                            <div class="bar" style="height: 38%"></div>
+                                            <div class="bar" style="height: 72%"></div>
+                                            <div class="bar" style="height: 28%"></div>
+                                            <div class="bar" style="height: 65%"></div>
+                                            <div class="bar" style="height: 88%"></div>
+                                            <div class="bar active" style="height: 48%"></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="panel-content">
+                        <div class="content-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                            Rapports & Analyses
+                        </div>
+                        
+                        <h2 class="content-title">
+                            Prenez des décisions<br>
+                            <span class="title-accent">éclairées</span>
+                        </h2>
+                        
+                        <p class="content-text">
+                            Des tableaux de bord clairs pour analyser vos ventes, marges et performances. Exportez vos données en un clic.
+                        </p>
+                        
+                        <ul class="content-features">
+                            <li>
+                                <span class="feature-check">✓</span>
+                                CA jour/semaine/mois
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Top produits
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Analyse des marges
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                Export Excel/PDF
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
+
         </div>
     </section>
 
     {{-- CTA SECTION --}}
-    <section class="demo-cta-section">
+    <section class="demo-cta">
+        <div class="cta-background"></div>
+        
         <div class="container">
-            <div class="demo-cta-card">
-                <h2>Prêt à passer à l'action ?</h2>
-                <p>Rejoignez plus de 500 quincailleries qui utilisent QuincaApp au quotidien</p>
-                <div class="demo-cta-actions">
-                    <a href="{{ route('pricing') }}" class="btn-primary btn-large">
-                        <i class="bi bi-rocket-takeoff"></i>
-                        Essai gratuit 14 jours
+            <div class="cta-content">
+                <div class="cta-badge">
+                    <span class="badge-dot"></span>
+                    Prêt à commencer ?
+                </div>
+                
+                <h2 class="cta-title">
+                    Rejoignez plus de <span class="text-gradient">500 quincailleries</span>
+                </h2>
+                
+                <p class="cta-text">
+                    Essai gratuit 14 jours · Sans carte bancaire · Sans engagement
+                </p>
+                
+                <div class="cta-buttons">
+                    <a href="{{ route('pricing') }}" class="cta-btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M5 3l14 9-14 9V3z"/>
+                        </svg>
+                        Essai gratuit
                     </a>
-                    <a href="{{ route('landing') }}" class="btn-outline btn-large">
-                        <i class="bi bi-arrow-left"></i>
+                    
+                    <a href="{{ route('landing') }}" class="cta-btn-secondary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
                         Retour à l'accueil
                     </a>
                 </div>
-                <p class="small-note">Sans carte bancaire • Sans engagement</p>
             </div>
         </div>
     </section>
+
 </div>
 
 <style>
-/* -----------------------------------------------------
-   STYLES DE LA PAGE DÉMO
------------------------------------------------------ */
-
+/* ============================================================================
+   VARIABLES & BASE
+   ============================================================================ */
 .demo-page {
+    --white: #ffffff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    
+    --orange-50: #fff7ed;
+    --orange-100: #ffedd5;
+    --orange-200: #fed7aa;
+    --orange-300: #fdba74;
+    --orange-400: #fb923c;
+    --orange-500: #f97316;
+    --orange-600: #ea580c;
+    --orange-700: #c2410c;
+    
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background: var(--white);
-}
-
-/* Header */
-.demo-header {
-    padding: 60px 0 40px;
-    text-align: center;
-    background: linear-gradient(135deg, var(--orange-50) 0%, var(--white) 100%);
-}
-
-.demo-header h1 {
-    font-size: 42px;
-    font-weight: 800;
     color: var(--gray-900);
-    margin-bottom: 16px;
+    line-height: 1.5;
 }
 
-.demo-header p {
-    font-size: 18px;
-    color: var(--gray-600);
-    max-width: 600px;
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+/* ============================================================================
+   HERO SECTION
+   ============================================================================ */
+.demo-hero {
+    position: relative;
+    padding: 80px 0 48px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.hero-bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(var(--gray-200) 1px, transparent 1px),
+        linear-gradient(90deg, var(--gray-200) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at 50% 0%, black, transparent 70%);
+    opacity: 0.3;
+}
+
+.hero-bg-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 0%, var(--orange-100), transparent 70%);
+    opacity: 0.5;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
     margin: 0 auto;
 }
 
-/* Tabs */
-.demo-tabs-section {
-    padding: 20px 0 0;
-    border-bottom: 1px solid var(--gray-200);
-    background: var(--white);
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--orange-50);
+    border: 1px solid var(--orange-200);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--orange-600);
+    margin-bottom: 24px;
 }
 
-.demo-tabs-container {
+.badge-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--orange-500);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.hero-title {
+    font-size: clamp(40px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    color: var(--gray-900);
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-description {
+    font-size: 18px;
+    color: var(--gray-600);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ============================================================================
+   TABS
+   ============================================================================ */
+.demo-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.tabs-wrapper {
     display: flex;
+    align-items: center;
     justify-content: center;
     gap: 8px;
-    flex-wrap: wrap;
+    position: relative;
+    padding: 16px 0;
 }
 
-.demo-tab {
+.tab-btn {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 14px 28px;
+    padding: 10px 24px;
     background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
-    font-size: 16px;
-    font-weight: 600;
+    border-radius: var(--radius-lg);
+    font-size: 15px;
+    font-weight: 500;
     color: var(--gray-600);
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
+    z-index: 2;
 }
 
-.demo-tab i {
-    font-size: 20px;
+.tab-btn:hover {
+    color: var(--orange-600);
+    background: var(--orange-50);
 }
 
-.demo-tab:hover {
-    color: var(--orange-500);
+.tab-btn.active {
+    color: var(--orange-600);
+    font-weight: 600;
 }
 
-.demo-tab.active {
-    color: var(--orange-500);
-    border-bottom-color: var(--orange-500);
+.tab-icon {
+    transition: transform 0.2s;
 }
 
-/* Content Panels */
-.demo-content-section {
-    padding: 60px 0;
-    background: var(--white);
+.tab-btn:hover .tab-icon {
+    transform: translateY(-1px);
+}
+
+.tab-slider {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    height: 32px;
+    background: var(--orange-100);
+    border-radius: var(--radius-lg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+    opacity: 0;
+}
+
+.tab-btn.active ~ .tab-slider {
+    opacity: 1;
+}
+
+/* ============================================================================
+   PANELS
+   ============================================================================ */
+.demo-panels {
+    padding: 64px 0;
 }
 
 .demo-panel {
     display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .demo-panel.active {
     display: block;
-    animation: fadeIn 0.5s ease;
+    opacity: 1;
+    transform: translateY(0);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.demo-grid {
+.panel-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 60px;
+    gap: 64px;
     align-items: center;
 }
 
-.demo-grid.reverse {
+.panel-grid.reverse {
     direction: rtl;
 }
 
-.demo-grid.reverse .demo-description {
+.panel-grid.reverse .panel-content {
     direction: ltr;
 }
 
-/* Mockups */
-.demo-mockup {
+/* ============================================================================
+   VISUAL CARDS
+   ============================================================================ */
+.panel-visual {
+    position: relative;
+}
+
+.visual-card {
     background: var(--white);
     border: 1px solid var(--gray-200);
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
+    transition: transform 0.3s;
 }
 
-.demo-mockup.large {
-    transform: scale(1.05);
+.visual-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 40px -20px rgba(0,0,0,0.2);
 }
 
-.mockup-header {
-    background: var(--gray-50);
-    padding: 16px;
+.card-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--gray-50);
     border-bottom: 1px solid var(--gray-200);
 }
 
-.mockup-dot {
-    width: 12px;
-    height: 12px;
+.header-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.header-dots span {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--gray-300);
 }
 
-.mockup-dot:first-child { background: #ef4444; }
-.mockup-dot:nth-child(2) { background: #eab308; }
-.mockup-dot:nth-child(3) { background: #10b981; }
+.header-dots span:first-child { background: #ff5f57; }
+.header-dots span:nth-child(2) { background: #ffbd2e; }
+.header-dots span:nth-child(3) { background: #28c840; }
 
-.mockup-title {
-    margin-left: auto;
-    font-size: 14px;
+.header-title {
+    font-size: 13px;
     font-weight: 600;
     color: var(--gray-600);
+    letter-spacing: -0.01em;
 }
 
-.mockup-body {
-    padding: 24px;
+.card-body {
+    padding: 20px;
 }
 
-/* Stock Table */
-.stock-table {
-    width: 100%;
+/* Stock Items */
+.stock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.stock-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--gray-100);
+.stock-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-100);
+    transition: all 0.2s;
 }
 
-.stock-row.header {
-    color: var(--gray-500);
-    font-weight: 600;
-    font-size: 13px;
-    text-transform: uppercase;
+.stock-item:hover {
+    border-color: var(--orange-200);
+    background: var(--orange-50);
 }
 
-.stock-badge {
-    display: inline-block;
-    padding: 4px 8px;
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.item-icon {
+    font-size: 18px;
+}
+
+.item-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--gray-800);
+    margin-bottom: 2px;
+}
+
+.item-ref {
+    font-size: 11px;
+    color: var(--gray-400);
+    font-family: monospace;
+}
+
+.item-stock {
+    padding: 4px 10px;
     border-radius: 20px;
     font-size: 12px;
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+}
+
+.item-stock.critical { background: #fee2e2; color: #dc2626; }
+.item-stock.warning { background: var(--orange-100); color: var(--orange-700); }
+.item-stock.success { background: #dcfce7; color: #16a34a; }
+
+.item-price {
     font-weight: 600;
-}
-
-.stock-badge.critical {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.stock-badge.warning {
-    background: var(--orange-100);
-    color: var(--orange-600);
-}
-
-.stock-badge.success {
-    background: #dcfce7;
-    color: #16a34a;
+    color: var(--gray-700);
+    font-size: 14px;
 }
 
 /* Sale Preview */
 .sale-preview {
     background: var(--gray-50);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     padding: 20px;
 }
 
 .sale-client {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--gray-200);
     margin-bottom: 16px;
 }
 
-.sale-client i {
-    color: var(--orange-500);
-    font-size: 20px;
+.client-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+.client-details {
+    flex: 1;
+}
+
+.client-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gray-800);
+    margin-bottom: 2px;
+}
+
+.client-status {
+    font-size: 11px;
+    color: var(--gray-400);
+}
+
+.client-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    background: var(--orange-100);
+    color: var(--orange-700);
+    border-radius: 20px;
 }
 
 .sale-items {
@@ -541,347 +931,487 @@
     display: flex;
     justify-content: space-between;
     padding: 8px 0;
-    color: var(--gray-700);
+    font-size: 13px;
+    color: var(--gray-600);
+    border-bottom: 1px dashed var(--gray-200);
 }
 
 .sale-total {
     display: flex;
     justify-content: space-between;
-    padding: 16px 0;
+    padding: 12px 0;
     border-top: 2px solid var(--gray-200);
-    font-weight: 700;
-    font-size: 18px;
+    font-weight: 600;
 }
 
 .total-amount {
-    color: var(--orange-500);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--orange-600);
 }
 
 .sale-actions {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-top: 16px;
 }
 
-.sale-btn {
+.btn-secondary, .btn-primary {
     flex: 1;
     padding: 10px;
-    text-align: center;
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: 10px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 600;
-    font-size: 14px;
-    cursor: default;
+    border: none;
+    opacity: 0.7;
 }
 
-.sale-btn.primary {
-    background: var(--orange-500);
-    border-color: var(--orange-500);
-    color: var(--white);
-}
-
-/* Clients Preview */
-.clients-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.client-card {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px;
-    background: var(--gray-50);
-    border-radius: 16px;
-}
-
-.client-avatar {
-    width: 48px;
-    height: 48px;
-    background: var(--orange-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--orange-600);
-    font-weight: 700;
-    font-size: 16px;
-}
-
-.client-info {
-    flex: 1;
-}
-
-.client-info strong {
-    display: block;
-    margin-bottom: 4px;
-}
-
-.client-info span {
-    display: block;
-    font-size: 13px;
-    color: var(--gray-500);
-}
-
-.client-stats {
-    text-align: right;
-}
-
-.client-stats span {
-    display: block;
-    font-size: 13px;
+.btn-secondary {
+    background: white;
+    border: 1px solid var(--gray-200);
     color: var(--gray-600);
 }
 
-.client-stats span:first-child {
+.btn-primary {
+    background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+    color: white;
+}
+
+/* Clients List */
+.clients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.client-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-100);
+}
+
+.row-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
     font-weight: 600;
-    color: var(--orange-500);
+    font-size: 13px;
+}
+
+.row-info {
+    flex: 1;
+}
+
+.row-info strong {
+    display: block;
+    font-size: 14px;
+    color: var(--gray-800);
+    margin-bottom: 2px;
+}
+
+.row-info span {
+    font-size: 11px;
+    color: var(--gray-400);
 }
 
 /* Reports Preview */
 .reports-preview {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
 }
 
-.report-chart {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    height: 100px;
-}
-
-.chart-bar {
-    flex: 1;
-    background: var(--orange-200);
-    border-radius: 4px;
-}
-
-.report-stats {
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
 
-.report-stat {
-    text-align: center;
-    padding: 12px;
+.stat-box {
     background: var(--gray-50);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
+    padding: 12px;
+    border: 1px solid var(--gray-100);
 }
 
-.report-stat span {
+.stat-label {
     display: block;
-    font-size: 12px;
-    color: var(--gray-500);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-400);
     margin-bottom: 4px;
 }
 
-.report-stat strong {
+.stat-value {
     display: block;
-    font-size: 14px;
-    color: var(--gray-900);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 2px;
 }
 
-/* Demo Description */
-.demo-description {
+.stat-trend {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.stat-trend.up { color: #10b981; }
+
+.chart-container {
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 120px;
+}
+
+.bar {
+    flex: 1;
+    background: var(--orange-200);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s;
+}
+
+.bar.active {
+    background: linear-gradient(180deg, var(--orange-400), var(--orange-600));
+}
+
+/* Visual Badges */
+.visual-badge {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+    box-shadow: var(--shadow-md);
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.stock-badge-1 {
+    top: -12px;
+    right: -12px;
+    color: #16a34a;
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.stock-badge-2 {
+    bottom: -12px;
+    left: -12px;
+    color: var(--orange-700);
+    border-color: var(--orange-200);
+    background: var(--orange-50);
+}
+
+.sales-badge {
+    bottom: -12px;
+    right: -12px;
+}
+
+.badge-dot-pulse {
+    width: 6px;
+    height: 6px;
+    background: var(--orange-500);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+/* ============================================================================
+   PANEL CONTENT
+   ============================================================================ */
+.panel-content {
     padding: 20px;
 }
 
-.demo-badge {
-    display: inline-block;
-    padding: 6px 14px;
-    background: var(--orange-100);
-    border-radius: 30px;
+.content-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--orange-50);
+    border-radius: 100px;
     font-size: 13px;
     font-weight: 600;
     color: var(--orange-600);
     margin-bottom: 20px;
+    border: 1px solid var(--orange-200);
 }
 
-.demo-description h2 {
-    font-size: 32px;
+.content-title {
+    font-size: clamp(28px, 3vw, 36px);
     font-weight: 700;
+    line-height: 1.2;
     color: var(--gray-900);
     margin-bottom: 16px;
 }
 
-.demo-description p {
-    font-size: 16px;
-    color: var(--gray-600);
-    margin-bottom: 24px;
-    line-height: 1.6;
+.title-accent {
+    color: var(--orange-500);
 }
 
-.demo-features-list {
+.content-text {
+    font-size: 16px;
+    color: var(--gray-600);
+    line-height: 1.7;
+    margin-bottom: 28px;
+}
+
+.content-features {
     list-style: none;
-    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
 }
 
-.demo-features-list li {
+.content-features li {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-    font-size: 16px;
-    color: var(--gray-700);
-}
-
-.demo-features-list i {
-    color: var(--orange-500);
-    font-size: 20px;
-}
-
-.demo-note {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    background: var(--orange-50);
-    border-radius: 12px;
-    color: var(--gray-700);
+    gap: 8px;
     font-size: 14px;
+    color: var(--gray-700);
 }
 
-.demo-note i {
-    color: var(--orange-500);
-    font-size: 20px;
+.feature-check {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
 }
 
-.demo-stats {
-    display: flex;
-    gap: 30px;
-    margin-top: 30px;
+/* ============================================================================
+   CTA SECTION
+   ============================================================================ */
+.demo-cta {
+    position: relative;
+    padding: 100px 0;
+    overflow: hidden;
 }
 
-.demo-stat {
+.cta-background {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--gray-900), #000000);
+    pointer-events: none;
+}
+
+.cta-background::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(249,115,22,0.2), transparent 50%);
+}
+
+.cta-content {
+    position: relative;
+    z-index: 2;
     text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
-.stat-number {
-    display: block;
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--orange-500);
-    margin-bottom: 4px;
-}
-
-.stat-label {
+.cta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: rgba(249,115,22,0.2);
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: 100px;
     font-size: 13px;
-    color: var(--gray-500);
+    font-weight: 600;
+    color: var(--orange-400);
+    margin-bottom: 24px;
+    backdrop-filter: blur(4px);
 }
 
-/* CTA Section */
-.demo-cta-section {
-    padding: 80px 0;
-    background: var(--gray-50);
-}
-
-.demo-cta-card {
-    background: var(--white);
-    border-radius: 30px;
-    padding: 60px;
-    text-align: center;
-    border: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-lg);
-}
-
-.demo-cta-card h2 {
-    font-size: 36px;
+.cta-title {
+    font-size: clamp(32px, 4vw, 42px);
     font-weight: 700;
-    color: var(--gray-900);
+    color: white;
     margin-bottom: 16px;
+    line-height: 1.2;
 }
 
-.demo-cta-card p {
-    font-size: 18px;
-    color: var(--gray-600);
+.cta-text {
+    font-size: 16px;
+    color: var(--gray-400);
     margin-bottom: 32px;
 }
 
-.demo-cta-actions {
+.cta-buttons {
     display: flex;
     gap: 16px;
     justify-content: center;
-    margin-bottom: 24px;
 }
 
-.small-note {
-    font-size: 13px;
-    color: var(--gray-500);
+.cta-btn-primary, .cta-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: var(--radius-lg);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
 }
 
-/* Responsive */
+.cta-btn-primary {
+    background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+    color: white;
+    box-shadow: 0 8px 20px rgba(249,115,22,0.3);
+}
+
+.cta-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(249,115,22,0.4);
+}
+
+.cta-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--gray-700);
+    color: var(--gray-300);
+}
+
+.cta-btn-secondary:hover {
+    border-color: var(--gray-500);
+    color: white;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
 @media (max-width: 1024px) {
-    .demo-grid {
+    .panel-grid {
         grid-template-columns: 1fr;
         gap: 40px;
     }
     
-    .demo-grid.reverse {
+    .panel-grid.reverse {
         direction: ltr;
     }
     
-    .demo-mockup.large {
-        transform: none;
+    .visual-badge {
+        display: none;
     }
 }
 
 @media (max-width: 768px) {
-    .demo-header h1 {
+    .container {
+        padding: 0 20px;
+    }
+    
+    .tabs-wrapper {
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 12px 0;
+    }
+    
+    .tab-btn {
+        padding: 8px 16px;
+        white-space: nowrap;
+    }
+    
+    .content-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+    }
+    
+    .cta-btn-primary, .cta-btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
         font-size: 32px;
     }
     
-    .demo-tabs-container {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .demo-tab {
-        justify-content: center;
-    }
-    
-    .demo-cta-card {
-        padding: 40px 20px;
-    }
-    
-    .demo-cta-actions {
-        flex-direction: column;
-    }
-    
-    .demo-stats {
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .report-stats {
-        grid-template-columns: 1fr;
+    .hero-description {
+        font-size: 16px;
     }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const tabs = document.querySelectorAll('.demo-tab');
+    const tabs = document.querySelectorAll('.tab-btn');
     const panels = document.querySelectorAll('.demo-panel');
+    const slider = document.getElementById('tabSlider');
+    
+    function updateSlider(activeTab) {
+        if (!slider || !activeTab) return;
+        
+        const tabRect = activeTab.getBoundingClientRect();
+        const tabsRect = activeTab.parentElement.getBoundingClientRect();
+        
+        slider.style.width = tabRect.width + 'px';
+        slider.style.left = (activeTab.offsetLeft) + 'px';
+        slider.style.opacity = '1';
+    }
     
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            // Désactiver tous les tabs
+            // Update tabs
             tabs.forEach(t => t.classList.remove('active'));
-            // Activer le tab cliqué
             tab.classList.add('active');
             
-            // Cacher tous les panels
-            panels.forEach(panel => panel.classList.remove('active'));
+            // Update slider
+            updateSlider(tab);
             
-            // Afficher le panel correspondant
-            const tabId = tab.dataset.tab;
-            document.getElementById(tabId + '-demo').classList.add('active');
+            // Update panels
+            const targetId = tab.dataset.tab + '-panel';
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+                if (panel.id === targetId) {
+                    panel.classList.add('active');
+                }
+            });
         });
+    });
+    
+    // Initialize slider
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab) {
+        updateSlider(activeTab);
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab) {
+            updateSlider(activeTab);
+        }
     });
 });
 </script>
