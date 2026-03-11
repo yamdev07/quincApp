@@ -4,6 +4,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Tenant extends Model
 {
@@ -11,6 +12,7 @@ class Tenant extends Model
         'name',
         'company_name',
         'domain',
+        'subdomain', // Ajouté
         'database_name',
         'db_username',
         'db_password',
@@ -21,12 +23,36 @@ class Tenant extends Model
         'is_active',
         'subscription_ends_at',
         'settings',
+        
+        // 👇 NOUVELLES COLONNES D'ABONNEMENT
+        'subscription_price',
+        'billing_cycle',
+        'subscription_start_date',
+        'subscription_end_date',
+        'has_trial',
+        'trial_days',
+        'trial_ends_at',
+        'payment_status',
+        'last_payment_date',
+        'last_payment_amount',
+        'stripe_customer_id',
+        'stripe_subscription_id',
+        'paypal_subscription_id',
+        'subscription_metadata',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'subscription_ends_at' => 'datetime',
         'settings' => 'array',
+        
+        // 👇 NOUVEAUX CASTS
+        'subscription_start_date' => 'date',
+        'subscription_end_date' => 'date',
+        'trial_ends_at' => 'date',
+        'last_payment_date' => 'date',
+        'subscription_metadata' => 'array',
+        'has_trial' => 'boolean',
     ];
 
     /**
@@ -121,7 +147,104 @@ class Tenant extends Model
     }
 
     /**
-     * Vérifier si le tenant est actif
+     * 👇 HISTORIQUE DES ABONNEMENTS
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * 👇 ABONNEMENT ACTIF
+     */
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+                    ->where('status', 'active')
+                    ->where('end_date', '>', now())
+                    ->latest();
+    }
+
+    // =====================================================
+    // ✅ MÉTHODES DE GESTION DES ABONNEMENTS
+    // =====================================================
+
+    /**
+     * Vérifier si l'abonnement est actif
+     */
+    public function hasActiveSubscription(): bool
+    {
+        // Si en période d'essai
+        if ($this->payment_status === 'trial' && $this->trial_ends_at && $this->trial_ends_at->isFuture()) {
+            return true;
+        }
+        
+        // Si payé et pas expiré
+        return $this->payment_status === 'paid' 
+            && $this->subscription_end_date 
+            && $this->subscription_end_date->isFuture();
+    }
+
+    /**
+     * Vérifier si l'abonnement est expiré
+     */
+    public function isExpired(): bool
+    {
+        if ($this->payment_status === 'trial') {
+            return $this->trial_ends_at && $this->trial_ends_at->isPast();
+        }
+        
+        return $this->subscription_end_date && $this->subscription_end_date->isPast();
+    }
+
+    /**
+     * Vérifier si le paiement est en retard
+     */
+    public function isOverdue(): bool
+    {
+        return $this->payment_status === 'overdue';
+    }
+
+    /**
+     * Jours restants avant expiration
+     */
+    public function daysRemaining(): int
+    {
+        if ($this->payment_status === 'trial' && $this->trial_ends_at) {
+            return max(0, Carbon::now()->diffInDays($this->trial_ends_at, false));
+        }
+        
+        if ($this->payment_status === 'paid' && $this->subscription_end_date) {
+            return max(0, Carbon::now()->diffInDays($this->subscription_end_date, false));
+        }
+        
+        return 0;
+    }
+
+    /**
+     * Prix formaté (en euros ou FCFA)
+     */
+    public function getFormattedPriceAttribute(): string
+    {
+        return number_format($this->subscription_price / 100, 0, ',', ' ') . ' FCFA';
+    }
+
+    /**
+     * Libellé du cycle de facturation
+     */
+    public function getBillingCycleLabelAttribute(): string
+    {
+        return match($this->billing_cycle) {
+            'monthly'   => 'Mensuel',
+            'quarterly' => 'Trimestriel',
+            'semester'  => 'Semestriel',
+            'yearly'    => 'Annuel',
+            default     => 'Mensuel'
+        };
+    }
+
+    /**
+     * Vérifier si le tenant est actif (ancienne méthode à conserver)
      */
     public function isActive(): bool
     {
@@ -183,5 +306,67 @@ class Tenant extends Model
                     ->where('stock', '<=', $threshold)
                     ->orderBy('stock')
                     ->get();
+    }
+
+    // =====================================================
+    // 🔍 SCOPES POUR LES REQUÊTES
+    // =====================================================
+
+    /**
+     * Scope pour les abonnements actifs
+     */
+    public function scopeActive($query)
+    {
+        return $query->where(function($q) {
+            $q->where('payment_status', 'paid')
+              ->where('subscription_end_date', '>', now())
+              ->orWhere(function($q2) {
+                  $q2->where('payment_status', 'trial')
+                      ->where('trial_ends_at', '>', now());
+              });
+        });
+    }
+
+    /**
+     * Scope pour les paiements en retard
+     */
+    public function scopeOverdue($query)
+    {
+        return $query->where('payment_status', 'overdue');
+    }
+
+    /**
+     * Scope pour les essais qui expirent bientôt
+     */
+    public function scopeTrialExpiring($query, $days = 7)
+    {
+        return $query->where('payment_status', 'trial')
+            ->where('trial_ends_at', '<=', now()->addDays($days))
+            ->where('trial_ends_at', '>', now());
+    }
+
+    /**
+     * Scope pour les abonnements qui expirent bientôt
+     */
+    public function scopeExpiringSoon($query, $days = 7)
+    {
+        return $query->where('payment_status', 'paid')
+            ->where('subscription_end_date', '<=', now()->addDays($days))
+            ->where('subscription_end_date', '>', now());
+    }
+
+    /**
+     * Scope pour les abonnements expirés
+     */
+    public function scopeExpired($query)
+    {
+        return $query->where(function($q) {
+            $q->where('payment_status', 'paid')
+              ->where('subscription_end_date', '<=', now())
+              ->orWhere(function($q2) {
+                  $q2->where('payment_status', 'trial')
+                      ->where('trial_ends_at', '<=', now());
+              });
+        });
     }
 }

@@ -35,25 +35,39 @@ class User extends Authenticatable
     }
 
     /**
+     * =====================================================
      * RELATIONS
+     * =====================================================
+     */
+    
+    /**
+     * La quincaillerie (tenant) auquel appartient l'utilisateur
      */
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
     }
 
+    /**
+     * Le propriétaire (super_admin) qui a créé cet utilisateur
+     */
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * Les employés créés par cet utilisateur (si c'est un super_admin)
+     */
     public function employees()
     {
         return $this->hasMany(User::class, 'owner_id');
     }
 
     /**
+     * =====================================================
      * VÉRIFICATIONS DE RÔLE
+     * =====================================================
      */
     public function isSuperAdminGlobal(): bool
     {
@@ -86,7 +100,9 @@ class User extends Authenticatable
     }
 
     /**
+     * =====================================================
      * VÉRIFICATIONS DE RÔLES ÉTENDUS
+     * =====================================================
      */
     public function isSuperAdminOrAdmin(): bool
     {
@@ -102,7 +118,9 @@ class User extends Authenticatable
     }
 
     /**
+     * =====================================================
      * PERMISSIONS SPÉCIFIQUES
+     * =====================================================
      */
     public function canManageUsers(): bool
     {
@@ -138,7 +156,9 @@ class User extends Authenticatable
     }
 
     /**
+     * =====================================================
      * PERMISSIONS SPÉCIFIQUES AU SUPER ADMIN GLOBAL
+     * =====================================================
      */
     public function canViewAllTenants(): bool
     {
@@ -186,6 +206,12 @@ class User extends Authenticatable
     }
 
     /**
+     * =====================================================
+     * SCOPES
+     * =====================================================
+     */
+    
+    /**
      * Récupère tous les utilisateurs de la même quincaillerie
      * ou tous les utilisateurs pour le super_admin_global
      */
@@ -198,6 +224,28 @@ class User extends Authenticatable
         $ownerId = $this->isSuperAdmin() ? $this->id : $this->owner_id;
         return $query->where('owner_id', $ownerId);
     }
+
+    /**
+     * Scope pour les utilisateurs d'un tenant spécifique
+     */
+    public function scopeByTenant($query, $tenantId)
+    {
+        return $query->where('tenant_id', $tenantId);
+    }
+
+    /**
+     * Scope pour les utilisateurs d'un rôle spécifique
+     */
+    public function scopeByRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    /**
+     * =====================================================
+     * MÉTHODES UTILITAIRES
+     * =====================================================
+     */
 
     /**
      * Récupère tous les tenants (quincailleries) accessibles
@@ -249,6 +297,67 @@ class User extends Authenticatable
     public function isGlobalOwner(): bool
     {
         // Tu peux définir ton email ici pour identification
-        return $this->email === 'ton@email.com' || $this->isSuperAdminGlobal();
+        return $this->email === 'admin@quincaapp.com' || $this->isSuperAdminGlobal();
+    }
+
+    /**
+     * Récupère le nombre d'employés (si c'est un super_admin)
+     */
+    public function getEmployeesCountAttribute(): int
+    {
+        if ($this->isSuperAdmin()) {
+            return $this->employees()->count();
+        }
+        return 0;
+    }
+
+    /**
+     * Vérifie si l'utilisateur peut accéder au dashboard
+     */
+    public function canAccessDashboard(): bool
+    {
+        return true; // Tous les utilisateurs connectés peuvent accéder au dashboard
+    }
+
+    /**
+     * Récupère le dashboard approprié selon le rôle
+     */
+    public function getDashboardRoute(): string
+    {
+        if ($this->isSuperAdminGlobal()) {
+            return route('super-admin.dashboard');
+        }
+        
+        return route('dashboard');
+    }
+
+    /**
+     * =====================================================
+     * MÉTHODES POUR L'ABONNEMENT
+     * =====================================================
+     */
+
+    /**
+     * Vérifie si le tenant de l'utilisateur a un abonnement actif
+     */
+    public function hasActiveTenantSubscription(): bool
+    {
+        if ($this->isSuperAdminGlobal()) {
+            return true; // Le global n'est pas concerné
+        }
+        
+        return $this->tenant && $this->tenant->hasActiveSubscription();
+    }
+
+    /**
+     * Récupère les jours restants de l'abonnement du tenant
+     */
+    public function getTenantDaysRemainingAttribute(): int
+    {
+        if ($this->isSuperAdminGlobal() || !$this->tenant) {
+            return 365; // Valeur par défaut
+        }
+        
+        return $this->tenant->daysRemaining();
     }
 }

@@ -11,9 +11,18 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\LandingController; // 👈 NOUVEAU
 use App\Models\Sale;
 use App\Models\Product;
 use App\Models\Client;
+
+// ======================
+// ROUTES PUBLIQUES (VITRINE)
+// ======================
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/demo', [LandingController::class, 'demo'])->name('demo');
+Route::get('/tarifs', [LandingController::class, 'pricing'])->name('pricing');
+Route::post('/inscription', [LandingController::class, 'register'])->name('register.tenant');
 
 // Route de test
 Route::view('/welcome', 'welcome');
@@ -39,6 +48,11 @@ Route::middleware(['auth', 'super_admin_global'])->prefix('super-admin')->name('
     Route::get('/tenants/{tenant}', [SuperAdminController::class, 'showTenant'])->name('tenants.show');
     Route::patch('/tenants/{tenant}/toggle', [SuperAdminController::class, 'toggleTenant'])->name('tenants.toggle');
     Route::delete('/tenants/{tenant}', [SuperAdminController::class, 'destroyTenant'])->name('tenants.destroy');
+    
+    // 👇 NOUVELLES ROUTES PAIEMENTS
+    Route::get('/tenants/{tenant}/payments', [SuperAdminController::class, 'managePayments'])->name('tenants.payments');
+    Route::post('/tenants/{tenant}/payments', [SuperAdminController::class, 'markPaymentReceived'])->name('tenants.payments.store');
+    Route::post('/tenants/{tenant}/extend', [SuperAdminController::class, 'extendSubscription'])->name('tenants.extend');
 });
 
 // ======================
@@ -111,8 +125,8 @@ Route::middleware(['auth'])->group(function () {
     // ----------------------
     // TABLEAU DE BORD PRINCIPAL
     // ----------------------
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.alt');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Note: '/' redirige vers landing, plus vers dashboard
 
     // ----------------------
     // VENTES - Accessible à tous les utilisateurs authentifiés
