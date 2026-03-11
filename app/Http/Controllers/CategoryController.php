@@ -42,6 +42,7 @@ class CategoryController extends Controller
     // Affiche toutes les catégories principales avec leurs sous-catégories
     public function index()
     {
+        // 👈 AJOUT DU FILTRE PAR OWNER_ID
         $categories = Category::with(['children' => function($query) {
                 $query->withCount('products')
                       ->orderBy('name');
@@ -49,6 +50,7 @@ class CategoryController extends Controller
             ->withCount(['products as total_products'])
             ->withSum('products as total_stock', 'stock')
             ->whereNull('parent_id')
+            ->where('owner_id', Auth::id()) // 👈 FILTRE IMPORTANT !
             ->orderBy('name')
             ->get();
         
@@ -65,6 +67,7 @@ class CategoryController extends Controller
             ->with(['products' => function($query) {
                 $query->orderBy('name')->with('supplier');
             }])
+            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
             ->findOrFail($id);
         
         $this->authorizeCategoryAccess($category);
@@ -72,6 +75,7 @@ class CategoryController extends Controller
         // Toutes les catégories principales pour les menus
         $mainCategories = Category::whereNull('parent_id')
             ->where('id', '!=', $id)
+            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
             ->orderBy('name')
             ->get();
         
@@ -111,6 +115,7 @@ class CategoryController extends Controller
         $this->authorizeAdmin();
         
         $mainCategories = Category::whereNull('parent_id')
+            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
             ->orderBy('name')
             ->get();
             
@@ -130,8 +135,8 @@ class CategoryController extends Controller
 
         // Vérifier que la catégorie parente appartient à la même quincaillerie
         if ($request->parent_id) {
-            $parentCategory = Category::find($request->parent_id);
-            if (!Auth::user()->hasAccessTo($parentCategory)) {
+            $parentCategory = Category::where('owner_id', Auth::id())->find($request->parent_id);
+            if (!$parentCategory) {
                 return back()->with('error', 'Catégorie parente invalide.');
             }
         }
@@ -140,6 +145,7 @@ class CategoryController extends Controller
             'name' => $request->name,
             'parent_id' => $request->parent_id,
             'description' => $request->description,
+            'owner_id' => Auth::id(), // 👈 AJOUT DE L'OWNER_ID
         ]);
 
         $message = $request->parent_id 
@@ -154,11 +160,15 @@ class CategoryController extends Controller
     {
         $this->authorizeAdmin();
         
-        $category = Category::with('parent')->findOrFail($id);
+        $category = Category::with('parent')
+            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->findOrFail($id);
+            
         $this->authorizeCategoryAccess($category);
         
         // Récupérer toutes les catégories principales (sauf elle-même et ses enfants)
         $mainCategories = Category::whereNull('parent_id')
+            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
             ->where('id', '!=', $id)
             ->whereNotIn('id', function($query) use ($id) {
                 $query->select('id')
@@ -176,19 +186,19 @@ class CategoryController extends Controller
     {
         $this->authorizeAdmin();
         
-        $category = Category::findOrFail($id);
+        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
         $this->authorizeCategoryAccess($category);
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'name' => 'required|string|max:255|unique:categories,name,' . $category->id . ',id,owner_id,' . Auth::id(),
             'parent_id' => 'nullable|exists:categories,id|different:id',
             'description' => 'nullable|string|max:1000',
         ]);
 
         // Vérifier que la catégorie parente appartient à la même quincaillerie
         if ($request->parent_id) {
-            $parentCategory = Category::find($request->parent_id);
-            if (!Auth::user()->hasAccessTo($parentCategory)) {
+            $parentCategory = Category::where('owner_id', Auth::id())->find($request->parent_id);
+            if (!$parentCategory) {
                 return back()->with('error', 'Catégorie parente invalide.');
             }
         }
@@ -233,7 +243,10 @@ class CategoryController extends Controller
     {
         $this->authorizeAdmin();
         
-        $category = Category::withCount(['products', 'children'])->findOrFail($id);
+        $category = Category::withCount(['products', 'children'])
+            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->findOrFail($id);
+            
         $this->authorizeCategoryAccess($category);
         
         // Vérifier si la catégorie peut être supprimée
@@ -248,8 +261,8 @@ class CategoryController extends Controller
         if ($category->children_count > 0) {
             if ($category->parent_id) {
                 // Vérifier que le parent appartient à la même quincaillerie
-                $parentCategory = Category::find($category->parent_id);
-                if (!Auth::user()->hasAccessTo($parentCategory)) {
+                $parentCategory = Category::where('owner_id', Auth::id())->find($category->parent_id);
+                if (!$parentCategory) {
                     return back()->with('error', 'Impossible de transférer les sous-catégories.');
                 }
                 $category->children()->update(['parent_id' => $category->parent_id]);
@@ -269,7 +282,7 @@ class CategoryController extends Controller
     {
         $this->authorizeAdmin();
         
-        $category = Category::findOrFail($id);
+        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
         $this->authorizeCategoryAccess($category);
         
         $request->validate([
@@ -278,8 +291,8 @@ class CategoryController extends Controller
         ]);
         
         // Vérifier que la nouvelle catégorie appartient à la même quincaillerie
-        $newCategory = Category::find($request->new_category_id);
-        if (!Auth::user()->hasAccessTo($newCategory)) {
+        $newCategory = Category::where('owner_id', Auth::id())->find($request->new_category_id);
+        if (!$newCategory) {
             return back()->with('error', 'Catégorie de destination invalide.');
         }
         
@@ -309,17 +322,17 @@ class CategoryController extends Controller
     {
         $this->authorizeAdmin();
         
-        $category = Category::findOrFail($id);
+        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
         $this->authorizeCategoryAccess($category);
         
         $request->validate([
             'product_id' => 'required|exists:products,id',
         ]);
         
-        $product = Product::find($request->product_id);
+        $product = Product::where('owner_id', Auth::id())->find($request->product_id);
         
         // Vérifier que le produit appartient à la même quincaillerie
-        if (!Auth::user()->hasAccessTo($product)) {
+        if (!$product) {
             return back()->with('error', 'Produit invalide.');
         }
         
@@ -335,20 +348,17 @@ class CategoryController extends Controller
     {
         $this->authorizeAdmin();
         
-        $category = Category::findOrFail($id);
+        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
         $this->authorizeCategoryAccess($category);
         
-        $product = Product::findOrFail($productId);
-        if (!Auth::user()->hasAccessTo($product)) {
-            return back()->with('error', 'Produit invalide.');
-        }
+        $product = Product::where('owner_id', Auth::id())->findOrFail($productId);
         
         $request->validate([
             'target_category_id' => 'required|exists:categories,id|different:' . $id,
         ]);
         
-        $targetCategory = Category::find($request->target_category_id);
-        if (!Auth::user()->hasAccessTo($targetCategory)) {
+        $targetCategory = Category::where('owner_id', Auth::id())->find($request->target_category_id);
+        if (!$targetCategory) {
             return back()->with('error', 'Catégorie de destination invalide.');
         }
         
@@ -364,7 +374,7 @@ class CategoryController extends Controller
     {
         $category = Category::with(['products' => function($query) {
             $query->with('supplier')->orderBy('name')->paginate(20);
-        }])->findOrFail($id);
+        }])->where('owner_id', Auth::id())->findOrFail($id);
         
         $this->authorizeCategoryAccess($category);
         
@@ -376,7 +386,10 @@ class CategoryController extends Controller
     // Statistiques avancées de la catégorie
     public function detailedStats($id)
     {
-        $category = Category::with(['products', 'children.products'])->findOrFail($id);
+        $category = Category::with(['products', 'children.products'])
+            ->where('owner_id', Auth::id())
+            ->findOrFail($id);
+            
         $this->authorizeCategoryAccess($category);
         
         $allProducts = $category->getAllProducts();

@@ -238,6 +238,34 @@
         box-shadow: 0 8px 20px rgba(220,38,38,0.3);
     }
 
+    /* Access denied */
+    .sme-access-denied {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        text-align: center;
+        animation: fadeUp 0.35s ease both;
+        margin-bottom: 24px;
+    }
+    .sme-access-denied svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin: 0 auto 16px;
+    }
+    .sme-access-denied h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .sme-access-denied p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 24px;
+    }
+
     /* Alertes */
     .sme-alert {
         display: flex;
@@ -480,33 +508,6 @@
             grid-template-columns: 1fr;
         }
     }
-
-    /* Accès refusé */
-    .sme-access-denied {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        border-radius: var(--radius);
-        padding: 32px;
-        text-align: center;
-        animation: fadeUp 0.35s ease both;
-    }
-    .sme-access-denied svg {
-        width: 48px;
-        height: 48px;
-        stroke: var(--danger);
-        margin: 0 auto 16px;
-    }
-    .sme-access-denied h2 {
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--danger);
-        margin-bottom: 8px;
-    }
-    .sme-access-denied p {
-        font-size: 14px;
-        color: var(--text-2);
-        margin-bottom: 24px;
-    }
 </style>
 @endsection
 
@@ -514,7 +515,7 @@
 <div class="sme-page">
 
     {{-- Vérification des autorisations --}}
-    @if(auth()->user()->role !== 'admin')
+    @if(!auth()->user()->isSuperAdminGlobal() && !auth()->user()->isSuperAdmin() && !auth()->user()->isAdmin())
         <div class="sme-access-denied">
             <svg viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -528,8 +529,7 @@
                 Retour aux fournisseurs
             </a>
         </div>
-        @php return; @endphp
-    @endif
+    @else
 
     {{-- HEADER --}}
     <div class="sme-header">
@@ -566,6 +566,18 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="sme-alert sme-alert-error">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+                <p class="font-semibold">Erreur</p>
+                <p class="text-sm">{{ session('error') }}</p>
+            </div>
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="sme-alert sme-alert-error">
             <svg viewBox="0 0 24 24" stroke-width="2">
@@ -573,7 +585,11 @@
             </svg>
             <div>
                 <p class="font-semibold">Erreur de validation</p>
-                <p class="text-sm">Veuillez corriger les erreurs dans le formulaire.</p>
+                <ul style="list-style:disc; margin-left:16px; margin-top:4px;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         </div>
     @endif
@@ -595,7 +611,8 @@
         </div>
 
         <div class="sme-card-body">
-            <form action="{{ route('suppliers.update', $supplier->id) }}" method="POST">
+            {{-- 👈 CORRECTION ICI : route('admin.suppliers.update', $supplier->id) --}}
+            <form action="{{ route('admin.suppliers.update', $supplier->id) }}" method="POST">
                 @csrf
                 @method('PUT')
 
@@ -682,7 +699,7 @@
                                name="phone" 
                                value="{{ old('phone', $supplier->phone) }}" 
                                class="sme-input @error('phone') error @enderror"
-                               placeholder="+33 1 23 45 67 89">
+                               placeholder="+221 77 123 45 67">
                     </div>
                     @error('phone')
                         <p class="sme-error">
@@ -748,6 +765,8 @@
             </div>
         </div>
     </div>
+
+    @endif {{-- Fin de la condition d'autorisation --}}
 </div>
 
 <script>
@@ -755,7 +774,8 @@ function confirmDelete() {
     if (confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce fournisseur ? Cette action est irréversible.')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ route('suppliers.destroy', $supplier->id) }}';
+        {{-- 👈 CORRECTION ICI : route('admin.suppliers.destroy', $supplier->id) --}}
+        form.action = '{{ route('admin.suppliers.destroy', $supplier->id) }}';
         
         const csrf = document.createElement('input');
         csrf.type = 'hidden';

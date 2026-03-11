@@ -118,6 +118,34 @@
         margin-left: 8px;
     }
 
+    /* Access denied */
+    .sp-access-denied {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        text-align: center;
+        animation: fadeUp 0.35s ease both;
+        margin-bottom: 24px;
+    }
+    .sp-access-denied svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin: 0 auto 16px;
+    }
+    .sp-access-denied h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .sp-access-denied p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 24px;
+    }
+
     /* Boutons */
     .btn-primary {
         display: inline-flex;
@@ -612,11 +640,35 @@
         color: #991b1b;
         font-size: 13px;
     }
+
+    /* Text colors */
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .text-yellow-600 { color: #b45309; }
+    .text-green-600 { color: var(--success); }
+    .text-red-600 { color: var(--danger); }
 </style>
 @endsection
 
 @section('content')
 <div class="sp-edit-page">
+
+    {{-- Vérification d'accès --}}
+    @if(!auth()->user()->canManageStock() || !(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+        <div class="sp-access-denied">
+            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2>Accès refusé</h2>
+            <p>Vous n'avez pas les droits pour modifier ce produit.</p>
+            <a href="{{ route('products.index') }}" class="btn-secondary">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+    @else
 
     {{-- HEADER --}}
     <div class="sp-edit-header">
@@ -727,7 +779,8 @@
         </div>
 
         <div class="sp-edit-card-body">
-            <form action="{{ route('products.update', $product->id) }}" method="POST" id="editProductForm">
+            {{-- 👈 CORRECTION ICI : route('admin.products.update', $product->id) au lieu de route('products.update', $product->id) --}}
+            <form action="{{ route('admin.products.update', $product->id) }}" method="POST" id="editProductForm">
                 @csrf
                 @method('PUT')
 
@@ -945,7 +998,7 @@
                             Voir le produit
                         </a>
                         
-                        @if(auth()->user()->role === 'admin')
+                        @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                             <button type="button" 
                                     onclick="if(confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce produit ?')) document.getElementById('deleteForm').submit();"
                                     class="btn-danger">
@@ -978,8 +1031,8 @@
     </div>
 
     {{-- DELETE FORM --}}
-    @if(auth()->user()->role === 'admin')
-    <form id="deleteForm" action="{{ route('products.destroy', $product->id) }}" method="POST" style="display:none;">
+    @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
+    <form id="deleteForm" action="{{ route('admin.products.destroy', $product->id) }}" method="POST" style="display:none;">
         @csrf
         @method('DELETE')
     </form>
@@ -1031,6 +1084,8 @@
             </div>
         </div>
     </div>
+    
+    @endif {{-- Fin de la condition d'autorisation --}}
 </div>
 @endsection
 
@@ -1060,27 +1115,41 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fonction de mise à jour de l'aperçu
     function updatePreview() {
         // Nom
-        previewName.textContent = nameInput.value || 'Non défini';
+        if (previewName) previewName.textContent = nameInput.value || 'Non défini';
         
         // Stock
-        const stock = parseInt(stockInput.value) || 0;
-        previewStock.innerHTML = `<span class="${stock > 10 ? 'text-green-600' : (stock > 0 ? 'text-yellow-600' : 'text-red-600')}">${stock} unités</span>`;
+        if (previewStock && stockInput) {
+            const stock = parseInt(stockInput.value) || 0;
+            previewStock.innerHTML = `<span class="${stock > 10 ? 'text-success' : (stock > 0 ? 'text-yellow-600' : 'text-danger')}">${stock} unités</span>`;
+        }
         
         // Prix
-        previewPurchase.textContent = (parseInt(purchasePriceInput.value) || 0).toLocaleString('fr-FR') + ' CFA';
-        previewSale.textContent = (parseInt(salePriceInput.value) || 0).toLocaleString('fr-FR') + ' CFA';
+        if (previewPurchase && purchasePriceInput) {
+            previewPurchase.textContent = (parseInt(purchasePriceInput.value) || 0).toLocaleString('fr-FR') + ' CFA';
+        }
+        if (previewSale && salePriceInput) {
+            previewSale.textContent = (parseInt(salePriceInput.value) || 0).toLocaleString('fr-FR') + ' CFA';
+        }
         
         // Catégorie
-        previewCategory.textContent = categorySelect.options[categorySelect.selectedIndex]?.text || 'Non définie';
+        if (previewCategory && categorySelect) {
+            previewCategory.textContent = categorySelect.options[categorySelect.selectedIndex]?.text || 'Non définie';
+        }
         
         // Fournisseur
-        previewSupplier.textContent = supplierSelect.options[supplierSelect.selectedIndex]?.text || 'Non défini';
+        if (previewSupplier && supplierSelect) {
+            previewSupplier.textContent = supplierSelect.options[supplierSelect.selectedIndex]?.text || 'Non défini';
+        }
         
         // Description
-        previewDescription.textContent = descriptionInput.value || 'Aucune description';
+        if (previewDescription && descriptionInput) {
+            previewDescription.textContent = descriptionInput.value || 'Aucune description';
+        }
         
         // Compteur de caractères
-        charCount.textContent = descriptionInput.value.length + '/500 caractères';
+        if (charCount && descriptionInput) {
+            charCount.textContent = descriptionInput.value.length + '/500 caractères';
+        }
         
         // Calcul de la marge
         updateMargin();
@@ -1088,6 +1157,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Calcul et affichage de la marge
     function updateMargin() {
+        if (!purchasePriceInput || !salePriceInput || !marginDisplay) return;
+        
         const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
         const salePrice = parseFloat(salePriceInput.value) || 0;
         const margin = salePrice - purchasePrice;
@@ -1131,9 +1202,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Validation du formulaire
     document.getElementById('editProductForm')?.addEventListener('submit', function(e) {
-        const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-        const salePrice = parseFloat(salePriceInput.value) || 0;
-        const stock = parseInt(stockInput.value) || 0;
+        const purchasePrice = parseFloat(purchasePriceInput?.value) || 0;
+        const salePrice = parseFloat(salePriceInput?.value) || 0;
+        const stock = parseInt(stockInput?.value) || 0;
         
         if (salePrice < purchasePrice && purchasePrice > 0) {
             if (!confirm('⚠️ Le prix de vente est inférieur au prix d\'achat. Voulez-vous continuer ?')) {

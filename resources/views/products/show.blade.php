@@ -116,6 +116,34 @@
         margin-top: 4px;
     }
 
+    /* Access denied */
+    .spd-access-denied {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        text-align: center;
+        animation: fadeUp 0.35s ease both;
+        margin-bottom: 24px;
+    }
+    .spd-access-denied svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin: 0 auto 16px;
+    }
+    .spd-access-denied h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .spd-access-denied p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 24px;
+    }
+
     /* Boutons */
     .btn-primary {
         display: inline-flex;
@@ -809,6 +837,23 @@
 @section('content')
 <div class="spd-page">
 
+    {{-- Vérification d'accès --}}
+    @if(!auth()->user()->canManageStock())
+        <div class="spd-access-denied">
+            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2>Accès refusé</h2>
+            <p>Vous n'avez pas les droits pour voir ce produit.</p>
+            <a href="{{ route('products.index') }}" class="btn-secondary">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+    @else
+
     {{-- HEADER --}}
     <div class="spd-header">
         <div class="spd-header-l">
@@ -826,8 +871,8 @@
             </div>
         </div>
         <div style="display: flex; gap: 8px;">
-            @if(Auth::user() && Auth::user()->role === 'admin')
-                <a href="{{ route('products.edit', $product->id) }}" class="btn-outline">
+            @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
+                <a href="{{ route('admin.products.edit', $product->id) }}" class="btn-outline">
                     <svg viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -880,7 +925,7 @@
             </div>
             <div class="spd-stat-val">{{ number_format($product->sale_price, 0, ',', ' ') }}</div>
             <div class="spd-stat-unit">CFA/unité</div>
-            @if(Auth::user() && Auth::user()->role === 'admin' && $product->purchase_price > 0)
+            @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() && $product->purchase_price > 0)
                 <div class="spd-stat-foot">Achat: {{ number_format($product->purchase_price, 0, ',', ' ') }} CFA</div>
             @endif
         </div>
@@ -955,7 +1000,7 @@
                             <div class="spd-info-label">Fournisseur</div>
                             <div class="spd-info-value">{{ $product->supplier->name ?? 'Non spécifié' }}</div>
                         </div>
-                        @if(Auth::user() && Auth::user()->role === 'admin')
+                        @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                             <div class="spd-info-item">
                                 <div class="spd-info-label">Prix d'achat</div>
                                 <div class="spd-info-value">{{ number_format($product->purchase_price, 0, ',', ' ') }} CFA</div>
@@ -1121,7 +1166,7 @@
                 </div>
                 <div class="spd-card-body">
                     <div class="spd-actions">
-                        @if(Auth::user() && Auth::user()->role === 'admin')
+                        @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                             <button onclick="openRestockModal()" class="spd-action-btn">
                                 <svg viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1136,7 +1181,7 @@
                                 Ajuster le stock
                             </button>
 
-                            <a href="{{ route('products.edit', $product->id) }}" class="spd-action-btn">
+                            <a href="{{ route('admin.products.edit', $product->id) }}" class="spd-action-btn">
                                 <svg viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
@@ -1150,7 +1195,7 @@
                                 Voir l'historique
                             </a>
 
-                            <form action="{{ route('products.destroy', $product->id) }}" method="POST"
+                            <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
                                 onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.')" style="width:100%;">
                                 @csrf
                                 @method('DELETE')
@@ -1328,6 +1373,8 @@
             @endif
         </div>
     </div>
+    
+    @endif {{-- Fin de la condition d'autorisation --}}
 </div>
 
 {{-- MODAL RÉAPPROVISIONNEMENT - PARFAITEMENT CENTRÉE --}}
@@ -1351,7 +1398,8 @@
             <p class="text-orange-100 mt-1 text-sm">Ajouter du stock à ce produit</p>
         </div>
         
-        <form action="{{ route('products.restock', $product->id) }}" method="POST" class="p-5">
+        {{-- 👈 CORRECTION ICI : route('admin.products.restock', $product->id) --}}
+        <form action="{{ route('admin.products.restock', $product->id) }}" method="POST" class="p-5">
             @csrf
             <div class="space-y-4">
                 <div>
@@ -1420,7 +1468,8 @@
             <p class="text-orange-100 mt-1 text-sm">Ajuster manuellement le stock</p>
         </div>
         
-        <form action="{{ route('products.adjust-stock', $product->id) }}" method="POST" class="p-5">
+        {{-- 👈 CORRECTION ICI : route('admin.products.adjust-stock', $product->id) --}}
+        <form action="{{ route('admin.products.adjust-stock', $product->id) }}" method="POST" class="p-5">
             @csrf
             <div class="space-y-4">
                 <div>

@@ -574,6 +574,24 @@
 @section('content')
 <div class="sp-create-page">
 
+    {{-- Vérification d'accès --}}
+    @if(!auth()->user()->canManageStock() || !(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+        <div class="sp-create-error" style="justify-content: center; text-align: center;">
+            <svg viewBox="0 0 24 24" stroke-width="1.5" style="width:48px;height:48px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h3>Accès refusé</h3>
+            <p>Vous n'avez pas les droits pour créer un produit.</p>
+            <a href="{{ route('products.index') }}" class="btn-outline" style="margin-top:16px;">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+        @php return; @endphp
+    @endif
+
     {{-- HEADER --}}
     <div class="sp-create-header">
         <div class="sp-create-header-l">
@@ -637,7 +655,7 @@
         </div>
 
         <div class="sp-create-card-body">
-            <form action="{{ route('products.store') }}" method="POST" id="createProductForm">
+            <form action="{{ route('admin.products.store') }}" method="POST" id="createProductForm">
                 @csrf
 
                 {{-- Nom du produit --}}

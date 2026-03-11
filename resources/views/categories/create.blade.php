@@ -224,6 +224,7 @@
         padding: 32px;
         text-align: center;
         animation: fadeUp 0.35s ease both;
+        margin-bottom: 24px;
     }
     .sc-access-denied svg {
         width: 48px;
@@ -513,22 +514,21 @@
 <div class="sc-page">
 
     {{-- Vérification des autorisations --}}
-    @if(auth()->user()->role !== 'admin')
+    @if(!auth()->user()->isSuperAdminGlobal() && !auth()->user()->isSuperAdmin() && !auth()->user()->isAdmin())
         <div class="sc-access-denied">
             <svg viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
             <h2>Accès refusé</h2>
             <p>Vous n'avez pas l'autorisation d'accéder à cette section.</p>
-            <a href="{{ route('categories.index') }}" class="btn-secondary">
+            <a href="{{ route('dashboard') }}" class="btn-secondary">
                 <svg viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Retour aux catégories
+                Retour au tableau de bord
             </a>
         </div>
-        @php return; @endphp
-    @endif
+    @else
 
     {{-- HEADER --}}
     <div class="sc-header">
@@ -812,6 +812,8 @@
             </div>
         </div>
     @endif
+    
+    @endif {{-- Fin de la condition d'autorisation --}}
 </div>
 @endsection
 
@@ -821,66 +823,68 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     const nameInput = document.getElementById('name');
     
-    form.addEventListener('submit', function(e) {
-        const name = nameInput.value.trim();
-        
-        if (!name) {
-            e.preventDefault();
+    if (form && nameInput) {
+        form.addEventListener('submit', function(e) {
+            const name = nameInput.value.trim();
             
-            // Animation pour le champ vide
-            nameInput.classList.add('error', 'animate-pulse');
-            nameInput.style.borderColor = '#dc2626';
-            nameInput.style.backgroundColor = '#fef2f2';
-            
-            setTimeout(() => {
-                nameInput.classList.remove('animate-pulse');
-            }, 1000);
-            
-            // Scroll vers le champ vide
-            nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            nameInput.focus();
-            
-            // Message d'erreur
-            const existingError = nameInput.parentElement.parentElement.querySelector('.sc-error-message');
-            if (!existingError) {
-                const errorMsg = document.createElement('p');
-                errorMsg.className = 'sc-error-message';
-                errorMsg.innerHTML = `
-                    <svg viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Le nom de la catégorie est obligatoire.
-                `;
-                nameInput.parentElement.parentElement.appendChild(errorMsg);
+            if (!name) {
+                e.preventDefault();
+                
+                // Animation pour le champ vide
+                nameInput.classList.add('error', 'animate-pulse');
+                nameInput.style.borderColor = '#dc2626';
+                nameInput.style.backgroundColor = '#fef2f2';
+                
+                setTimeout(() => {
+                    nameInput.classList.remove('animate-pulse');
+                }, 1000);
+                
+                // Scroll vers le champ vide
+                nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                nameInput.focus();
+                
+                // Message d'erreur
+                const existingError = nameInput.parentElement.parentElement.querySelector('.sc-error-message');
+                if (!existingError) {
+                    const errorMsg = document.createElement('p');
+                    errorMsg.className = 'sc-error-message';
+                    errorMsg.innerHTML = `
+                        <svg viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Le nom de la catégorie est obligatoire.
+                    `;
+                    nameInput.parentElement.parentElement.appendChild(errorMsg);
+                }
+                
+                return false;
             }
             
-            return false;
-        }
-        
-        // Effet de chargement
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.innerHTML = `
-                <svg viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px; animation:spin 1s linear infinite;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {{ isset($category) ? 'Mise à jour...' : 'Création...' }}
-            `;
-            submitBtn.disabled = true;
-        }
-    });
+            // Effet de chargement
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px; animation:spin 1s linear infinite;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    {{ isset($category) ? 'Mise à jour...' : 'Création...' }}
+                `;
+                submitBtn.disabled = true;
+            }
+        });
 
-    // Supprimer l'erreur quand l'utilisateur commence à taper
-    nameInput.addEventListener('input', function() {
-        this.classList.remove('error', 'animate-pulse');
-        this.style.borderColor = '#e2e8f0';
-        this.style.backgroundColor = '#fafbfd';
-        
-        const errorMsg = this.parentElement.parentElement.querySelector('.sc-error-message');
-        if (errorMsg) {
-            errorMsg.remove();
-        }
-    });
+        // Supprimer l'erreur quand l'utilisateur commence à taper
+        nameInput.addEventListener('input', function() {
+            this.classList.remove('error', 'animate-pulse');
+            this.style.borderColor = '#e2e8f0';
+            this.style.backgroundColor = '#fafbfd';
+            
+            const errorMsg = this.parentElement.parentElement.querySelector('.sc-error-message');
+            if (errorMsg) {
+                errorMsg.remove();
+            }
+        });
+    }
 });
 </script>
 @endsection

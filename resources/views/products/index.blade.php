@@ -1039,6 +1039,20 @@
         font-weight: 700;
         color: #14532d;
     }
+
+    /* Disabled button */
+    .btn-primary:disabled,
+    .btn-primary.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .sp-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
 </style>
 @endsection
 
@@ -1062,22 +1076,22 @@
             </div>
         </div>
         <div class="sp-header-actions" style="display: flex; gap: 8px;">
-            <button onclick="openMergeModal()" class="btn-outline">
-                <svg viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
-                </svg>
-                Fusionner
-            </button>
-            @auth
-                @if(Auth::user()->role === 'admin')
-                    <a href="{{ route('products.create') }}" class="btn-primary">
-                        <svg viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Nouveau produit
-                    </a>
-                @endif
-            @endauth
+            @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                <button onclick="openMergeModal()" class="btn-outline">
+                    <svg viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                    </svg>
+                    Fusionner
+                </button>
+            @endif
+            @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                <a href="{{ route('admin.products.create') }}" class="btn-primary">
+                    <svg viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nouveau produit
+                </a>
+            @endif
         </div>
     </div>
 
@@ -1331,22 +1345,22 @@
                     </svg>
                     Rapport
                 </a>
-                <button onclick="openMergeModal()" class="btn-outline">
-                    <svg viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
-                    </svg>
-                    Fusionner
-                </button>
-                @auth
-                    @if(Auth::user()->role === 'admin')
-                        <a href="{{ route('products.create') }}" class="btn-outline">
-                            <svg viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Nouveau
-                        </a>
-                    @endif
-                @endauth
+                @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                    <button onclick="openMergeModal()" class="btn-outline">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
+                        </svg>
+                        Fusionner
+                    </button>
+                @endif
+                @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                    <a href="{{ route('admin.products.create') }}" class="btn-outline">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nouveau
+                    </a>
+                @endif
             </div>
         </div>
     </div>
@@ -1360,7 +1374,7 @@
                         <th>ID</th>
                         <th>Produit</th>
                         <th>Prix vente</th>
-                        @if(Auth::user() && Auth::user()->role === 'admin')
+                        @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
                             <th>Prix achat</th>
                         @endif
                         <th>Stock</th>
@@ -1387,6 +1401,10 @@
                             $avatarClass = '';
                             if ($isCumulated) { $idClass = 'cumulated'; $avatarClass = 'cumulated'; }
                             elseif ($hasBeenCumulated) { $idClass = 'merged'; $avatarClass = 'merged'; }
+                            
+                            $canEdit = Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) && !$hasBeenCumulated;
+                            $canDelete = Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) && !($hasBeenCumulated || ($isCumulated && ($product->original_count ?? 0) > 0));
+                            $canUncumulate = Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) && $isCumulated;
                         @endphp
                         <tr class="{{ $hasBeenCumulated ? 'opacity-75' : '' }}">
                             <td>
@@ -1425,7 +1443,7 @@
                                 <div class="sp-price">{{ number_format($salePrice, 0, ',', ' ') }}</div>
                                 <div class="sp-price-sub">CFA</div>
                             </td>
-                            @if(Auth::user() && Auth::user()->role === 'admin')
+                            @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
                                 <td>
                                     <div class="sp-price">{{ number_format($purchasePrice, 0, ',', ' ') }}</div>
                                     <div class="sp-price-sub">CFA</div>
@@ -1494,44 +1512,43 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
                                     </a>
-                                    @if(Auth::user() && Auth::user()->role === 'admin')
-                                        @if(!$hasBeenCumulated)
-                                            <a href="{{ route('products.edit', $product->id) }}" class="sp-btn sp-btn-edit" title="Modifier">
-                                                <svg viewBox="0 0 24 24" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </a>
-                                        @endif
-                                        <form action="{{ route('products.destroy', $product->id) }}" method="POST" 
+                                    @if($canEdit)
+                                        <a href="{{ route('admin.products.edit', $product->id) }}" class="sp-btn sp-btn-edit" title="Modifier">
+                                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </a>
+                                    @endif
+                                    @if($canDelete)
+                                        <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST" 
                                               onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce produit ?')" 
                                               style="display:inline;">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="sp-btn sp-btn-delete" title="Supprimer" 
-                                                    @if($hasBeenCumulated || ($isCumulated && $originalCount > 0)) disabled @endif>
+                                            <button type="submit" class="sp-btn sp-btn-delete" title="Supprimer">
                                                 <svg viewBox="0 0 24 24" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
                                         </form>
-                                        @if($isCumulated)
-                                            <form action="{{ route('products.uncumulate', $product->id) }}" method="POST" 
-                                                  onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir défaire ce cumul ?')"
-                                                  style="display:inline;">
-                                                @csrf
-                                                <button type="submit" class="sp-btn sp-btn-uncumulate" title="Défaire le cumul">
-                                                    <svg viewBox="0 0 24 24" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                    </svg>
-                                                </button>
-                                            </form>
-                                        @endif
+                                    @endif
+                                    @if($canUncumulate)
+                                        <form action="{{ route('admin.products.uncumulate', $product->id) }}" method="POST" 
+                                              onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir défaire ce cumul ?')"
+                                              style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="sp-btn sp-btn-uncumulate" title="Défaire le cumul">
+                                                <svg viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                            </button>
+                                        </form>
                                     @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ Auth::user() && Auth::user()->role === 'admin' ? 9 : 8 }}">
+                            <td colspan="{{ Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) ? 9 : 8 }}">
                                 <div class="sp-empty">
                                     <div class="sp-empty-ico">
                                         <svg viewBox="0 0 24 24" stroke-width="1.5">
@@ -1554,12 +1571,14 @@
                                             Voir tous
                                         </a>
                                     @else
-                                        <a href="{{ route('products.create') }}" class="btn-primary">
-                                            <svg viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                                            </svg>
-                                            Créer un produit
-                                        </a>
+                                        @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                                            <a href="{{ route('admin.products.create') }}" class="btn-primary">
+                                                <svg viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                Créer un produit
+                                            </a>
+                                        @endif
                                     @endif
                                 </div>
                             </td>
@@ -1585,6 +1604,7 @@
 </div>
 
 {{-- MODAL DE FUSION --}}
+@if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
 <div id="mergeModal" class="sp-modal">
     <div class="sp-modal-content">
         <div class="sp-modal-header">
@@ -1601,7 +1621,7 @@
             </button>
         </div>
         <div class="sp-modal-body">
-            <form action="{{ route('products.merge') }}" method="POST" id="mergeForm">
+            <form action="{{ route('admin.products.merge') }}" method="POST" id="mergeForm">
                 @csrf
                 
                 <div style="margin-bottom:20px;">
@@ -1722,6 +1742,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <script>
 let productsData = {};
@@ -1780,13 +1801,17 @@ async function loadModalData() {
 }
 
 function openMergeModal() {
-    document.getElementById('mergeModal').classList.add('show');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('mergeForm').reset();
-    document.querySelectorAll('input[name="product_ids[]"]').forEach(cb => cb.checked = false);
-    initializeMergeData();
-    loadModalData();
-    updateMergeSelection();
+    @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+        document.getElementById('mergeModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('mergeForm').reset();
+        document.querySelectorAll('input[name="product_ids[]"]').forEach(cb => cb.checked = false);
+        initializeMergeData();
+        loadModalData();
+        updateMergeSelection();
+    @else
+        alert('Vous n\'avez pas les droits pour effectuer cette action.');
+    @endif
 }
 
 function closeMergeModal() {
