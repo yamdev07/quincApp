@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 class LandingController extends Controller
 {
@@ -117,94 +118,95 @@ class LandingController extends Controller
         return view('landing.register', compact('plan', 'planName', 'planPrice'));
     }
     
-    /**
-     * Traite l'inscription et crée la quincaillerie
-     */
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'subdomain' => 'required|string|alpha_dash|unique:tenants,subdomain',
-            'address' => 'nullable|string|max:500',
-            'phone' => 'nullable|string|max:20',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'plan' => 'required|in:monthly,quarterly,semester,yearly',
+   public function register(Request $request)
+{
+    $validated = $request->validate([
+        'company_name' => 'required|string|max:255',
+        'subdomain' => 'required|string|alpha_dash|unique:tenants,subdomain',
+        'address' => 'nullable|string|max:500',
+        'phone' => 'nullable|string|max:20',
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'plan' => 'required|in:monthly,quarterly,semester,yearly',
+    ]);
+    
+    try {
+        DB::beginTransaction();
+        
+        $prices = [
+            'monthly' => 10000,
+            'quarterly' => 28500,
+            'semester' => 54000,
+            'yearly' => 102000,
+        ];
+        
+        $password = Str::random(12);
+        
+        // Créer le tenant
+        $tenant = Tenant::create([
+            'name' => $request->company_name,
+            'company_name' => $request->company_name,
+            'subdomain' => $request->subdomain,
+            'domain' => $request->subdomain . '.quincaapp.com',
+            'email' => $request->email,
+            'phone' => $request->phone ?? null,
+            'address' => $request->address ?? null,
+            'logo' => null,
+            'is_active' => true,
+            'database_name' => 'tenant_' . $request->subdomain,
+            'db_username' => 'user_' . $request->subdomain,
+            'db_password' => Str::random(16),
+            'subscription_price' => $prices[$request->plan],
+            'billing_cycle' => $request->plan,
+            'subscription_start_date' => now(),
+            'subscription_end_date' => now()->addDays(14),
+            'has_trial' => true,
+            'trial_days' => 14,
+            'trial_ends_at' => now()->addDays(14),
+            'payment_status' => 'trial',
+            'settings' => json_encode(['theme' => 'default', 'created_from' => 'website']),
+            'subscription_metadata' => json_encode(['source' => 'website', 'plan' => $request->plan]),
         ]);
         
-        try {
-            DB::beginTransaction();
-            
-            // Prix selon le plan (en FCFA)
-            $prices = [
-                'monthly' => 10000,
-                'quarterly' => 28500,
-                'semester' => 54000,
-                'yearly' => 102000,
-            ];
-            
-            // Générer un mot de passe aléatoire
-            $password = Str::random(12);
-            
-            // 1. Créer le tenant (quincaillerie)
-            $tenant = Tenant::create([
-                'company_name' => $validated['company_name'],
-                'subdomain' => $validated['subdomain'],
-                'address' => $validated['address'] ?? null,
-                'phone' => $validated['phone'] ?? null,
-                'email' => $validated['email'],
-                'is_active' => true,
-                
-                // Infos d'abonnement
-                'subscription_price' => $prices[$validated['plan']],
-                'billing_cycle' => $validated['plan'],
-                'payment_status' => 'trial',
-                'has_trial' => true,
-                'trial_days' => 14,
-                'trial_ends_at' => now()->addDays(14),
-            ]);
-            
-            // 2. Créer l'utilisateur admin
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($password),
-                'role' => 'super_admin',
-                'tenant_id' => $tenant->id,
-            ]);
-            
-            // 3. Associer le propriétaire
-            $tenant->owner_id = $user->id;
-            $tenant->save();
-            
-            // 4. Créer l'entrée dans l'historique des abonnements
+        // Créer l'utilisateur
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($password),
+            'role' => 'super_admin',
+            'tenant_id' => $tenant->id,
+            'can_manage_users' => true,
+        ]);
+        
+        // Associer le propriétaire
+        $tenant->owner_id = $user->id;
+        $tenant->save();
+        
+        // Créer l'abonnement
+        if (method_exists($tenant, 'subscriptions')) {
             $tenant->subscriptions()->create([
-                'plan_type' => $validated['plan'],
-                'amount' => $prices[$validated['plan']],
+                'plan_type' => $request->plan,
+                'amount' => $prices[$request->plan],
                 'start_date' => now(),
                 'end_date' => now()->addDays(14),
                 'status' => 'trial',
             ]);
-            
-            DB::commit();
-            
-            // 5. Envoyer l'email avec les identifiants (à décommenter quand vous aurez créé le Mailable)
-            // Mail::to($user->email)->send(new \App\Mail\WelcomeMail($user, $password, $tenant));
-            
-            // 6. Connecter l'utilisateur automatiquement
-            auth()->login($user);
-            
-            // 7. Rediriger vers le dashboard avec un message de succès
-            return redirect()->route('dashboard')
-                ->with('success', 'Bienvenue sur QuincaApp ! Votre période d\'essai de 14 jours commence maintenant. Vos identifiants vous ont été envoyés par email.');
-                
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->withInput()
-                ->with('error', 'Une erreur est survenue lors de la création de votre compte : ' . $e->getMessage());
         }
+        
+        DB::commit();
+        
+        auth()->login($user);
+        
+        return redirect()->route('dashboard')
+            ->with('success', 'Bienvenue sur QuincaApp ! Votre période d\'essai de 14 jours commence maintenant.');
+            
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()
+            ->withInput()
+            ->with('error', 'Erreur : ' . $e->getMessage());
     }
+}
     
     /**
      * Affiche la page de succès après inscription
