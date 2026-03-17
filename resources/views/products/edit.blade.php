@@ -47,6 +47,9 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
     }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 
     /* Page */
     .sp-edit-page {
@@ -183,6 +186,12 @@
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 12px 28px rgba(249,115,22,0.4);
+    }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
     .btn-secondary {
@@ -653,8 +662,8 @@
 @section('content')
 <div class="sp-edit-page">
 
-    {{-- Vérification d'accès --}}
-    @if(!auth()->user()->canManageStock() || !(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+    {{-- ✅ VÉRIFICATION D'ACCÈS CORRIGÉE POUR LE MAGASINIER --}}
+    @if(!auth()->user()->canManageStock())
         <div class="sp-access-denied">
             <svg viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -779,7 +788,6 @@
         </div>
 
         <div class="sp-edit-card-body">
-            {{-- 👈 CORRECTION ICI : route('admin.products.update', $product->id) au lieu de route('products.update', $product->id) --}}
             <form action="{{ route('admin.products.update', $product->id) }}" method="POST" id="editProductForm">
                 @csrf
                 @method('PUT')

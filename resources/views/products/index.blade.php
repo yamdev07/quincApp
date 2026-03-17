@@ -1076,7 +1076,7 @@
             </div>
         </div>
         <div class="sp-header-actions" style="display: flex; gap: 8px;">
-            @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+            @if(Auth::user() && Auth::user()->canManageStock())
                 <button onclick="openMergeModal()" class="btn-outline">
                     <svg viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
@@ -1084,7 +1084,7 @@
                     Fusionner
                 </button>
             @endif
-            @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+            @if(Auth::user() && Auth::user()->canManageStock())
                 <a href="{{ route('admin.products.create') }}" class="btn-primary">
                     <svg viewBox="0 0 24 24" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1184,7 +1184,7 @@
         </div>
     </div>
 
-    {{-- SEARCH CARD --}}
+    {{-- SEARCH CARD (UNIQUEMENT LES FILTRES ICI) --}}
     <div class="sp-card">
         <div class="sp-card-header">
             <div class="sp-card-header-l">
@@ -1228,6 +1228,7 @@
                     </button>
                 </div>
 
+                {{-- FILTRES (UNE SEULE FOIS) --}}
                 <div class="sp-filters">
                     <a href="{{ route('products.index') }}" 
                        class="sp-filter-chip {{ !request('filter') && !request('search') ? 'active' : '' }}">
@@ -1267,7 +1268,7 @@
                     <a href="{{ route('products.index', ['filter' => 'cumulated']) }}" 
                        class="sp-filter-chip {{ request('filter') == 'cumulated' ? 'active' : '' }}">
                         <svg viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" />
                         </svg>
                         Cumulés
                     </a>
@@ -1326,7 +1327,7 @@
         </div>
     </div>
 
-    {{-- QUICK ACTIONS --}}
+    {{-- QUICK ACTIONS (SANS LES FILTRES, UNIQUEMENT LES ACTIONS) --}}
     <div class="sp-card" style="margin-bottom:24px;">
         <div class="sp-card-body" style="padding:16px 24px;">
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -1345,7 +1346,7 @@
                     </svg>
                     Rapport
                 </a>
-                @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                @if(Auth::user() && Auth::user()->canManageStock())
                     <button onclick="openMergeModal()" class="btn-outline">
                         <svg viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
@@ -1353,7 +1354,7 @@
                         Fusionner
                     </button>
                 @endif
-                @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                @if(Auth::user() && Auth::user()->canManageStock())
                     <a href="{{ route('admin.products.create') }}" class="btn-outline">
                         <svg viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1374,7 +1375,7 @@
                         <th>ID</th>
                         <th>Produit</th>
                         <th>Prix vente</th>
-                        @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                        @if(Auth::user() && Auth::user()->canManageStock())
                             <th>Prix achat</th>
                         @endif
                         <th>Stock</th>
@@ -1402,9 +1403,16 @@
                             if ($isCumulated) { $idClass = 'cumulated'; $avatarClass = 'cumulated'; }
                             elseif ($hasBeenCumulated) { $idClass = 'merged'; $avatarClass = 'merged'; }
                             
-                            $canEdit = Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) && !$hasBeenCumulated;
-                            $canDelete = Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) && !($hasBeenCumulated || ($isCumulated && ($product->original_count ?? 0) > 0));
-                            $canUncumulate = Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) && $isCumulated;
+                            // PERMISSIONS - Le magasinier peut gérer le stock
+                            $canManageStock = Auth::user() && Auth::user()->canManageStock();
+                            $isSuperAdmin = Auth::user() && Auth::user()->isSuperAdmin();
+                            
+                            // Le magasinier peut modifier les produits
+                            $canEdit = $canManageStock && !$hasBeenCumulated;
+                            // Seul le super admin peut supprimer
+                            $canDelete = $isSuperAdmin && !($hasBeenCumulated || ($isCumulated && ($product->original_count ?? 0) > 0));
+                            // Seul le super admin peut défaire un cumul
+                            $canUncumulate = $isSuperAdmin && $isCumulated;
                         @endphp
                         <tr class="{{ $hasBeenCumulated ? 'opacity-75' : '' }}">
                             <td>
@@ -1443,7 +1451,7 @@
                                 <div class="sp-price">{{ number_format($salePrice, 0, ',', ' ') }}</div>
                                 <div class="sp-price-sub">CFA</div>
                             </td>
-                            @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                            @if(Auth::user() && Auth::user()->canManageStock())
                                 <td>
                                     <div class="sp-price">{{ number_format($purchasePrice, 0, ',', ' ') }}</div>
                                     <div class="sp-price-sub">CFA</div>
@@ -1548,7 +1556,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()) ? 9 : 8 }}">
+                            <td colspan="{{ Auth::user() && Auth::user()->canManageStock() ? 9 : 8 }}">
                                 <div class="sp-empty">
                                     <div class="sp-empty-ico">
                                         <svg viewBox="0 0 24 24" stroke-width="1.5">
@@ -1571,7 +1579,7 @@
                                             Voir tous
                                         </a>
                                     @else
-                                        @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+                                        @if(Auth::user() && Auth::user()->canManageStock())
                                             <a href="{{ route('admin.products.create') }}" class="btn-primary">
                                                 <svg viewBox="0 0 24 24" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1604,7 +1612,7 @@
 </div>
 
 {{-- MODAL DE FUSION --}}
-@if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+@if(Auth::user() && Auth::user()->canManageStock())
 <div id="mergeModal" class="sp-modal">
     <div class="sp-modal-content">
         <div class="sp-modal-header">
@@ -1801,7 +1809,7 @@ async function loadModalData() {
 }
 
 function openMergeModal() {
-    @if(Auth::user() && Auth::user()->canManageStock() && (Auth::user()->isSuperAdmin() || Auth::user()->isAdmin()))
+    @if(Auth::user() && Auth::user()->canManageStock())
         document.getElementById('mergeModal').classList.add('show');
         document.body.style.overflow = 'hidden';
         document.getElementById('mergeForm').reset();

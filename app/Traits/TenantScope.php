@@ -17,23 +17,36 @@ trait TenantScope
         static::addGlobalScope('tenant', function (Builder $builder) {
             if (Auth::check()) {
                 $user = Auth::user();
-                $ownerId = $user->isSuperAdmin() ? $user->id : ($user->owner_id ?? $user->id);
                 
-                $builder->where($builder->getModel()->getTable() . '.owner_id', $ownerId);
+                // Super Admin Global voit tout
+                if ($user->isSuperAdminGlobal()) {
+                    return;
+                }
+                
+                // Filtrer par tenant_id (tous les utilisateurs de la même quincaillerie)
+                if ($user->tenant_id) {
+                    $builder->where($builder->getModel()->getTable() . '.tenant_id', $user->tenant_id);
+                }
             }
         });
 
-        // Assigner automatiquement owner_id à la création
+        // Assigner automatiquement tenant_id et owner_id à la création
         static::creating(function ($model) {
             if (Auth::check()) {
                 $user = Auth::user();
-                $model->owner_id = $user->isSuperAdmin() ? $user->id : ($user->owner_id ?? $user->id);
+                
+                // Tenant_id = la quincaillerie de l'utilisateur
+                $model->tenant_id = $user->tenant_id;
+                
+                // Owner_id = le créateur (pour traçabilité)
+                $ownerId = $user->isSuperAdmin() ? $user->id : ($user->owner_id ?? $user->id);
+                $model->owner_id = $ownerId;
             }
         });
     }
 
     /**
-     * Désactiver temporairement le scope tenant (pour admin)
+     * Désactiver temporairement le scope tenant (pour super admin global)
      */
     public function scopeWithoutTenant($query)
     {
@@ -41,14 +54,23 @@ trait TenantScope
     }
 
     /**
-     * Voir toutes les données (admin uniquement)
+     * Voir toutes les données (super admin global uniquement)
      */
     public function scopeAllData($query)
     {
-        if (Auth::check() && Auth::user()->isSuperAdmin()) {
+        if (Auth::check() && Auth::user()->isSuperAdminGlobal()) {
             return $query->withoutGlobalScope('tenant');
         }
         return $query;
+    }
+
+    /**
+     * Scope pour filtrer par utilisateur (owner_id)
+     */
+    public function scopeOwnedBy($query, $userId = null)
+    {
+        $userId = $userId ?? Auth::id();
+        return $query->where($query->getModel()->getTable() . '.owner_id', $userId);
     }
 
     /**
@@ -60,15 +82,41 @@ trait TenantScope
         
         if (!$user) return false;
         
-        return $this->owner_id === ($user->owner_id ?? $user->id) || 
-               $user->isSuperAdmin();
+        // Super Admin Global voit tout
+        if ($user->isSuperAdminGlobal()) {
+            return true;
+        }
+        
+        // Même tenant = accessible
+        return $this->tenant_id === $user->tenant_id;
     }
 
     /**
-     * Relation avec le propriétaire
+     * Vérifier si l'utilisateur est le propriétaire (créateur)
+     */
+    public function isOwnedBy($user = null)
+    {
+        $user = $user ?? Auth::user();
+        
+        if (!$user) return false;
+        
+        return $this->owner_id === ($user->owner_id ?? $user->id) || 
+               $this->owner_id === $user->id;
+    }
+
+    /**
+     * Relation avec le propriétaire (créateur)
      */
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Relation avec le tenant (quincaillerie)
+     */
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 }

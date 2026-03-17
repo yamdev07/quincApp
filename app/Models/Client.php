@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
-use App\Traits\TenantScope; // ← AJOUTER
+use App\Traits\TenantScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
 {
-    use HasFactory, TenantScope; // ← AJOUTER TenantScope
+    use HasFactory, TenantScope;
 
     protected $fillable = [
         'name',
         'phone',
         'email',
-        // 'owner_id' n'est PAS dans fillable (sera auto-assigné)
+        'owner_id',
+        'tenant_id', // ← AJOUTÉ
     ];
 
     // ============ RELATIONS ============
@@ -28,11 +29,19 @@ class Client extends Model
     }
 
     /**
-     * 👇 Propriétaire (super_admin de la quincaillerie)
+     * Propriétaire (super_admin de la quincaillerie)
      */
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Tenant (quincaillerie)
+     */
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     // ============ ACCESSORS ============
@@ -98,14 +107,19 @@ class Client extends Model
     // ============ SCOPES ============
 
     /**
-     * 👇 Filtrer les clients de la même quincaillerie
+     * Filtrer les clients de la même quincaillerie (par tenant_id)
      */
     public function scopeSameCompany($query)
     {
         if (auth()->check()) {
             $user = auth()->user();
-            $ownerId = $user->isSuperAdmin() ? $user->id : $user->owner_id;
-            return $query->where('owner_id', $ownerId);
+            
+            // Super Admin Global voit tout
+            if ($user->isSuperAdminGlobal()) {
+                return $query;
+            }
+            
+            return $query->where('tenant_id', $user->tenant_id);
         }
         return $query;
     }

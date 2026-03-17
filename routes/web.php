@@ -15,6 +15,9 @@ use App\Http\Controllers\LandingController;
 use App\Models\Sale;
 use App\Models\Product;
 use App\Models\Client;
+use App\Mail\NewTenantWelcomeMail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 
 // ======================
 // ROUTES PUBLIQUES (VITRINE)
@@ -23,7 +26,7 @@ Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/demo', [LandingController::class, 'demo'])->name('demo');
 Route::get('/tarifs', [LandingController::class, 'pricing'])->name('pricing');
 
-// 👇 NOUVELLES ROUTES D'INSCRIPTION
+// Routes d'inscription
 Route::get('/inscription', [LandingController::class, 'registerForm'])->name('register.form');
 Route::post('/inscription', [LandingController::class, 'register'])->name('register.tenant');
 Route::get('/inscription/succes', [LandingController::class, 'registerSuccess'])->name('register.success');
@@ -63,7 +66,7 @@ Route::middleware(['auth', 'super_admin_global'])->prefix('super-admin')->name('
 // Routes ADMIN (super_admin et admin de la quincaillerie)
 // ======================
 
-// 1. CATÉGORIES - CRUD admin
+// 1. CATÉGORIES - CRUD admin (admin uniquement)
 Route::middleware(['auth', 'admin'])->prefix('categories')->name('categories.')->group(function () {
     Route::get('/', [CategoryController::class, 'index'])->name('index');
     Route::get('/create', [CategoryController::class, 'create'])->name('create');
@@ -76,8 +79,8 @@ Route::middleware(['auth', 'admin'])->prefix('categories')->name('categories.')-
     Route::get('/{category}/stats', [CategoryController::class, 'detailedStats'])->name('stats');
 });
 
-// 2. PRODUITS - CRUD admin (avec toutes les actions avancées)
-Route::middleware(['auth', 'admin'])->prefix('admin/products')->name('admin.products.')->group(function () {
+// 2. PRODUITS - Gestion complète (admin, super_admin et magasinier)
+Route::middleware(['auth', 'stock.manager'])->prefix('admin/products')->name('admin.products.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
     Route::get('/create', [ProductController::class, 'create'])->name('create');
     Route::post('/', [ProductController::class, 'store'])->name('store');
@@ -85,20 +88,20 @@ Route::middleware(['auth', 'admin'])->prefix('admin/products')->name('admin.prod
     Route::put('/{product}', [ProductController::class, 'update'])->name('update');
     Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
     
-    // Gestion du stock (admin)
+    // Gestion du stock
     Route::post('/{product}/restock', [ProductController::class, 'restock'])->name('restock');
     Route::post('/{product}/adjust-stock', [ProductController::class, 'adjustStock'])->name('adjust-stock');
     
-    // Export (admin)
+    // Export
     Route::get('/{product}/history/export', [ProductController::class, 'exportHistory'])->name('history.export');
     Route::get('/global-history/export', [ProductController::class, 'exportGlobalHistory'])->name('global-history.export');
     
-    // Gestion des cumuls et fusion (admin uniquement)
+    // Gestion des cumuls et fusion
     Route::post('/merge', [ProductController::class, 'mergeProducts'])->name('merge');
     Route::post('/{product}/uncumulate', [ProductController::class, 'uncumulateProduct'])->name('uncumulate');
 });
 
-// 3. FOURNISSEURS - CRUD admin
+// 3. FOURNISSEURS - CRUD admin (admin uniquement)
 Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
     Route::get('/', [SupplierController::class, 'index'])->name('index');
     Route::get('/create', [SupplierController::class, 'create'])->name('create');
@@ -111,7 +114,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.sup
     Route::get('/{supplier}/orders', [SupplierController::class, 'orders'])->name('orders');
 });
 
-// 4. Gestion des utilisateurs (super_admin et admin de la quincaillerie)
+// 4. Gestion des utilisateurs (admin uniquement)
 Route::middleware(['auth', 'admin'])->prefix('users')->name('users.')->group(function () {
     Route::get('/', [UserController::class, 'index'])->name('index');
     Route::get('/create', [UserController::class, 'create'])->name('create');
@@ -262,6 +265,154 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', function () {
         return view('profile');
     })->name('profile');
+});
+
+// ======================
+// ROUTE DE TEST EMAIL (avec authentification)
+// ======================
+Route::middleware(['auth'])->get('/test-email', function () {
+    try {
+        Illuminate\Support\Facades\Mail::raw('Test de configuration email', function($message) {
+            $message->to(config('mail.from.address'))
+                    ->subject('Test Laravel - ' . now()->format('H:i:s'));
+        });
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Email envoyé avec succès !',
+            'config' => [
+                'driver' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'username' => config('mail.mailers.smtp.username') ? '✓' : '✗',
+                'encryption' => config('mail.mailers.smtp.encryption'),
+                'from' => config('mail.from.address'),
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+})->name('test.email');
+
+// ======================
+// ROUTES DE TEST EMAIL SANS AUTHENTIFICATION
+// ======================
+
+// Test SMTP simple
+Route::get('/test-smtp', function() {
+    try {
+        $user = User::latest()->first();
+        
+        if (!$user) {
+            return "❌ Aucun utilisateur trouvé dans la base de données";
+        }
+        
+        Mail::raw('Test de connexion SMTP - ' . now(), function($message) use ($user) {
+            $message->to($user->email)
+                    ->subject('Test SMTP QuincaPro');
+        });
+        
+        return "✅ Test SMTP réussi ! Email envoyé à " . $user->email;
+        
+    } catch (\Exception $e) {
+        return "❌ Erreur SMTP : " . $e->getMessage();
+    }
+});
+
+// Test avec le Mailable
+Route::get('/test-mailable', function() {
+    try {
+        $user = User::latest()->first();
+        
+        if (!$user) {
+            return "❌ Aucun utilisateur trouvé dans la base de données";
+        }
+        
+        $plainPassword = 'TestPassword123';
+        
+        Mail::to($user->email)->send(new NewTenantWelcomeMail($user, $plainPassword));
+        
+        return "✅ Mailable envoyé avec succès à " . $user->email;
+        
+    } catch (\Exception $e) {
+        return "❌ Erreur Mailable : " . $e->getMessage() . "<br>" .
+               "Fichier : " . $e->getFile() . "<br>" .
+               "Ligne : " . $e->getLine();
+    }
+});
+
+// Test avec affichage de la vue
+Route::get('/test-email-view', function() {
+    try {
+        $user = User::latest()->first();
+        
+        if (!$user) {
+            return "❌ Aucun utilisateur trouvé";
+        }
+        
+        $plainPassword = 'TestPassword123';
+        
+        return view('emails.new-tenant-welcome', [
+            'user' => $user,
+            'plainPassword' => $plainPassword
+        ]);
+        
+    } catch (\Exception $e) {
+        return "❌ Erreur d'affichage de la vue : " . $e->getMessage();
+    }
+});
+
+// Test d'envoi direct (sans Mailable)
+Route::get('/test-email-direct', function() {
+    try {
+        $user = User::latest()->first();
+        
+        if (!$user) {
+            return "❌ Aucun utilisateur trouvé";
+        }
+        
+        $plainPassword = 'TestPassword123';
+        
+        // Construire le HTML
+        $html = view('emails.new-tenant-welcome', [
+            'user' => $user,
+            'plainPassword' => $plainPassword
+        ])->render();
+        
+        // Envoyer l'email
+        Mail::send([], [], function($message) use ($user, $html) {
+            $message->to($user->email)
+                    ->subject('Bienvenue sur QuincaPro - Test direct')
+                    ->from(config('mail.from.address'), config('mail.from.name'))
+                    ->setBody($html, 'text/html');
+        });
+        
+        return "✅ Email direct envoyé avec succès à " . $user->email;
+        
+    } catch (\Exception $e) {
+        return "❌ Erreur envoi direct : " . $e->getMessage();
+    }
+});
+
+// Test de vérification de la configuration
+Route::get('/mail-config', function() {
+    return [
+        'default' => config('mail.default'),
+        'smtp' => [
+            'host' => config('mail.mailers.smtp.host'),
+            'port' => config('mail.mailers.smtp.port'),
+            'username' => config('mail.mailers.smtp.username') ? '✓ défini' : '✗ non défini',
+            'encryption' => config('mail.mailers.smtp.encryption'),
+        ],
+        'from' => [
+            'address' => config('mail.from.address'),
+            'name' => config('mail.from.name'),
+        ],
+        'mailer_available' => Mail::mailer() ? '✓' : '✗',
+    ];
 });
 
 // ======================

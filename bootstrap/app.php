@@ -5,7 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\SuperAdminGlobalMiddleware;
-// use App\Http\Middleware\IdentifyTenant; // Décommente si tu veux l'utiliser
+use App\Http\Middleware\StockManagerMiddleware; // 👈 AJOUTER CETTE LIGNE
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'super_admin_global' => SuperAdminGlobalMiddleware::class,
-            // 'identify.tenant' => IdentifyTenant::class, // Décommente si nécessaire
+            'stock.manager' => StockManagerMiddleware::class, // 👈 AJOUTER CET ALIAS
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

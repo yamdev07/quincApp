@@ -23,7 +23,9 @@ class Product extends Model
         'stock',         // Stock disponible actuel ← IMPORTANT
         'supplier_id',
         'category_id',
-        // 'owner_id' n'est PAS dans fillable (sera automatiquement assigné par le Trait)
+        'owner_id',
+        'tenant_id',     // ← AJOUTER ICI
+        'user_id',
     ];
 
     // Conversion des types de données
@@ -62,13 +64,19 @@ class Product extends Model
         return $this->hasMany(StockMovement::class)->orderBy('created_at', 'desc');
     }
 
-    // 👇 NOUVELLE RELATION : Propriétaire (super_admin)
+    // 👇 Relation : Propriétaire (super_admin)
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    // 👇 NOUVELLE RELATION : Utilisateur qui a créé/modifié
+    // 👇 Relation : Tenant (quincaillerie)
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    // 👇 Relation : Utilisateur qui a créé/modifié
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -162,10 +170,16 @@ class Product extends Model
         });
     }
 
-    // 👇 NOUVEAU SCOPE : Par propriétaire
+    // 👇 Scope : Par propriétaire
     public function scopeByOwner($query, $ownerId)
     {
         return $query->where('owner_id', $ownerId);
+    }
+
+    // 👇 Scope : Par tenant
+    public function scopeByTenant($query, $tenantId)
+    {
+        return $query->where('tenant_id', $tenantId);
     }
 
     // ============ MÉTHODES DE GESTION DE STOCK ============

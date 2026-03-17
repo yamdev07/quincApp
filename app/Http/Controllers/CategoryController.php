@@ -20,18 +20,19 @@ class CategoryController extends Controller
      */
     private function authorizeCategoryAccess(Category $category)
     {
-        if (!Auth::user()->hasAccessTo($category)) {
+        // Vérifier par tenant_id plutôt que par hasAccessTo()
+        if (!auth()->user()->isSuperAdminGlobal() && $category->tenant_id !== auth()->user()->tenant_id) {
             abort(403, 'Vous n\'avez pas accès à cette catégorie.');
         }
     }
 
     /**
-     * Vérifier les permissions d'administration
+     * Vérifier les permissions d'administration (inclut le manager maintenant)
      */
     private function authorizeAdmin()
     {
-        if (!Auth::user()->isSuperAdminOrAdmin()) {
-            abort(403, 'Action réservée aux administrateurs.');
+        if (!auth()->user()->isSuperAdminOrAdmin() && !auth()->user()->isManager()) {
+            abort(403, 'Action réservée aux administrateurs et managers.');
         }
     }
 
@@ -39,25 +40,39 @@ class CategoryController extends Controller
     // ROUTES PUBLIQUES (avec filtre par quincaillerie)
     // -------------------------
 
-    // Affiche toutes les catégories principales avec leurs sous-catégories
+    /**
+     * Affiche toutes les catégories principales avec leurs sous-catégories
+     */
     public function index()
     {
-        // 👈 AJOUT DU FILTRE PAR OWNER_ID
+        // Le trait TenantScope filtre automatiquement par tenant_id
         $categories = Category::with(['children' => function($query) {
                 $query->withCount('products')
-                      ->orderBy('name');
+                    ->orderBy('name');
             }])
             ->withCount(['products as total_products'])
             ->withSum('products as total_stock', 'stock')
             ->whereNull('parent_id')
-            ->where('owner_id', Auth::id()) // 👈 FILTRE IMPORTANT !
             ->orderBy('name')
-            ->get();
+            ->distinct() // 👈 Évite les doublons
+            ->paginate(15);
         
-        return view('categories.index', compact('categories'));
+        // Statistiques globales (par tenant) - déjà filtrées par le trait
+        $totalCategories = Category::distinct()->count('id');
+        $categoriesWithChildren = Category::has('children')->distinct()->count('id');
+        $totalProductsInCategories = Product::whereNotNull('category_id')->distinct('id')->count('id');
+        
+        return view('categories.index', compact(
+            'categories', 
+            'totalCategories', 
+            'categoriesWithChildren', 
+            'totalProductsInCategories'
+        ));
     }
 
-    // Affiche une catégorie spécifique avec ses sous-catégories et produits
+    /**
+     * Affiche une catégorie spécifique avec ses sous-catégories et produits
+     */
     public function show($id)
     {
         $category = Category::with(['children' => function($query) {
@@ -65,9 +80,9 @@ class CategoryController extends Controller
                       ->orderBy('name');
             }])
             ->with(['products' => function($query) {
-                $query->orderBy('name')->with('supplier');
+                $query->orderBy('name')->with('supplier')->distinct();
             }])
-            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->where('tenant_id', auth()->user()->tenant_id) // 👈 FILTRE PAR TENANT
             ->findOrFail($id);
         
         $this->authorizeCategoryAccess($category);
@@ -75,8 +90,9 @@ class CategoryController extends Controller
         // Toutes les catégories principales pour les menus
         $mainCategories = Category::whereNull('parent_id')
             ->where('id', '!=', $id)
-            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->where('tenant_id', auth()->user()->tenant_id) // 👈 FILTRE PAR TENANT
             ->orderBy('name')
+            ->distinct()
             ->get();
         
         // Calculer les statistiques (incluant les sous-catégories)
@@ -109,20 +125,25 @@ class CategoryController extends Controller
     // ROUTES ADMIN (avec vérifications)
     // -------------------------
 
-    // Formulaire pour créer une nouvelle catégorie
+    /**
+     * Formulaire pour créer une nouvelle catégorie
+     */
     public function create()
     {
         $this->authorizeAdmin();
         
         $mainCategories = Category::whereNull('parent_id')
-            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->where('tenant_id', auth()->user()->tenant_id) // 👈 FILTRE PAR TENANT
             ->orderBy('name')
+            ->distinct()
             ->get();
             
         return view('categories.create', compact('mainCategories'));
     }
 
-    // Enregistre une nouvelle catégorie
+    /**
+     * Enregistre une nouvelle catégorie
+     */
     public function store(Request $request)
     {
         $this->authorizeAdmin();
@@ -135,17 +156,21 @@ class CategoryController extends Controller
 
         // Vérifier que la catégorie parente appartient à la même quincaillerie
         if ($request->parent_id) {
-            $parentCategory = Category::where('owner_id', Auth::id())->find($request->parent_id);
+            $parentCategory = Category::where('tenant_id', auth()->user()->tenant_id)
+                ->find($request->parent_id);
+                
             if (!$parentCategory) {
-                return back()->with('error', 'Catégorie parente invalide.');
+                return back()->with('error', 'Catégorie parente invalide ou n\'appartient pas à votre quincaillerie.');
             }
         }
 
+        // Création de la catégorie
         Category::create([
             'name' => $request->name,
             'parent_id' => $request->parent_id,
             'description' => $request->description,
-            'owner_id' => Auth::id(), // 👈 AJOUT DE L'OWNER_ID
+            'owner_id' => Auth::id(),
+            'tenant_id' => auth()->user()->tenant_id,
         ]);
 
         $message = $request->parent_id 
@@ -155,20 +180,22 @@ class CategoryController extends Controller
         return redirect()->route('categories.index')->with('success', $message);
     }
 
-    // Formulaire pour éditer une catégorie existante
+    /**
+     * Formulaire pour éditer une catégorie existante
+     */
     public function edit($id)
     {
         $this->authorizeAdmin();
         
         $category = Category::with('parent')
-            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->where('tenant_id', auth()->user()->tenant_id) // 👈 FILTRE PAR TENANT
             ->findOrFail($id);
             
         $this->authorizeCategoryAccess($category);
         
         // Récupérer toutes les catégories principales (sauf elle-même et ses enfants)
         $mainCategories = Category::whereNull('parent_id')
-            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->where('tenant_id', auth()->user()->tenant_id) // 👈 FILTRE PAR TENANT
             ->where('id', '!=', $id)
             ->whereNotIn('id', function($query) use ($id) {
                 $query->select('id')
@@ -176,28 +203,34 @@ class CategoryController extends Controller
                       ->where('parent_id', $id);
             })
             ->orderBy('name')
+            ->distinct()
             ->get();
         
         return view('categories.edit', compact('category', 'mainCategories'));
     }
 
-    // Met à jour une catégorie existante
+    /**
+     * Met à jour une catégorie existante
+     */
     public function update(Request $request, $id)
     {
         $this->authorizeAdmin();
         
-        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
+        $category = Category::where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($id);
         $this->authorizeCategoryAccess($category);
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id . ',id,owner_id,' . Auth::id(),
+            'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:categories,id|different:id',
             'description' => 'nullable|string|max:1000',
         ]);
 
         // Vérifier que la catégorie parente appartient à la même quincaillerie
         if ($request->parent_id) {
-            $parentCategory = Category::where('owner_id', Auth::id())->find($request->parent_id);
+            $parentCategory = Category::where('tenant_id', auth()->user()->tenant_id)
+                ->find($request->parent_id);
+                
             if (!$parentCategory) {
                 return back()->with('error', 'Catégorie parente invalide.');
             }
@@ -222,7 +255,9 @@ class CategoryController extends Controller
         return redirect()->route('categories.index')->with('success', 'Catégorie mise à jour avec succès.');
     }
 
-    // Vérifie si une catégorie est descendante d'une autre (pour éviter les boucles)
+    /**
+     * Vérifie si une catégorie est descendante d'une autre (pour éviter les boucles)
+     */
     private function isDescendant($parent, $child)
     {
         if (!$parent || !$child) return false;
@@ -238,13 +273,15 @@ class CategoryController extends Controller
         return false;
     }
 
-    // Supprime une catégorie
+    /**
+     * Supprime une catégorie
+     */
     public function destroy($id)
     {
         $this->authorizeAdmin();
         
         $category = Category::withCount(['products', 'children'])
-            ->where('owner_id', Auth::id()) // 👈 AJOUT DU FILTRE
+            ->where('tenant_id', auth()->user()->tenant_id) // 👈 FILTRE PAR TENANT
             ->findOrFail($id);
             
         $this->authorizeCategoryAccess($category);
@@ -261,7 +298,9 @@ class CategoryController extends Controller
         if ($category->children_count > 0) {
             if ($category->parent_id) {
                 // Vérifier que le parent appartient à la même quincaillerie
-                $parentCategory = Category::where('owner_id', Auth::id())->find($category->parent_id);
+                $parentCategory = Category::where('tenant_id', auth()->user()->tenant_id)
+                    ->find($category->parent_id);
+                    
                 if (!$parentCategory) {
                     return back()->with('error', 'Impossible de transférer les sous-catégories.');
                 }
@@ -277,12 +316,15 @@ class CategoryController extends Controller
             ->with('success', 'Catégorie supprimée avec succès.');
     }
 
-    // Supprime une catégorie et transfère ses produits et sous-catégories
+    /**
+     * Supprime une catégorie et transfère ses produits et sous-catégories
+     */
     public function destroyWithTransfer(Request $request, $id)
     {
         $this->authorizeAdmin();
         
-        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
+        $category = Category::where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($id);
         $this->authorizeCategoryAccess($category);
         
         $request->validate([
@@ -291,12 +333,14 @@ class CategoryController extends Controller
         ]);
         
         // Vérifier que la nouvelle catégorie appartient à la même quincaillerie
-        $newCategory = Category::where('owner_id', Auth::id())->find($request->new_category_id);
+        $newCategory = Category::where('tenant_id', auth()->user()->tenant_id)
+            ->find($request->new_category_id);
+            
         if (!$newCategory) {
             return back()->with('error', 'Catégorie de destination invalide.');
         }
         
-        DB::transaction(function () use ($category, $request) {
+        DB::transaction(function () use ($category, $request, $newCategory) {
             // Transférer les produits vers la nouvelle catégorie
             $category->products()->update(['category_id' => $request->new_category_id]);
             
@@ -314,22 +358,26 @@ class CategoryController extends Controller
     }
 
     // -------------------------
-    // ROUTES PRODUITS (avec vérifications)
+    // ROUTES PRODUITS
     // -------------------------
 
-    // Ajouter un produit à une catégorie
+    /**
+     * Ajouter un produit à une catégorie
+     */
     public function addProduct(Request $request, $id)
     {
         $this->authorizeAdmin();
         
-        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
+        $category = Category::where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($id);
         $this->authorizeCategoryAccess($category);
         
         $request->validate([
             'product_id' => 'required|exists:products,id',
         ]);
         
-        $product = Product::where('owner_id', Auth::id())->find($request->product_id);
+        $product = Product::where('tenant_id', auth()->user()->tenant_id)
+            ->find($request->product_id);
         
         // Vérifier que le produit appartient à la même quincaillerie
         if (!$product) {
@@ -343,21 +391,27 @@ class CategoryController extends Controller
             ->with('success', "Le produit '{$product->name}' a été ajouté à la catégorie.");
     }
 
-    // Transférer un produit vers une autre catégorie
+    /**
+     * Transférer un produit vers une autre catégorie
+     */
     public function transferProduct(Request $request, $id, $productId)
     {
         $this->authorizeAdmin();
         
-        $category = Category::where('owner_id', Auth::id())->findOrFail($id);
+        $category = Category::where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($id);
         $this->authorizeCategoryAccess($category);
         
-        $product = Product::where('owner_id', Auth::id())->findOrFail($productId);
+        $product = Product::where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($productId);
         
         $request->validate([
             'target_category_id' => 'required|exists:categories,id|different:' . $id,
         ]);
         
-        $targetCategory = Category::where('owner_id', Auth::id())->find($request->target_category_id);
+        $targetCategory = Category::where('tenant_id', auth()->user()->tenant_id)
+            ->find($request->target_category_id);
+            
         if (!$targetCategory) {
             return back()->with('error', 'Catégorie de destination invalide.');
         }
@@ -369,12 +423,18 @@ class CategoryController extends Controller
             ->with('success', "Le produit '{$product->name}' a été transféré vers '{$targetCategory->name}'.");
     }
 
-    // Voir tous les produits d'une catégorie (avec pagination)
+    /**
+     * Voir tous les produits d'une catégorie (avec pagination)
+     */
     public function products($id)
     {
         $category = Category::with(['products' => function($query) {
-            $query->with('supplier')->orderBy('name')->paginate(20);
-        }])->where('owner_id', Auth::id())->findOrFail($id);
+            $query->with('supplier')
+                  ->orderBy('name')
+                  ->distinct()
+                  ->paginate(20);
+        }])->where('tenant_id', auth()->user()->tenant_id)
+          ->findOrFail($id);
         
         $this->authorizeCategoryAccess($category);
         
@@ -383,11 +443,13 @@ class CategoryController extends Controller
         return view('categories.products', compact('category', 'allProducts'));
     }
 
-    // Statistiques avancées de la catégorie
+    /**
+     * Statistiques avancées de la catégorie
+     */
     public function detailedStats($id)
     {
         $category = Category::with(['products', 'children.products'])
-            ->where('owner_id', Auth::id())
+            ->where('tenant_id', auth()->user()->tenant_id)
             ->findOrFail($id);
             
         $this->authorizeCategoryAccess($category);

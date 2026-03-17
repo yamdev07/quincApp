@@ -20,7 +20,8 @@ class StockMovement extends Model
         'motif',
         'reference_document',
         'user_id',
-        // 'owner_id' n'est PAS dans fillable (sera auto-assigné)
+        'owner_id',
+        'tenant_id', // ← AJOUTER ICI
     ];
     
     protected $casts = [
@@ -50,11 +51,19 @@ class StockMovement extends Model
     }
 
     /**
-     * 👇 Propriétaire (super_admin de la quincaillerie)
+     * Propriétaire (super_admin de la quincaillerie)
      */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Tenant (quincaillerie)
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     // ============ ACCESSORS ============
@@ -162,14 +171,19 @@ class StockMovement extends Model
     // ============ SCOPES ============
 
     /**
-     * 👇 Filtrer les mouvements de la même quincaillerie
+     * Filtrer les mouvements de la même quincaillerie (par tenant_id)
      */
     public function scopeSameCompany($query)
     {
         if (auth()->check()) {
             $user = auth()->user();
-            $ownerId = $user->isSuperAdmin() ? $user->id : $user->owner_id;
-            return $query->where('owner_id', $ownerId);
+            
+            // Super Admin Global voit tout
+            if ($user->isSuperAdminGlobal()) {
+                return $query;
+            }
+            
+            return $query->where('tenant_id', $user->tenant_id);
         }
         return $query;
     }
@@ -275,6 +289,8 @@ class StockMovement extends Model
             'motif' => $motif,
             'reference_document' => $reference,
             'user_id' => auth()->id(),
+            'owner_id' => $product->owner_id,
+            'tenant_id' => $product->tenant_id, // ← AJOUTER ICI
         ]);
 
         // Mettre à jour le stock du produit
@@ -305,6 +321,8 @@ class StockMovement extends Model
             'motif' => $motif,
             'reference_document' => $reference,
             'user_id' => auth()->id(),
+            'owner_id' => $product->owner_id,
+            'tenant_id' => $product->tenant_id, // ← AJOUTER ICI
         ]);
 
         // Mettre à jour le stock du produit
@@ -347,6 +365,8 @@ class StockMovement extends Model
             'motif' => 'ANNULATION: ' . $this->motif,
             'reference_document' => 'CANCEL-' . $this->id,
             'user_id' => auth()->id(),
+            'owner_id' => $this->owner_id,
+            'tenant_id' => $this->tenant_id, // ← AJOUTER ICI
         ]);
 
         return $cancelMovement;

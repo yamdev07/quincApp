@@ -14,7 +14,7 @@ class Category extends Model
         'name',
         'parent_id',
         'description',
-        // 'owner_id' n'est PAS dans fillable (sera auto-assigné)
+        'tenant_id',
     ];
 
     // ============ RELATIONS ============

@@ -14,7 +14,8 @@ class Sale extends Model
         'client_id',
         'user_id',
         'total_price',
-        // 'owner_id' n'est PAS dans fillable (sera auto-assigné)
+        'owner_id',
+        'tenant_id', // ← AJOUTER ICI
     ];
 
     protected $casts = [
@@ -53,6 +54,14 @@ class Sale extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * 👇 Tenant (quincaillerie)
+     */
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     // ============ ACCESSORS ============
@@ -121,8 +130,13 @@ class Sale extends Model
     {
         if (auth()->check()) {
             $user = auth()->user();
-            $ownerId = $user->isSuperAdmin() ? $user->id : $user->owner_id;
-            return $query->where('owner_id', $ownerId);
+            
+            // Super Admin Global voit tout
+            if ($user->isSuperAdminGlobal()) {
+                return $query;
+            }
+            
+            return $query->where('tenant_id', $user->tenant_id);
         }
         return $query;
     }
@@ -206,6 +220,8 @@ class Sale extends Model
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'total_price' => $unitPrice * $quantity,
+            'owner_id' => $this->owner_id,
+            'tenant_id' => $this->tenant_id,
         ]);
 
         // Mettre à jour le total de la vente
@@ -248,6 +264,7 @@ class Sale extends Model
                     'reference_document' => 'CANCEL-' . $this->id,
                     'user_id' => auth()->id(),
                     'owner_id' => $this->owner_id,
+                    'tenant_id' => $this->tenant_id,
                 ]);
             }
         }

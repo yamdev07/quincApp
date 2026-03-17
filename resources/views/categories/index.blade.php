@@ -45,6 +45,9 @@
         from { opacity: 0; transform: translateY(20px); }
         to   { opacity: 1; transform: translateY(0); }
     }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 
     /* Page */
     .sc-page {
@@ -142,6 +145,12 @@
         transform: translateY(-2px);
         box-shadow: 0 12px 28px rgba(249,115,22,0.4);
     }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
 
     .btn-secondary {
         display: inline-flex;
@@ -196,6 +205,34 @@
         border-color: var(--orange);
         color: var(--orange);
         background: var(--orange-pale);
+    }
+
+    /* Access denied */
+    .sc-access-denied {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        text-align: center;
+        animation: fadeUp 0.35s ease both;
+        margin-bottom: 24px;
+    }
+    .sc-access-denied svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin: 0 auto 16px;
+    }
+    .sc-access-denied h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .sc-access-denied p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 24px;
     }
 
     /* Alertes */
@@ -602,6 +639,27 @@
         color: var(--text-2);
     }
 
+    /* Status */
+    .sc-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 40px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .status-multiple {
+        background: #f5f3ff;
+        color: var(--purple);
+        border: 1px solid #ddd6fe;
+    }
+    .status-simple {
+        background: #f1f5f9;
+        color: var(--text-2);
+        border: 1px solid var(--border);
+    }
+
     /* Actions */
     .sc-actions {
         display: flex;
@@ -657,6 +715,20 @@
         background: var(--danger);
         border-color: var(--danger);
         color: #fff;
+    }
+
+    /* Read-only badge */
+    .sc-badge-readonly {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #f1f5f9;
+        border: 1px solid var(--border);
+        border-radius: 40px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-3);
     }
 
     /* Empty state */
@@ -738,22 +810,20 @@
 @section('content')
 <div class="sc-page">
 
-    {{-- Vérification d'accès --}}
+    {{-- ✅ VÉRIFICATION D'ACCÈS - canManageStock() inclut le manager --}}
     @if(!auth()->user()->canManageStock())
-        <div class="sc-alert" style="background: #fef2f2; border-left-color: var(--danger); color: #991b1b; justify-content: center; text-align: center;">
-            <svg viewBox="0 0 24 24" stroke-width="1.5" style="width:48px;height:48px;">
+        <div class="sc-access-denied">
+            <svg viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <div>
-                <h3 style="font-size:18px; font-weight:700; margin-bottom:8px;">Accès refusé</h3>
-                <p>Vous n'avez pas les droits pour gérer les catégories.</p>
-                <a href="{{ route('dashboard') }}" class="btn-outline" style="margin-top:16px; display:inline-flex;">
-                    <svg viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Retour au tableau de bord
-                </a>
-            </div>
+            <h2>Accès refusé</h2>
+            <p>Vous n'avez pas les droits pour gérer les catégories.</p>
+            <a href="{{ route('dashboard') }}" class="btn-secondary">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour au tableau de bord
+            </a>
         </div>
     @else
 
@@ -774,7 +844,8 @@
             </div>
         </div>
         <div class="sc-header-actions" style="display: flex; gap: 8px;">
-            @if(auth()->user() && auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+            {{-- ✅ MANAGER PEUT CRÉER --}}
+            @if(auth()->user() && auth()->user()->canManageStock())
                 <a href="{{ route('categories.create') }}" class="btn-primary">
                     <svg viewBox="0 0 24 24" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -814,7 +885,7 @@
                     </svg>
                 </div>
             </div>
-            <div class="sc-stat-val">{{ $categories->count() }}</div>
+            <div class="sc-stat-val">{{ $totalCategories }}</div>
             <div class="sc-stat-foot">Total</div>
         </div>
 
@@ -823,11 +894,11 @@
                 <span class="sc-stat-label">Avec sous-catégories</span>
                 <div class="sc-stat-ico">
                     <svg viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8m-8-4h8m-4 8h8M8 8h8" />
                     </svg>
                 </div>
             </div>
-            <div class="sc-stat-val">{{ $categories->filter(function($cat) { return $cat->children->count() > 0; })->count() }}</div>
+            <div class="sc-stat-val">{{ $categoriesWithChildren }}</div>
             <div class="sc-stat-foot">Catégories</div>
         </div>
 
@@ -840,7 +911,7 @@
                     </svg>
                 </div>
             </div>
-            <div class="sc-stat-val">{{ $categories->sum('total_products') }}</div>
+            <div class="sc-stat-val">{{ $totalProductsInCategories }}</div>
             <div class="sc-stat-foot">Produits</div>
         </div>
     </div>
@@ -948,7 +1019,7 @@
                                     @endphp
                                     Filtre : <strong>{{ $filterLabels[request('filter')] ?? request('filter') }}</strong> • 
                                 @endif
-                                <strong>{{ $categories->count() }}</strong> résultat(s) trouvé(s)
+                                <strong>{{ $categories->total() }}</strong> résultat(s) trouvé(s)
                             </span>
                         </div>
                         <a href="{{ route('categories.index') }}" class="btn-outline" style="padding:4px 12px;">
@@ -976,7 +1047,8 @@
                     </svg>
                     Rapport
                 </a>
-                @if(auth()->user() && auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+                {{-- ✅ MANAGER PEUT CRÉER --}}
+                @if(auth()->user() && auth()->user()->canManageStock())
                     <a href="{{ route('categories.create') }}" class="btn-outline">
                         <svg viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1006,7 +1078,7 @@
                     @forelse($categories as $category)
                         @php
                             $subCount = $category->children->count();
-                            $productCount = $category->total_products ?? $category->products->count();
+                            $productCount = $category->products->count();
                         @endphp
                         <tr>
                             <td>
@@ -1041,7 +1113,8 @@
                                 @endif
                             </td>
                             <td>
-                                @if(auth()->user() && auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+                                {{-- ✅ MANAGER PEUT VOIR, MODIFIER ET SUPPRIMER --}}
+                                @if(auth()->user() && auth()->user()->canManageStock())
                                     <div class="sc-actions">
                                         <a href="{{ route('categories.show', $category->id) }}" class="sc-btn sc-btn-view" title="Voir">
                                             <svg viewBox="0 0 24 24" stroke-width="2">
@@ -1049,6 +1122,8 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </a>
+                                        
+                                        {{-- ✅ MANAGER PEUT MODIFIER ET SUPPRIMER --}}
                                         <a href="{{ route('categories.edit', $category->id) }}" class="sc-btn sc-btn-edit" title="Modifier">
                                             <svg viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1102,7 +1177,8 @@
                                             Voir tous
                                         </a>
                                     @else
-                                        @if(auth()->user() && auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+                                        {{-- ✅ MANAGER PEUT CRÉER --}}
+                                        @if(auth()->user() && auth()->user()->canManageStock())
                                             <a href="{{ route('categories.create') }}" class="btn-primary">
                                                 <svg viewBox="0 0 24 24" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1133,7 +1209,7 @@
         </div>
     @endif
 
-    @endif
+    @endif {{-- Fin de la condition d'autorisation --}}
 </div>
 
 <script>
