@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 
 // ======================
-// ROUTES PUBLIQUES (VITRINE)
+// ROUTES PUBLIQUES (VITRINE) - PAS DE MIDDLEWARE
 // ======================
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/demo', [LandingController::class, 'demo'])->name('demo');
@@ -35,9 +35,9 @@ Route::get('/inscription/succes', [LandingController::class, 'registerSuccess'])
 Route::view('/welcome', 'welcome');
 
 // ======================
-// Routes AJAX pour le dashboard
+// Routes AJAX pour le dashboard - PROTÉGÉES PAR AUTH + TRIAL
 // ======================
-Route::middleware(['auth'])->prefix('ajax/dashboard')->name('ajax.dashboard.')->group(function () {
+Route::middleware(['auth', 'check.trial'])->prefix('ajax/dashboard')->name('ajax.dashboard.')->group(function () {
     Route::get('/chart-data', [DashboardController::class, 'chartData'])->name('chart');
     Route::get('/stats', [DashboardController::class, 'stats'])->name('stats');
     Route::get('/recent-sales', [DashboardController::class, 'recentSales'])->name('recent-sales');
@@ -45,7 +45,7 @@ Route::middleware(['auth'])->prefix('ajax/dashboard')->name('ajax.dashboard.')->
 });
 
 // ======================
-// Routes SUPER ADMIN GLOBAL (toi - le créateur)
+// Routes SUPER ADMIN GLOBAL (toi - le créateur) - PAS DE TRIAL (toujours accès)
 // ======================
 Route::middleware(['auth', 'super_admin_global'])->prefix('super-admin')->name('super-admin.')->group(function () {
     Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
@@ -63,11 +63,11 @@ Route::middleware(['auth', 'super_admin_global'])->prefix('super-admin')->name('
 });
 
 // ======================
-// Routes ADMIN (super_admin et admin de la quincaillerie)
+// Routes ADMIN (super_admin et admin de la quincaillerie) - AVEC TRIAL
 // ======================
 
-// 1. CATÉGORIES - CRUD admin (admin uniquement)
-Route::middleware(['auth', 'admin'])->prefix('categories')->name('categories.')->group(function () {
+// 1. CATÉGORIES - CRUD admin
+Route::middleware(['auth', 'check.trial', 'admin'])->prefix('categories')->name('categories.')->group(function () {
     Route::get('/', [CategoryController::class, 'index'])->name('index');
     Route::get('/create', [CategoryController::class, 'create'])->name('create');
     Route::post('/', [CategoryController::class, 'store'])->name('store');
@@ -79,8 +79,8 @@ Route::middleware(['auth', 'admin'])->prefix('categories')->name('categories.')-
     Route::get('/{category}/stats', [CategoryController::class, 'detailedStats'])->name('stats');
 });
 
-// 2. PRODUITS - Gestion complète (admin, super_admin et magasinier)
-Route::middleware(['auth', 'stock.manager'])->prefix('admin/products')->name('admin.products.')->group(function () {
+// 2. PRODUITS - Gestion complète
+Route::middleware(['auth', 'check.trial', 'stock.manager'])->prefix('admin/products')->name('admin.products.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
     Route::get('/create', [ProductController::class, 'create'])->name('create');
     Route::post('/', [ProductController::class, 'store'])->name('store');
@@ -101,8 +101,8 @@ Route::middleware(['auth', 'stock.manager'])->prefix('admin/products')->name('ad
     Route::post('/{product}/uncumulate', [ProductController::class, 'uncumulateProduct'])->name('uncumulate');
 });
 
-// 3. FOURNISSEURS - CRUD admin (admin uniquement)
-Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
+// 3. FOURNISSEURS - CRUD admin
+Route::middleware(['auth', 'check.trial', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
     Route::get('/', [SupplierController::class, 'index'])->name('index');
     Route::get('/create', [SupplierController::class, 'create'])->name('create');
     Route::post('/', [SupplierController::class, 'store'])->name('store');
@@ -114,8 +114,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.sup
     Route::get('/{supplier}/orders', [SupplierController::class, 'orders'])->name('orders');
 });
 
-// 4. Gestion des utilisateurs (admin uniquement)
-Route::middleware(['auth', 'admin'])->prefix('users')->name('users.')->group(function () {
+// 4. Gestion des utilisateurs
+Route::middleware(['auth', 'check.trial', 'admin'])->prefix('users')->name('users.')->group(function () {
     Route::get('/', [UserController::class, 'index'])->name('index');
     Route::get('/create', [UserController::class, 'create'])->name('create');
     Route::post('/', [UserController::class, 'store'])->name('store');
@@ -126,16 +126,16 @@ Route::middleware(['auth', 'admin'])->prefix('users')->name('users.')->group(fun
 });
 
 // ======================
-// Routes protégées par authentification (pour tous les utilisateurs)
+// Routes protégées par authentification (pour tous les utilisateurs) - AVEC TRIAL
 // ======================
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'check.trial'])->group(function () {
     // ----------------------
     // TABLEAU DE BORD PRINCIPAL
     // ----------------------
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ----------------------
-    // VENTES - Accessible à tous les utilisateurs authentifiés
+    // VENTES
     // ----------------------
     Route::prefix('sales')->name('sales.')->group(function () {
         Route::get('/', [SaleController::class, 'index'])->name('index');
@@ -150,7 +150,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ----------------------
-    // CLIENTS - Accessible à tous les utilisateurs authentifiés
+    // CLIENTS
     // ----------------------
     Route::prefix('clients')->name('clients.')->group(function () {
         Route::get('/', [ClientController::class, 'index'])->name('index');
@@ -165,7 +165,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ----------------------
-    // FOURNISSEURS - Lecture seule pour les utilisateurs normaux
+    // FOURNISSEURS - Lecture seule
     // ----------------------
     Route::prefix('suppliers')->name('suppliers.')->group(function () {
         Route::get('/', [SupplierController::class, 'index'])->name('index');
@@ -174,7 +174,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ----------------------
-    // PRODUITS - Lecture seule pour les utilisateurs normaux
+    // PRODUITS - Lecture seule
     // ----------------------
     Route::prefix('products')->name('products.')->group(function () {
         Route::get('/', [ProductController::class, 'index'])->name('index');
@@ -191,7 +191,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ----------------------
-    // CATEGORIES - Lecture seule pour les utilisateurs normaux
+    // CATEGORIES - Lecture seule
     // ----------------------
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/', [CategoryController::class, 'index'])->name('index');
@@ -199,7 +199,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // -----------------------
-    // RAPPORTS ET STATISTIQUES - Réservé aux managers et au-dessus
+    // RAPPORTS ET STATISTIQUES
     // ----------------------
     Route::middleware(['manager'])->prefix('reports')->name('reports.')->group(function () {
         // Page d'accueil des rapports
@@ -266,6 +266,17 @@ Route::middleware(['auth'])->group(function () {
         return view('profile');
     })->name('profile');
 });
+
+// ======================
+// PAGES D'EXPIRATION (ACCESSIBLES SANS CHECK.TRIAL)
+// ======================
+Route::get('/trial-expired', function () {
+    return view('errors.trial-expired');
+})->name('trial.expired');
+
+Route::get('/subscription-expired', function () {
+    return view('errors.subscription-expired');
+})->name('subscription.expired');
 
 // ======================
 // ROUTE DE TEST EMAIL (avec authentification)
