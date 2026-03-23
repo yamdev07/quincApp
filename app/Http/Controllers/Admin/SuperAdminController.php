@@ -378,4 +378,154 @@ class SuperAdminController extends Controller
         
         return view('admin.super-admin.dashboard', compact('stats', 'months', 'registrations'));
     }
+
+    /**
+     * Affiche les utilisateurs d'un tenant spécifique
+     */
+    public function users(Tenant $tenant)
+    {
+        // Récupérer tous les utilisateurs de ce tenant
+        $users = User::where('tenant_id', $tenant->id)
+                    ->with('owner') // Pour voir qui a créé l'utilisateur
+                    ->orderBy('role')
+                    ->orderBy('name')
+                    ->get();
+        
+        return view('admin.super-admin.tenant-users', compact('tenant', 'users'));
+    }
+
+    /**
+     * Créer un utilisateur dans un tenant
+     */
+    public function createUser(Tenant $tenant)
+    {
+        return view('admin.super-admin.create-user', compact('tenant'));
+    }
+
+    /**
+     * Enregistrer un utilisateur dans un tenant
+     */
+    public function storeUser(Request $request, Tenant $tenant)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,NULL,id,tenant_id,' . $tenant->id,
+            'role' => 'required|in:super_admin,admin,manager,cashier,storekeeper',
+            'password' => 'required|string|min:8',
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role'],
+                'tenant_id' => $tenant->id,
+                'owner_id' => auth()->id(),
+                'can_manage_users' => in_array($validated['role'], ['super_admin', 'admin']),
+            ]);
+            
+            DB::commit();
+            
+            return redirect()
+                ->route('super-admin.tenants.users', $tenant)
+                ->with('success', "Utilisateur {$user->name} créé avec succès.");
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withInput()
+                ->with('error', "Erreur : " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Modifier un utilisateur d'un tenant
+     */
+    public function editUser(Tenant $tenant, User $user)
+    {
+        if ($user->tenant_id != $tenant->id) {
+            abort(404);
+        }
+        
+        return view('admin.super-admin.edit-user', compact('tenant', 'user'));
+    }
+
+    /**
+     * Mettre à jour un utilisateur
+     */
+    public function updateUser(Request $request, Tenant $tenant, User $user)
+    {
+        if ($user->tenant_id != $tenant->id) {
+            abort(404);
+        }
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id . ',id,tenant_id,' . $tenant->id,
+            'role' => 'required|in:super_admin,admin,manager,cashier,storekeeper',
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            $user->update([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => $validated['role'],
+                'can_manage_users' => in_array($validated['role'], ['super_admin', 'admin']),
+            ]);
+            
+            if ($request->filled('password')) {
+                $request->validate(['password' => 'string|min:8']);
+                $user->update(['password' => Hash::make($request->password)]);
+            }
+            
+            DB::commit();
+            
+            return redirect()
+                ->route('super-admin.tenants.users', $tenant)
+                ->with('success', "Utilisateur {$user->name} mis à jour.");
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withInput()
+                ->with('error', "Erreur : " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Supprimer un utilisateur d'un tenant
+     */
+    public function destroyUser(Tenant $tenant, User $user)
+    {
+        if ($user->tenant_id != $tenant->id) {
+            abort(404);
+        }
+        
+        // Empêcher la suppression du propriétaire
+        if ($user->id == $tenant->owner_id) {
+            return back()->with('error', "Impossible de supprimer le propriétaire de la quincaillerie.");
+        }
+        
+        try {
+            DB::beginTransaction();
+            
+            $userName = $user->name;
+            $user->delete();
+            
+            DB::commit();
+            
+            return redirect()
+                ->route('super-admin.tenants.users', $tenant)
+                ->with('success', "Utilisateur {$userName} supprimé.");
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "Erreur : " . $e->getMessage());
+        }
+    }
 }

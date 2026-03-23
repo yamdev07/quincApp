@@ -60,6 +60,23 @@ Route::middleware(['auth', 'super_admin_global'])->prefix('super-admin')->name('
     Route::get('/tenants/{tenant}/payments', [SuperAdminController::class, 'managePayments'])->name('tenants.payments');
     Route::post('/tenants/{tenant}/payments', [SuperAdminController::class, 'markPaymentReceived'])->name('tenants.payments.store');
     Route::post('/tenants/{tenant}/extend', [SuperAdminController::class, 'extendSubscription'])->name('tenants.extend');
+    
+    // 👇 NOUVELLES ROUTES POUR GÉRER LES UTILISATEURS DES TENANTS
+    Route::prefix('tenants/{tenant}')->name('tenants.')->group(function () {
+        // Voir les utilisateurs du tenant
+        Route::get('/users', [SuperAdminController::class, 'users'])->name('users');
+        
+        // Créer un utilisateur
+        Route::get('/users/create', [SuperAdminController::class, 'createUser'])->name('users.create');
+        Route::post('/users', [SuperAdminController::class, 'storeUser'])->name('users.store');
+        
+        // Modifier un utilisateur
+        Route::get('/users/{user}/edit', [SuperAdminController::class, 'editUser'])->name('users.edit');
+        Route::put('/users/{user}', [SuperAdminController::class, 'updateUser'])->name('users.update');
+        
+        // Supprimer un utilisateur
+        Route::delete('/users/{user}', [SuperAdminController::class, 'destroyUser'])->name('users.destroy');
+    });
 });
 
 // ======================

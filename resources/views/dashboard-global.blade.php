@@ -789,25 +789,25 @@
                 <div class="alert-icon"><i class="bi bi-exclamation-triangle"></i></div>
                 <div class="alert-content">
                     <div class="alert-title">Paiements en retard</div>
-                    <div class="alert-desc">5 quincailleries</div>
+                    <div class="alert-desc">{{ $overdueTenants ?? 0 }} quincaillerie(s)</div>
                 </div>
-                <div class="alert-amount">1 495 €</div>
+                <div class="alert-amount">{{ number_format($overdueAmount ?? 0, 0, ',', ' ') }} FCFA</div>
             </div>
             <div class="alert-card">
                 <div class="alert-icon"><i class="bi bi-clock-history"></i></div>
                 <div class="alert-content">
                     <div class="alert-title">Essais gratuits</div>
-                    <div class="alert-desc">3 expirent cette semaine</div>
+                    <div class="alert-desc">{{ $trialExpiringSoon ?? 0 }} expirent cette semaine</div>
                 </div>
-                <div class="alert-amount">J-3</div>
+                <div class="alert-amount">J-{{ $trialExpiringDays ?? 0 }}</div>
             </div>
             <div class="alert-card">
                 <div class="alert-icon"><i class="bi bi-check-circle"></i></div>
                 <div class="alert-content">
                     <div class="alert-title">Paiements OK</div>
-                    <div class="alert-desc">42 ce mois</div>
+                    <div class="alert-desc">{{ $paidTenants ?? 0 }} ce mois</div>
                 </div>
-                <div class="alert-amount">13 450 €</div>
+                <div class="alert-amount">{{ number_format($paidAmount ?? 0, 0, ',', ' ') }} FCFA</div>
             </div>
         </div>
 

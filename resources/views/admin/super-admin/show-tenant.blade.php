@@ -827,11 +827,14 @@
                     <svg viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    <h2>Propriétaire</h2>
+                    <h2>Équipe & Employés</h2>
+                    <span class="st-badge" style="margin-left: auto; background: var(--orange-pale); color: var(--orange);">
+                        {{ $tenant->users_count ?? $tenant->users->count() ?? 0 }} employés
+                    </span>
                 </div>
                 <div class="st-card-body">
                     @if($tenant->owner)
-                        <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
                             <div class="st-avatar">
                                 {{ strtoupper(substr($tenant->owner->name, 0, 1)) }}
                             </div>
@@ -847,28 +850,62 @@
                                 </div>
                                 @if($tenant->owner->role)
                                     <span class="st-badge" style="background: var(--gray-100); color: var(--gray-600); margin-top: 4px; display: inline-block;">
-                                        {{ $tenant->owner->role_label }}
+                                        {{ $tenant->owner->role }}
                                     </span>
                                 @endif
                             </div>
                         </div>
-                        
-                        <div style="margin-top: 20px;">
-                            <a href="{{ route('users.index') }}?tenant={{ $tenant->id }}" class="btn-outline">
-                                <svg viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                                Voir tous les utilisateurs
-                            </a>
-                        </div>
-                    @else
-                        <div class="st-empty">
-                            <div class="st-empty-ico">
-                                <svg viewBox="0 0 24 24" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                </svg>
+                    @endif
+                    
+                    {{-- BOUTONS DE GESTION DES EMPLOYÉS --}}
+                    <div class="st-actions" style="margin-top: 16px;">
+                        <a href="{{ route('super-admin.tenants.users', $tenant) }}" class="btn-primary" style="background: linear-gradient(135deg, var(--orange), var(--orange-dark));">
+                            <svg viewBox="0 0 24 24" stroke-width="2" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            Gérer les employés
+                        </a>
+                        <a href="{{ route('super-admin.tenants.users.create', $tenant) }}" class="btn-outline">
+                            <svg viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                            + Ajouter un employé
+                        </a>
+                    </div>
+                    
+                    {{-- LISTE DES EMPLOYÉS RÉCENTS --}}
+                    @if(isset($tenant->users) && $tenant->users->count() > 0)
+                        <div style="margin-top: 24px;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 12px;">
+                                Derniers employés ajoutés
                             </div>
-                            <p>Aucun propriétaire assigné</p>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                @foreach($tenant->users->take(3) as $user)
+                                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <div style="width: 32px; height: 32px; background: var(--gray-100); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--orange); font-weight: 600;">
+                                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <div style="font-weight: 500; font-size: 14px;">{{ $user->name }}</div>
+                                                <div style="font-size: 11px; color: var(--text-3);">{{ $user->email }}</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="st-badge" style="background: var(--gray-100); color: var(--gray-600); font-size: 10px;">
+                                                {{ $user->role }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            @if(($tenant->users->count() - 3) > 0)
+                                <div style="margin-top: 12px; text-align: center;">
+                                    <span class="st-badge" style="background: var(--gray-100); color: var(--text-2);">
+                                        + {{ $tenant->users->count() - 3 }} autres employés
+                                    </span>
+                                </div>
+                            @endif
                         </div>
                     @endif
                 </div>
