@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Traits\TenantScope; // ← AJOUTER
+use App\Traits\TenantScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
-    use HasFactory, TenantScope; // ← AJOUTER TenantScope
+    use HasFactory, TenantScope;
 
     // Les champs qui peuvent être assignés en masse
     protected $fillable = [
@@ -19,12 +19,12 @@ class Product extends Model
         'sale_price',
         'discount',
         'purchase_price',
-        'quantity',      // Quantité totale achetée (historique)
-        'stock',         // Stock disponible actuel ← IMPORTANT
+        'quantity',
+        'stock',
         'supplier_id',
         'category_id',
         'owner_id',
-        'tenant_id',     // ← AJOUTER ICI
+        'tenant_id',
         'user_id',
     ];
 
@@ -64,19 +64,16 @@ class Product extends Model
         return $this->hasMany(StockMovement::class)->orderBy('created_at', 'desc');
     }
 
-    // 👇 Relation : Propriétaire (super_admin)
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    // 👇 Relation : Tenant (quincaillerie)
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    // 👇 Relation : Utilisateur qui a créé/modifié
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -84,13 +81,11 @@ class Product extends Model
 
     // ============ ACCESSORS ============
     
-    // Quantité vendue (calculée)
     public function getSoldQuantityAttribute()
     {
         return $this->quantity - $this->stock;
     }
 
-    // Statut du stock
     public function getStockStatusAttribute()
     {
         if ($this->stock <= 0) {
@@ -102,25 +97,21 @@ class Product extends Model
         }
     }
 
-    // Valeur du stock au prix d'achat
     public function getStockValuePurchaseAttribute()
     {
         return $this->stock * $this->purchase_price;
     }
 
-    // Valeur du stock au prix de vente
     public function getStockValueSaleAttribute()
     {
         return $this->stock * $this->sale_price;
     }
 
-    // Bénéfice potentiel
     public function getPotentialProfitAttribute()
     {
         return ($this->sale_price - $this->purchase_price) * $this->stock;
     }
 
-    // Marge en pourcentage
     public function getProfitMarginAttribute()
     {
         if ($this->purchase_price == 0) return 0;
@@ -129,54 +120,53 @@ class Product extends Model
 
     // ============ SCOPES ============
     
-    // Produits en stock
     public function scopeInStock($query)
     {
         return $query->where('stock', '>', 0);
     }
     
-    // Produits en rupture de stock
     public function scopeOutOfStock($query)
     {
         return $query->where('stock', '=', 0);
     }
     
-    // Produits en faible stock
     public function scopeLowStock($query, $threshold = 5)
     {
         return $query->where('stock', '<=', $threshold)->where('stock', '>', 0);
     }
     
-    // Produits par fournisseur
     public function scopeBySupplier($query, $supplier_id)
     {
         return $query->where('supplier_id', $supplier_id);
     }
     
-    // Produits par catégorie
     public function scopeByCategory($query, $category_id)
     {
         return $query->where('category_id', $category_id);
     }
     
-    // Produits avec stocks multiples (achats différents)
+    /**
+     * Scope pour les produits avec stocks multiples (achats différents)
+     * Version compatible PostgreSQL
+     */
     public function scopeWithMultipleBatches($query)
     {
-        return $query->whereHas('stockMovements', function($q) {
-            $q->where('type', 'entree')
-              ->select(DB::raw('COUNT(DISTINCT purchase_price) as batch_count'))
-              ->groupBy('product_id')
-              ->having('batch_count', '>', 1);
+        return $query->whereExists(function($q) {
+            $q->select(DB::raw(1))
+                ->from('stock_movements')
+                ->whereColumn('stock_movements.product_id', 'products.id')
+                ->where('stock_movements.type', 'entree')
+                ->whereColumn('stock_movements.tenant_id', 'products.tenant_id')
+                ->groupBy('stock_movements.product_id')
+                ->havingRaw('COUNT(DISTINCT stock_movements.purchase_price) > 1');
         });
     }
 
-    // 👇 Scope : Par propriétaire
     public function scopeByOwner($query, $ownerId)
     {
         return $query->where('owner_id', $ownerId);
     }
 
-    // 👇 Scope : Par tenant
     public function scopeByTenant($query, $tenantId)
     {
         return $query->where('tenant_id', $tenantId);
@@ -184,13 +174,11 @@ class Product extends Model
 
     // ============ MÉTHODES DE GESTION DE STOCK ============
     
-    // Vérifier si on peut vendre une quantité
     public function canSell($quantity)
     {
         return $this->stock >= $quantity;
     }
     
-    // Vendre (déduire du stock)
     public function sell($quantity)
     {
         if (!$this->canSell($quantity)) {
@@ -201,7 +189,6 @@ class Product extends Model
         return $this;
     }
     
-    // Réapprovisionner (ajouter au stock)
     public function restock($quantity, $purchase_price = null)
     {
         $this->increment('stock', $quantity);
@@ -214,7 +201,6 @@ class Product extends Model
         return $this;
     }
     
-    // Ajuster le stock manuellement
     public function adjustStock($newStock, $reason = null)
     {
         if ($newStock > $this->stock) {
@@ -227,7 +213,6 @@ class Product extends Model
         return $this;
     }
     
-    // Synchroniser quantity avec stock + vendu
     public function syncQuantity()
     {
         $sold = $this->saleItems()->sum('quantity') ?? 0;
@@ -260,7 +245,6 @@ class Product extends Model
 
     /**
      * Calcule les totaux pour ce produit (regroupés)
-     * Retourne un tableau avec toutes les infos
      */
     public function getStockTotals()
     {
@@ -305,13 +289,15 @@ class Product extends Model
 
     /**
      * Vérifie si le produit a des stocks groupés (achats multiples)
+     * Version compatible PostgreSQL
      */
     public function hasMultipleBatches()
     {
         return StockMovement::where('product_id', $this->id)
             ->where('type', 'entree')
+            ->select('purchase_price', 'reference_document')
             ->distinct()
-            ->count(['purchase_price', 'reference_document']) > 1;
+            ->count() > 1;
     }
 
     /**
@@ -395,8 +381,6 @@ class Product extends Model
     {
         $this->update(['sale_price' => $newSalePrice]);
         
-        // Mettre à jour le prix de vente dans le modèle produit
-        // Les mouvements futurs utiliseront ce nouveau prix
         return $this;
     }
 

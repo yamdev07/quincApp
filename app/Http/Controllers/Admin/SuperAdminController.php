@@ -220,18 +220,22 @@ class SuperAdminController extends Controller
     /**
      * Supprime un tenant
      */
-    public function deleteTenant(Tenant $tenant)
+    public function destroyTenant(Tenant $tenant)
     {
         try {
             DB::beginTransaction();
             
-            // Supprimer tous les utilisateurs du tenant
+            // 1. First, remove the owner reference from the tenant
+            $tenant->owner_id = null;
+            $tenant->save();
+            
+            // 2. Delete all users belonging to this tenant
             User::where('tenant_id', $tenant->id)->delete();
             
-            // Supprimer les abonnements
+            // 3. Delete all subscriptions
             $tenant->subscriptions()->delete();
             
-            // Supprimer le tenant
+            // 4. Finally, delete the tenant
             $tenant->delete();
             
             DB::commit();
@@ -526,6 +530,156 @@ class SuperAdminController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', "Erreur : " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Marquer un abonnement comme payé (AJAX ou formulaire)
+     */
+    public function markAsPaid(Request $request, Tenant $tenant)
+    {
+        try {
+            DB::beginTransaction();
+            
+            // Mettre à jour le statut
+            $tenant->payment_status = 'paid';
+            $tenant->last_payment_date = Carbon::now();
+            $tenant->last_payment_amount = $tenant->subscription_price;
+            
+            // Si abonnement expiré, prolonger
+            if ($tenant->isExpired()) {
+                $tenant->subscription_start_date = Carbon::now();
+                switch ($tenant->billing_cycle) {
+                    case 'monthly':
+                        $tenant->subscription_end_date = Carbon::now()->addMonth();
+                        break;
+                    case 'quarterly':
+                        $tenant->subscription_end_date = Carbon::now()->addMonths(3);
+                        break;
+                    case 'semester':
+                        $tenant->subscription_end_date = Carbon::now()->addMonths(6);
+                        break;
+                    case 'yearly':
+                        $tenant->subscription_end_date = Carbon::now()->addYear();
+                        break;
+                }
+            }
+            
+            $tenant->save();
+            
+            // Ajouter à l'historique
+            $tenant->subscriptions()->create([
+                'plan_type' => $tenant->billing_cycle,
+                'amount' => $tenant->subscription_price / 100,
+                'start_date' => $tenant->subscription_start_date,
+                'end_date' => $tenant->subscription_end_date,
+                'status' => 'active',
+                'payment_method' => $request->payment_method ?? 'manual',
+                'transaction_id' => $request->transaction_id ?? 'MANUAL-' . uniqid(),
+            ]);
+            
+            DB::commit();
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Abonnement marqué comme payé avec succès.',
+                    'data' => [
+                        'status' => $tenant->payment_status,
+                        'end_date' => $tenant->subscription_end_date?->format('d/m/Y'),
+                        'days_remaining' => $tenant->daysRemaining()
+                    ]
+                ]);
+            }
+            
+            return redirect()->back()->with('success', 'Abonnement marqué comme payé.');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur : ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Prolonger l'abonnement (AJAX)
+     */
+    public function extendSubscriptionAjax(Request $request, Tenant $tenant)
+    {
+        $request->validate([
+            'days' => 'required|integer|min:1|max:365',
+        ]);
+        
+        try {
+            if ($tenant->subscription_end_date && $tenant->subscription_end_date->isFuture()) {
+                $tenant->subscription_end_date = $tenant->subscription_end_date->addDays($request->days);
+            } else {
+                $tenant->subscription_start_date = Carbon::now();
+                $tenant->subscription_end_date = Carbon::now()->addDays($request->days);
+            }
+            
+            $tenant->payment_status = 'paid';
+            $tenant->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Abonnement prolongé de {$request->days} jours.",
+                'data' => [
+                    'end_date' => $tenant->subscription_end_date->format('d/m/Y'),
+                    'days_remaining' => $tenant->daysRemaining()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Envoyer un rappel de paiement par email
+     */
+    public function sendReminder(Request $request, Tenant $tenant)
+    {
+        try {
+            // Vérifier que le tenant a un propriétaire
+            if (!$tenant->owner) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce tenant n\'a pas de propriétaire associé.'
+                ], 400);
+            }
+            
+            // Envoyer l'email de rappel
+            Mail::to($tenant->owner->email)->send(new PaymentReminderMail($tenant));
+            
+            // Optionnel : enregistrer dans un log
+            \Log::info('Rappel de paiement envoyé', [
+                'tenant_id' => $tenant->id,
+                'tenant_name' => $tenant->company_name,
+                'email' => $tenant->owner->email,
+                'sent_at' => now()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Rappel envoyé avec succès à ' . $tenant->owner->email
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'envoi : ' . $e->getMessage()
+            ], 500);
         }
     }
 }

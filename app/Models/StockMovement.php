@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use App\Traits\TenantScope; // ← AJOUTER
+use App\Traits\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class StockMovement extends Model
 {
-    use TenantScope; // ← AJOUTER
+    use TenantScope;
 
     protected $fillable = [
         'product_id',
@@ -21,7 +22,7 @@ class StockMovement extends Model
         'reference_document',
         'user_id',
         'owner_id',
-        'tenant_id', // ← AJOUTER ICI
+        'tenant_id',
     ];
     
     protected $casts = [
@@ -172,6 +173,7 @@ class StockMovement extends Model
 
     /**
      * Filtrer les mouvements de la même quincaillerie (par tenant_id)
+     * Version compatible PostgreSQL
      */
     public function scopeSameCompany($query)
     {
@@ -179,7 +181,7 @@ class StockMovement extends Model
             $user = auth()->user();
             
             // Super Admin Global voit tout
-            if ($user->isSuperAdminGlobal()) {
+            if (method_exists($user, 'isSuperAdminGlobal') && $user->isSuperAdminGlobal()) {
                 return $query;
             }
             
@@ -229,7 +231,7 @@ class StockMovement extends Model
     }
 
     /**
-     * Mouvements de ce mois
+     * Mouvements de ce mois - Version compatible PostgreSQL
      */
     public function scopeThisMonth($query)
     {
@@ -276,27 +278,36 @@ class StockMovement extends Model
      */
     public static function createEntry(Product $product, $quantity, $motif, $reference = null, $purchasePrice = null, $salePrice = null)
     {
-        $oldStock = $product->stock;
-        $newStock = $oldStock + $quantity;
+        DB::beginTransaction();
         
-        $movement = self::create([
-            'product_id' => $product->id,
-            'type' => 'entree',
-            'quantity' => $quantity,
-            'purchase_price' => $purchasePrice ?? $product->purchase_price,
-            'sale_price' => $salePrice ?? $product->sale_price,
-            'stock_after' => $newStock,
-            'motif' => $motif,
-            'reference_document' => $reference,
-            'user_id' => auth()->id(),
-            'owner_id' => $product->owner_id,
-            'tenant_id' => $product->tenant_id, // ← AJOUTER ICI
-        ]);
+        try {
+            $oldStock = $product->stock;
+            $newStock = $oldStock + $quantity;
+            
+            $movement = self::create([
+                'product_id' => $product->id,
+                'type' => 'entree',
+                'quantity' => $quantity,
+                'purchase_price' => $purchasePrice ?? $product->purchase_price,
+                'sale_price' => $salePrice ?? $product->sale_price,
+                'stock_after' => $newStock,
+                'motif' => $motif,
+                'reference_document' => $reference,
+                'user_id' => auth()->id(),
+                'owner_id' => $product->owner_id,
+                'tenant_id' => $product->tenant_id,
+            ]);
 
-        // Mettre à jour le stock du produit
-        $product->update(['stock' => $newStock]);
+            // Mettre à jour le stock du produit
+            $product->update(['stock' => $newStock]);
+            
+            DB::commit();
 
-        return $movement;
+            return $movement;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     /**
@@ -308,27 +319,36 @@ class StockMovement extends Model
             throw new \Exception("Stock insuffisant. Disponible: {$product->stock}, Demandé: {$quantity}");
         }
 
-        $oldStock = $product->stock;
-        $newStock = $oldStock - $quantity;
+        DB::beginTransaction();
         
-        $movement = self::create([
-            'product_id' => $product->id,
-            'type' => 'sortie',
-            'quantity' => $quantity,
-            'purchase_price' => $product->purchase_price,
-            'sale_price' => $product->sale_price,
-            'stock_after' => $newStock,
-            'motif' => $motif,
-            'reference_document' => $reference,
-            'user_id' => auth()->id(),
-            'owner_id' => $product->owner_id,
-            'tenant_id' => $product->tenant_id, // ← AJOUTER ICI
-        ]);
+        try {
+            $oldStock = $product->stock;
+            $newStock = $oldStock - $quantity;
+            
+            $movement = self::create([
+                'product_id' => $product->id,
+                'type' => 'sortie',
+                'quantity' => $quantity,
+                'purchase_price' => $product->purchase_price,
+                'sale_price' => $product->sale_price,
+                'stock_after' => $newStock,
+                'motif' => $motif,
+                'reference_document' => $reference,
+                'user_id' => auth()->id(),
+                'owner_id' => $product->owner_id,
+                'tenant_id' => $product->tenant_id,
+            ]);
 
-        // Mettre à jour le stock du produit
-        $product->update(['stock' => $newStock]);
+            // Mettre à jour le stock du produit
+            $product->update(['stock' => $newStock]);
+            
+            DB::commit();
 
-        return $movement;
+            return $movement;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     /**
@@ -342,34 +362,43 @@ class StockMovement extends Model
             throw new \Exception("Produit non trouvé");
         }
 
-        // Mouvement inverse
-        if ($this->type === 'entree') {
-            // Si c'était une entrée, on doit sortir la quantité
-            if ($product->stock < $this->quantity) {
-                throw new \Exception("Impossible d'annuler : stock insuffisant");
+        DB::beginTransaction();
+        
+        try {
+            // Mouvement inverse
+            if ($this->type === 'entree') {
+                // Si c'était une entrée, on doit sortir la quantité
+                if ($product->stock < $this->quantity) {
+                    throw new \Exception("Impossible d'annuler : stock insuffisant");
+                }
+                $product->decrement('stock', $this->quantity);
+            } else {
+                // Si c'était une sortie, on doit rentrer la quantité
+                $product->increment('stock', $this->quantity);
             }
-            $product->decrement('stock', $this->quantity);
-        } else {
-            // Si c'était une sortie, on doit rentrer la quantité
-            $product->increment('stock', $this->quantity);
+
+            // Créer un mouvement d'annulation
+            $cancelMovement = self::create([
+                'product_id' => $this->product_id,
+                'type' => $this->type === 'entree' ? 'sortie' : 'entree',
+                'quantity' => $this->quantity,
+                'purchase_price' => $this->purchase_price,
+                'sale_price' => $this->sale_price,
+                'stock_after' => $product->fresh()->stock,
+                'motif' => 'ANNULATION: ' . $this->motif,
+                'reference_document' => 'CANCEL-' . $this->id,
+                'user_id' => auth()->id(),
+                'owner_id' => $this->owner_id,
+                'tenant_id' => $this->tenant_id,
+            ]);
+            
+            DB::commit();
+
+            return $cancelMovement;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        // Créer un mouvement d'annulation
-        $cancelMovement = self::create([
-            'product_id' => $this->product_id,
-            'type' => $this->type === 'entree' ? 'sortie' : 'entree',
-            'quantity' => $this->quantity,
-            'purchase_price' => $this->purchase_price,
-            'sale_price' => $this->sale_price,
-            'stock_after' => $product->fresh()->stock,
-            'motif' => 'ANNULATION: ' . $this->motif,
-            'reference_document' => 'CANCEL-' . $this->id,
-            'user_id' => auth()->id(),
-            'owner_id' => $this->owner_id,
-            'tenant_id' => $this->tenant_id, // ← AJOUTER ICI
-        ]);
-
-        return $cancelMovement;
     }
 
     /**
@@ -449,7 +478,7 @@ class StockMovement extends Model
     }
 
     /**
-     * Scope pour les statistiques
+     * Scope pour les statistiques - Version optimisée pour PostgreSQL
      */
     public static function getStats($productId = null, $startDate = null, $endDate = null)
     {
@@ -471,6 +500,76 @@ class StockMovement extends Model
             'total_exits' => $exits,
             'net_flow' => $entries - $exits,
             'total_movements' => $query->count(),
+        ];
+    }
+
+    /**
+     * Récupérer les statistiques de mouvement par produit
+     * Version optimisée pour PostgreSQL
+     */
+    public static function getMovementStatsByProduct($tenantId = null, $startDate = null, $endDate = null)
+    {
+        $query = self::select(
+                'product_id',
+                DB::raw("SUM(CASE WHEN type = 'entree' THEN quantity ELSE 0 END) as total_entries"),
+                DB::raw("SUM(CASE WHEN type = 'sortie' THEN quantity ELSE 0 END) as total_exits"),
+                DB::raw("COUNT(*) as total_movements")
+            )
+            ->with('product')
+            ->groupBy('product_id');
+        
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+        
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+        
+        return $query->orderBy('total_movements', 'desc')->get();
+    }
+
+    /**
+     * Récupérer les statistiques quotidiennes des mouvements
+     * Version optimisée pour PostgreSQL
+     */
+    public static function getDailyMovementStats($tenantId = null, $days = 30)
+    {
+        $query = self::select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw("SUM(CASE WHEN type = 'entree' THEN quantity ELSE 0 END) as total_entries"),
+                DB::raw("SUM(CASE WHEN type = 'sortie' THEN quantity ELSE 0 END) as total_exits"),
+                DB::raw('COUNT(*) as total_movements')
+            )
+            ->where('created_at', '>=', now()->subDays($days))
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date', 'desc');
+        
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+        
+        return $query->get();
+    }
+
+    /**
+     * Vérifier la cohérence des mouvements pour un produit
+     */
+    public static function checkConsistency(Product $product)
+    {
+        $totalEntries = self::forProduct($product->id)->entries()->sum('quantity');
+        $totalExits = self::forProduct($product->id)->exits()->sum('quantity');
+        
+        $calculatedStock = $totalEntries - $totalExits;
+        
+        return [
+            'product_name' => $product->name,
+            'current_stock' => $product->stock,
+            'calculated_stock' => $calculatedStock,
+            'total_entries' => $totalEntries,
+            'total_exits' => $totalExits,
+            'is_consistent' => $product->stock == $calculatedStock,
+            'difference' => $product->stock - $calculatedStock,
         ];
     }
 }

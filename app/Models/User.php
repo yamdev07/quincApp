@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -18,6 +19,9 @@ class User extends Authenticatable
         'tenant_id',
         'owner_id',
         'can_manage_users',
+        'is_active',
+        'last_login_at',
+        'last_login_ip',
     ];
 
     protected $hidden = [
@@ -25,14 +29,12 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'can_manage_users' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+        'can_manage_users' => 'boolean',
+        'is_active' => 'boolean',
+    ];
 
     /**
      * =====================================================
@@ -62,6 +64,46 @@ class User extends Authenticatable
     public function employees()
     {
         return $this->hasMany(User::class, 'owner_id');
+    }
+
+    /**
+     * Ventes effectuées par cet utilisateur
+     */
+    public function sales()
+    {
+        return $this->hasMany(Sale::class, 'user_id');
+    }
+
+    /**
+     * Mouvements de stock effectués par cet utilisateur
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class, 'user_id');
+    }
+
+    /**
+     * Produits créés par cet utilisateur
+     */
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'user_id');
+    }
+
+    /**
+     * Clients créés par cet utilisateur
+     */
+    public function clients()
+    {
+        return $this->hasMany(Client::class, 'user_id');
+    }
+
+    /**
+     * Fournisseurs créés par cet utilisateur
+     */
+    public function suppliers()
+    {
+        return $this->hasMany(Supplier::class, 'user_id');
     }
 
     /**
@@ -97,6 +139,14 @@ class User extends Authenticatable
     public function isStorekeeper(): bool
     {
         return $this->role === 'storekeeper';
+    }
+
+    /**
+     * Vérifie si l'utilisateur est actif
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active ?? true;
     }
 
     /**
@@ -195,7 +245,7 @@ class User extends Authenticatable
     public function getRootOwnerAttribute()
     {
         if ($this->isSuperAdminGlobal()) {
-            return null; // Le global n'a pas de propriétaire
+            return null;
         }
         
         if ($this->isSuperAdmin()) {
@@ -207,22 +257,26 @@ class User extends Authenticatable
 
     /**
      * =====================================================
-     * SCOPES
+     * SCOPES - Version compatible PostgreSQL
      * =====================================================
      */
     
     /**
      * Récupère tous les utilisateurs de la même quincaillerie
-     * ou tous les utilisateurs pour le super_admin_global
      */
     public function scopeSameCompany($query)
     {
-        if ($this->isSuperAdminGlobal()) {
-            return $query; // Le super_admin_global voit tout
+        if (auth()->check()) {
+            $user = auth()->user();
+            
+            if ($user->isSuperAdminGlobal()) {
+                return $query;
+            }
+            
+            $ownerId = $user->isSuperAdmin() ? $user->id : $user->owner_id;
+            return $query->where('owner_id', $ownerId);
         }
-        
-        $ownerId = $this->isSuperAdmin() ? $this->id : $this->owner_id;
-        return $query->where('owner_id', $ownerId);
+        return $query;
     }
 
     /**
@@ -242,10 +296,49 @@ class User extends Authenticatable
     }
 
     /**
+     * Scope pour les utilisateurs actifs
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope pour les utilisateurs inactifs
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Scope pour la recherche
+     */
+    public function scopeSearch($query, $term)
+    {
+        return $query->where(function($q) use ($term) {
+            $q->where('name', 'LIKE', "%{$term}%")
+              ->orWhere('email', 'LIKE', "%{$term}%");
+        });
+    }
+
+    /**
      * =====================================================
      * MÉTHODES UTILITAIRES
      * =====================================================
      */
+
+    /**
+     * Enregistrer la dernière connexion
+     */
+    public function recordLogin($ip = null): self
+    {
+        $this->last_login_at = now();
+        $this->last_login_ip = $ip;
+        $this->save();
+
+        return $this;
+    }
 
     /**
      * Récupère tous les tenants (quincailleries) accessibles
@@ -253,10 +346,10 @@ class User extends Authenticatable
     public function getAccessibleTenants()
     {
         if ($this->isSuperAdminGlobal()) {
-            return \App\Models\Tenant::all();
+            return Tenant::all();
         }
         
-        return \App\Models\Tenant::where('id', $this->tenant_id)->get();
+        return Tenant::where('id', $this->tenant_id)->get();
     }
 
     /**
@@ -292,12 +385,42 @@ class User extends Authenticatable
     }
 
     /**
-     * Vérifie si l'utilisateur est le propriétaire global (toi)
+     * Statut de l'utilisateur
      */
-    public function isGlobalOwner(): bool
+    public function getStatusLabelAttribute(): string
     {
-        // Tu peux définir ton email ici pour identification
-        return $this->email === 'admin@quincaapp.com' || $this->isSuperAdminGlobal();
+        return $this->is_active ? 'Actif' : 'Inactif';
+    }
+
+    /**
+     * Statut classe CSS
+     */
+    public function getStatusClassAttribute(): string
+    {
+        return $this->is_active ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+    }
+
+    /**
+     * Initiales de l'utilisateur
+     */
+    public function getInitialsAttribute(): string
+    {
+        $words = explode(' ', $this->name);
+        $initials = '';
+
+        foreach ($words as $word) {
+            $initials .= strtoupper(substr($word, 0, 1));
+        }
+
+        return substr($initials, 0, 2);
+    }
+
+    /**
+     * Dernière connexion formatée
+     */
+    public function getLastLoginFormattedAttribute(): string
+    {
+        return $this->last_login_at ? $this->last_login_at->format('d/m/Y H:i') : 'Jamais';
     }
 
     /**
@@ -316,7 +439,7 @@ class User extends Authenticatable
      */
     public function canAccessDashboard(): bool
     {
-        return true; // Tous les utilisateurs connectés peuvent accéder au dashboard
+        return $this->is_active ?? true;
     }
 
     /**
@@ -343,7 +466,7 @@ class User extends Authenticatable
     public function hasActiveTenantSubscription(): bool
     {
         if ($this->isSuperAdminGlobal()) {
-            return true; // Le global n'est pas concerné
+            return true;
         }
         
         return $this->tenant && $this->tenant->hasActiveSubscription();
@@ -355,9 +478,95 @@ class User extends Authenticatable
     public function getTenantDaysRemainingAttribute(): int
     {
         if ($this->isSuperAdminGlobal() || !$this->tenant) {
-            return 365; // Valeur par défaut
+            return 365;
         }
         
         return $this->tenant->daysRemaining();
+    }
+
+    /**
+     * =====================================================
+     * MÉTHODES STATISTIQUES
+     * =====================================================
+     */
+
+    /**
+     * Récupérer les statistiques de l'utilisateur
+     */
+    public function getStatistics(): array
+    {
+        return [
+            'total_sales' => $this->sales()->count(),
+            'total_sales_amount' => $this->sales()->sum('final_price'),
+            'formatted_sales_amount' => number_format($this->sales()->sum('final_price'), 0, ',', ' ') . ' FCFA',
+            'total_stock_movements' => $this->stockMovements()->count(),
+            'total_products_created' => $this->products()->count(),
+            'total_clients_created' => $this->clients()->count(),
+            'total_suppliers_created' => $this->suppliers()->count(),
+            'average_sale_value' => $this->sales()->avg('final_price') ?? 0,
+            'last_sale_date' => $this->sales()->latest()->first()?->created_at?->format('d/m/Y H:i'),
+            'sales_this_month' => $this->sales()->whereMonth('created_at', now()->month)->count(),
+            'sales_today' => $this->sales()->whereDate('created_at', today())->count(),
+        ];
+    }
+
+    /**
+     * Récupérer les statistiques globales des utilisateurs
+     * Version optimisée pour PostgreSQL
+     */
+    public static function getGlobalUserStats($tenantId = null): array
+    {
+        $query = self::query();
+
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        $total = (clone $query)->count();
+        $active = (clone $query)->active()->count();
+        $inactive = (clone $query)->inactive()->count();
+
+        $statsByRole = (clone $query)
+            ->select('role', DB::raw('COUNT(*) as count'))
+            ->groupBy('role')
+            ->get()
+            ->mapWithKeys(function($item) {
+                return [$item->role => $item->count];
+            });
+
+        return [
+            'total_users' => $total,
+            'active_users' => $active,
+            'inactive_users' => $inactive,
+            'stats_by_role' => $statsByRole,
+            'super_admins_global' => $statsByRole['super_admin_global'] ?? 0,
+            'super_admins' => $statsByRole['super_admin'] ?? 0,
+            'admins' => $statsByRole['admin'] ?? 0,
+            'managers' => $statsByRole['manager'] ?? 0,
+            'cashiers' => $statsByRole['cashier'] ?? 0,
+            'storekeepers' => $statsByRole['storekeeper'] ?? 0,
+        ];
+    }
+
+    /**
+     * Activer l'utilisateur
+     */
+    public function activate(): self
+    {
+        $this->is_active = true;
+        $this->save();
+
+        return $this;
+    }
+
+    /**
+     * Désactiver l'utilisateur
+     */
+    public function deactivate(): self
+    {
+        $this->is_active = false;
+        $this->save();
+
+        return $this;
     }
 }
