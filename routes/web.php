@@ -25,6 +25,9 @@ use App\Models\User;
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/demo', [LandingController::class, 'demo'])->name('demo');
 Route::get('/tarifs', [LandingController::class, 'pricing'])->name('pricing');
+Route::get('/faq', [LandingController::class, 'faq'])->name('faq');
+Route::get('/fonctionnalites', [LandingController::class, 'features'])->name('features');
+
 
 // Routes d'inscription
 Route::get('/inscription', [LandingController::class, 'registerForm'])->name('register.form');

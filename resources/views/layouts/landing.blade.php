@@ -366,8 +366,8 @@
                 <a href="{{ route('landing') }}" class="nav-link">Accueil</a>
                 <a href="{{ route('demo') }}" class="nav-link">Démo</a>
                 <a href="{{ route('pricing') }}" class="nav-link">Tarifs</a>
-                <a href="#features" class="nav-link">Fonctionnalités</a>
-                <a href="#faq" class="nav-link">FAQ</a>
+                <a href="{{ route('features') }}" class="nav-link">Fonctionnalités</a>
+                <a href="{{route ('faq') }}" class="nav-link">FAQ</a>
             </div>
 
             <div class="navbar-actions">

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
-use App\Mail\NewTenantWelcomeMail; // 👈 IMPORTANT POUR L'ENVOI D'EMAIL
+use App\Mail\NewTenantWelcomeMail;
 
 class LandingController extends Controller
 {
@@ -71,6 +71,14 @@ class LandingController extends Controller
         ];
         
         return view('landing.pricing', compact('plans'));
+    }
+    
+    /**
+     * Affiche la page FAQ
+     */
+    public function faq()
+    {
+        return view('landing.faq');
     }
     
     /**
@@ -144,7 +152,7 @@ class LandingController extends Controller
                 'yearly' => 102000,
             ];
             
-            // ✅ GÉNÉRER LE MOT DE PASSE (on le garde en clair pour l'email)
+            // GÉNÉRER LE MOT DE PASSE (on le garde en clair pour l'email)
             $plainPassword = Str::random(12);
             
             // Créer le tenant
@@ -177,7 +185,7 @@ class LandingController extends Controller
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => Hash::make($plainPassword), // ✅ ON HASH LE MOT DE PASSE POUR LA BDD
+                'password' => Hash::make($plainPassword),
                 'role' => 'super_admin',
                 'tenant_id' => $tenant->id,
                 'can_manage_users' => true,
@@ -198,7 +206,7 @@ class LandingController extends Controller
                 ]);
             }
             
-            // ✅ ENVOYER L'EMAIL AVEC LE MOT DE PASSE EN CLAIR
+            // ENVOYER L'EMAIL AVEC LE MOT DE PASSE EN CLAIR
             try {
                 Mail::to($user->email)->send(new NewTenantWelcomeMail($user, $plainPassword));
                 \Log::info('✅ Email envoyé avec succès à ' . $user->email);
@@ -215,7 +223,7 @@ class LandingController extends Controller
             // Rediriger avec le mot de passe en session (optionnel, pour affichage)
             return redirect()->route('dashboard')
                 ->with('success', 'Bienvenue sur QuincaApp ! Votre période d\'essai de 14 jours commence maintenant.')
-                ->with('temp_password', $plainPassword); // Optionnel: afficher le mot de passe une seule fois
+                ->with('temp_password', $plainPassword);
                 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -232,5 +240,13 @@ class LandingController extends Controller
     public function registerSuccess()
     {
         return view('landing.success');
+    }
+
+    /**
+     * Affiche la page des fonctionnalités
+     */
+    public function features()
+    {
+        return view('landing.features');
     }
 }

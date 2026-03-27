@@ -178,28 +178,42 @@
             <div class="pills-container">
                 <a href="{{ route('pricing') }}?plan=monthly" class="pill-card">
                     <span class="pill-name">Mensuel</span>
-                    <span class="pill-price">299 €</span>
+                    <span class="pill-price">10 000 FCFA</span>
                     <span class="pill-period">/mois</span>
                 </a>
                 <a href="{{ route('pricing') }}?plan=quarterly" class="pill-card">
                     <span class="pill-name">Trimestriel</span>
-                    <span class="pill-price">284 €</span>
-                    <span class="pill-period">/mois</span>
+                    <span class="pill-price">28 500 FCFA</span>
+                    <span class="pill-period">/3 mois</span>
                     <span class="pill-badge">-5%</span>
                 </a>
                 <a href="{{ route('pricing') }}?plan=semester" class="pill-card popular">
                     <span class="pill-popular">⭐ Populaire</span>
                     <span class="pill-name">Semestriel</span>
-                    <span class="pill-price">269 €</span>
-                    <span class="pill-period">/mois</span>
+                    <span class="pill-price">54 000 FCFA</span>
+                    <span class="pill-period">/6 mois</span>
                     <span class="pill-badge">-10%</span>
                 </a>
                 <a href="{{ route('pricing') }}?plan=yearly" class="pill-card">
                     <span class="pill-name">Annuel</span>
-                    <span class="pill-price">254 €</span>
-                    <span class="pill-period">/mois</span>
+                    <span class="pill-price">102 000 FCFA</span>
+                    <span class="pill-period">/an</span>
                     <span class="pill-badge">-15%</span>
                 </a>
+            </div>
+
+            <div class="pricing-comparison-note">
+                <div class="comparison-quick">
+                    <div class="quick-item">
+                        <span class="quick-label">Mensuel équivalent</span>
+                        <span class="quick-value">à partir de 8 500 FCFA/mois</span>
+                    </div>
+                    <div class="quick-divider"></div>
+                    <div class="quick-item">
+                        <span class="quick-label">Économie annuelle</span>
+                        <span class="quick-value">jusqu'à 18 000 FCFA</span>
+                    </div>
+                </div>
             </div>
 
             <div class="teaser-cta">
@@ -265,18 +279,21 @@
         </div>
     </section>
 
-    {{-- FAQ --}}
+    {{-- FAQ SECTION --}}
     <section class="faq-section">
         <div class="container">
             <div class="section-header">
                 <span class="section-badge">FAQ</span>
                 <h2 class="section-title">Questions fréquentes</h2>
+                <p class="section-subtitle">
+                    Tout ce que vous devez savoir sur QuincaApp
+                </p>
             </div>
 
             <div class="faq-grid">
                 <div class="faq-item">
                     <h3>Comment fonctionne l'essai gratuit ?</h3>
-                    <p>Vous bénéficiez de 14 jours d'essai gratuit avec toutes les fonctionnalités. Aucune carte bancaire n'est demandée.</p>
+                    <p>Vous bénéficiez de <strong>14 jours d'essai gratuit</strong> avec toutes les fonctionnalités. Aucune carte bancaire n'est demandée.</p>
                 </div>
                 <div class="faq-item">
                     <h3>Puis-je changer de formule ?</h3>
@@ -615,7 +632,7 @@
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
 }
 
 .pill-card {
@@ -628,7 +645,7 @@
     color: var(--gray-900);
     transition: all 0.3s;
     position: relative;
-    min-width: 180px;
+    min-width: 200px;
 }
 
 .pill-card:hover {
@@ -661,6 +678,7 @@
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 8px;
+    color: var(--gray-700);
 }
 
 .pill-price {
@@ -669,6 +687,7 @@
     font-weight: 800;
     color: var(--orange-500);
     line-height: 1.2;
+    margin-bottom: 4px;
 }
 
 .pill-period {
@@ -686,6 +705,47 @@
     border-radius: 30px;
     font-size: 12px;
     font-weight: 600;
+}
+
+.pricing-comparison-note {
+    max-width: 500px;
+    margin: 0 auto 40px;
+}
+
+.comparison-quick {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 12px 20px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+}
+
+.quick-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.quick-label {
+    font-size: 12px;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.quick-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--orange-600);
+}
+
+.quick-divider {
+    width: 1px;
+    height: 30px;
+    background: var(--gray-200);
 }
 
 .teaser-cta {
@@ -793,6 +853,10 @@
     color: var(--gray-600);
     line-height: 1.6;
     font-size: 14px;
+}
+
+.faq-item strong {
+    color: var(--orange-600);
 }
 
 /* Final CTA */
@@ -920,7 +984,17 @@
     
     .pill-card {
         width: 100%;
-        max-width: 300px;
+        max-width: 280px;
+    }
+    
+    .comparison-quick {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .quick-divider {
+        width: 80%;
+        height: 1px;
     }
 }
 </style>
