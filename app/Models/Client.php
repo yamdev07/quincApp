@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\TenantScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Client extends Model
 {
@@ -15,7 +16,7 @@ class Client extends Model
         'phone',
         'email',
         'owner_id',
-        'tenant_id', // ← AJOUTÉ
+        'tenant_id',
     ];
 
     // ============ RELATIONS ============
@@ -153,29 +154,29 @@ class Client extends Model
     }
 
     /**
-     * Clients fidèles
+     * Clients fidèles - Version compatible PostgreSQL
      */
     public function scopeLoyal($query, $threshold = 10)
     {
-        return $query->whereHas('sales', function($q) {
-            $q->selectRaw('count(*) as total');
-        }, '>=', $threshold);
+        return $query->whereHas('sales', function($q) use ($threshold) {
+            $q->select(DB::raw('count(*) as total'))
+              ->havingRaw('count(*) >= ?', [$threshold]);
+        });
     }
 
     /**
-     * Clients réguliers
+     * Clients réguliers - Version compatible PostgreSQL
      */
     public function scopeRegular($query, $min = 3, $max = 9)
     {
-        return $query->whereHas('sales', function($q) {
-            $q->selectRaw('count(*) as total');
-        }, '>=', $min)->whereHas('sales', function($q) {
-            $q->selectRaw('count(*) as total');
-        }, '<=', $max);
+        return $query->whereHas('sales', function($q) use ($min, $max) {
+            $q->select(DB::raw('count(*) as total'))
+              ->havingRaw('count(*) >= ? AND count(*) <= ?', [$min, $max]);
+        });
     }
 
     /**
-     * Clients actifs (ont acheté récemment)
+     * Clients actifs (ont acheté récemment) - Version compatible PostgreSQL
      */
     public function scopeActive($query, $days = 30)
     {
@@ -198,21 +199,27 @@ class Client extends Model
     }
 
     /**
-     * Récupérer les produits préférés du client
+     * Récupérer les produits préférés du client - Version optimisée
      */
     public function favoriteProducts($limit = 5)
     {
-        return Product::whereIn('id', $this->sales()
-            ->with('items')
-            ->get()
-            ->flatMap(function($sale) {
-                return $sale->items->pluck('product_id');
-            })
-            ->countBy()
-            ->sortDesc()
-            ->take($limit)
-            ->keys()
-        )->get();
+        // Version optimisée avec une seule requête
+        $productIds = DB::table('sales')
+            ->join('sale_items', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.client_id', $this->id)
+            ->select('sale_items.product_id', DB::raw('COUNT(*) as purchase_count'))
+            ->groupBy('sale_items.product_id')
+            ->orderBy('purchase_count', 'desc')
+            ->limit($limit)
+            ->pluck('product_id');
+        
+        if ($productIds->isEmpty()) {
+            return collect();
+        }
+        
+        return Product::whereIn('id', $productIds)
+            ->with(['category', 'supplier'])
+            ->get();
     }
 
     /**

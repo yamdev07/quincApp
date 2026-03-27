@@ -2,26 +2,32 @@
 
 namespace App\Models;
 
-use App\Traits\TenantScope; // ← AJOUTER
+use App\Traits\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class SaleItem extends Model
 {
-    use TenantScope; // ← AJOUTER
+    use TenantScope;
 
     protected $fillable = [
         'sale_id',
         'product_id',
         'quantity',
-        'unit_price',
-        'total_price',
-        // 'owner_id' n'est PAS dans fillable (sera auto-assigné)
+        'price',
+        'purchase_price',
+        'discount',
+        'total',
+        'owner_id',
+        'tenant_id',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2',
+        'price' => 'decimal:2',
+        'purchase_price' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
     // ============ RELATIONS ============
@@ -43,11 +49,19 @@ class SaleItem extends Model
     }
 
     /**
-     * 👇 Propriétaire (super_admin de la quincaillerie)
+     * Propriétaire (super_admin de la quincaillerie)
      */
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Tenant (quincaillerie)
+     */
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     // ============ ACCESSORS ============
@@ -57,7 +71,7 @@ class SaleItem extends Model
      */
     public function getFormattedUnitPriceAttribute()
     {
-        return number_format($this->unit_price, 0, ',', ' ') . ' FCFA';
+        return number_format($this->price, 0, ',', ' ') . ' FCFA';
     }
 
     /**
@@ -65,7 +79,7 @@ class SaleItem extends Model
      */
     public function getFormattedTotalPriceAttribute()
     {
-        return number_format($this->total_price, 0, ',', ' ') . ' FCFA';
+        return number_format($this->total, 0, ',', ' ') . ' FCFA';
     }
 
     /**
@@ -81,7 +95,7 @@ class SaleItem extends Model
      */
     public function getSaleReferenceAttribute()
     {
-        return 'VENTE #' . $this->sale_id;
+        return $this->sale?->invoice_number ?? 'VENTE #' . $this->sale_id;
     }
 
     /**
@@ -91,8 +105,8 @@ class SaleItem extends Model
     {
         if (!$this->product) return 0;
         
-        $purchasePrice = $this->product->purchase_price ?? 0;
-        return ($this->unit_price - $purchasePrice) * $this->quantity;
+        $purchasePrice = $this->purchase_price ?? $this->product->purchase_price ?? 0;
+        return ($this->price - $purchasePrice) * $this->quantity;
     }
 
     /**
@@ -108,22 +122,28 @@ class SaleItem extends Model
      */
     public function getProfitMarginAttribute()
     {
-        if (!$this->product || $this->product->purchase_price == 0) return 0;
+        $purchasePrice = $this->purchase_price ?? $this->product?->purchase_price ?? 0;
+        if ($purchasePrice == 0) return 0;
         
-        return round((($this->unit_price - $this->product->purchase_price) / $this->product->purchase_price) * 100, 1);
+        return round((($this->price - $purchasePrice) / $purchasePrice) * 100, 1);
     }
 
     // ============ SCOPES ============
 
     /**
-     * 👇 Filtrer les articles de la même quincaillerie
+     * Filtrer les articles de la même quincaillerie - Version compatible
      */
     public function scopeSameCompany($query)
     {
         if (auth()->check()) {
             $user = auth()->user();
-            $ownerId = $user->isSuperAdmin() ? $user->id : $user->owner_id;
-            return $query->where('owner_id', $ownerId);
+            
+            // Super Admin Global voit tout
+            if (method_exists($user, 'isSuperAdminGlobal') && $user->isSuperAdminGlobal()) {
+                return $query;
+            }
+            
+            return $query->where('tenant_id', $user->tenant_id);
         }
         return $query;
     }
@@ -149,7 +169,7 @@ class SaleItem extends Model
      */
     public function scopeMinUnitPrice($query, $price)
     {
-        return $query->where('unit_price', '>=', $price);
+        return $query->where('price', '>=', $price);
     }
 
     /**
@@ -157,7 +177,7 @@ class SaleItem extends Model
      */
     public function scopeMaxUnitPrice($query, $price)
     {
-        return $query->where('unit_price', '<=', $price);
+        return $query->where('price', '<=', $price);
     }
 
     /**
@@ -166,6 +186,16 @@ class SaleItem extends Model
     public function scopeMinQuantity($query, $qty)
     {
         return $query->where('quantity', '>=', $qty);
+    }
+
+    /**
+     * Articles d'une période spécifique (via la vente)
+     */
+    public function scopeBetweenDates($query, $startDate, $endDate)
+    {
+        return $query->whereHas('sale', function($q) use ($startDate, $endDate) {
+            $q->whereBetween('created_at', [$startDate, $endDate]);
+        });
     }
 
     // ============ MÉTHODES ============
@@ -181,7 +211,7 @@ class SaleItem extends Model
     /**
      * Créer un article de vente
      */
-    public static function createFromProduct(Product $product, $quantity, $saleId, $unitPrice = null)
+    public static function createFromProduct(Product $product, $quantity, $saleId, $unitPrice = null, $tenantId = null, $ownerId = null)
     {
         $unitPrice = $unitPrice ?? $product->sale_price;
         $totalPrice = self::calculateTotalPrice($quantity, $unitPrice);
@@ -190,8 +220,11 @@ class SaleItem extends Model
             'sale_id' => $saleId,
             'product_id' => $product->id,
             'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'total_price' => $totalPrice,
+            'price' => $unitPrice,
+            'purchase_price' => $product->purchase_price,
+            'total' => $totalPrice,
+            'tenant_id' => $tenantId ?? $product->tenant_id,
+            'owner_id' => $ownerId ?? $product->owner_id,
         ]);
     }
 
@@ -201,7 +234,7 @@ class SaleItem extends Model
     public function updateQuantity($newQuantity)
     {
         $this->quantity = $newQuantity;
-        $this->total_price = $this->calculateTotalPrice($newQuantity, $this->unit_price);
+        $this->total = $this->calculateTotalPrice($newQuantity, $this->price);
         $this->save();
         
         // Mettre à jour le total de la vente parente
@@ -217,8 +250,8 @@ class SaleItem extends Model
      */
     public function updateUnitPrice($newUnitPrice)
     {
-        $this->unit_price = $newUnitPrice;
-        $this->total_price = $this->calculateTotalPrice($this->quantity, $newUnitPrice);
+        $this->price = $newUnitPrice;
+        $this->total = $this->calculateTotalPrice($this->quantity, $newUnitPrice);
         $this->save();
         
         // Mettre à jour le total de la vente parente
@@ -241,14 +274,15 @@ class SaleItem extends Model
             'product_id' => $this->product_id,
             'product_name' => $this->product_name,
             'quantity' => $this->quantity,
-            'unit_price' => $this->unit_price,
+            'unit_price' => $this->price,
             'formatted_unit_price' => $this->formatted_unit_price,
-            'total_price' => $this->total_price,
+            'total_price' => $this->total,
             'formatted_total_price' => $this->formatted_total_price,
+            'purchase_price' => $this->purchase_price,
             'profit' => $this->profit,
             'formatted_profit' => $this->formatted_profit,
             'profit_margin' => $this->profit_margin,
-            'date' => $this->created_at->format('d/m/Y H:i'),
+            'date' => $this->created_at?->format('d/m/Y H:i'),
         ];
     }
 
@@ -257,8 +291,10 @@ class SaleItem extends Model
      */
     public function isEditable()
     {
-        // On ne peut modifier que les articles des ventes du jour
-        return $this->sale && $this->sale->created_at->isToday();
+        // On ne peut modifier que les articles des ventes du jour et non annulées
+        return $this->sale && 
+               $this->sale->created_at->isToday() && 
+               $this->sale->status !== 'cancelled';
     }
 
     /**
@@ -280,8 +316,8 @@ class SaleItem extends Model
         $issues = [];
         
         // Vérifier que le prix total correspond
-        $calculatedTotal = $this->quantity * $this->unit_price;
-        if (abs($calculatedTotal - $this->total_price) > 0.01) {
+        $calculatedTotal = $this->quantity * $this->price;
+        if (abs($calculatedTotal - $this->total) > 0.01) {
             $issues[] = 'Le prix total ne correspond pas à quantité × prix unitaire';
         }
         
@@ -299,5 +335,58 @@ class SaleItem extends Model
             'is_consistent' => empty($issues),
             'issues' => $issues,
         ];
+    }
+
+    /**
+     * Récupérer les statistiques des ventes par produit
+     * Version optimisée pour PostgreSQL
+     */
+    public static function getSalesStatsByProduct($tenantId = null, $startDate = null, $endDate = null)
+    {
+        $query = self::select(
+                'product_id',
+                DB::raw('SUM(quantity) as total_quantity'),
+                DB::raw('SUM(total) as total_revenue'),
+                DB::raw('AVG(price) as average_price'),
+                DB::raw('COUNT(DISTINCT sale_id) as number_of_sales')
+            )
+            ->with('product')
+            ->groupBy('product_id');
+        
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+        
+        if ($startDate && $endDate) {
+            $query->whereHas('sale', function($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate]);
+            });
+        }
+        
+        return $query->orderBy('total_quantity', 'desc')->get();
+    }
+
+    /**
+     * Récupérer le total des ventes par jour
+     */
+    public static function getDailySalesStats($tenantId = null, $days = 30)
+    {
+        $query = self::join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->select(
+                DB::raw('DATE(sales.created_at) as date'),
+                DB::raw('SUM(sale_items.quantity) as total_quantity'),
+                DB::raw('SUM(sale_items.total) as total_revenue'),
+                DB::raw('COUNT(DISTINCT sales.id) as total_sales')
+            )
+            ->where('sales.status', 'completed')
+            ->where('sales.created_at', '>=', now()->subDays($days))
+            ->groupBy(DB::raw('DATE(sales.created_at)'))
+            ->orderBy('date', 'desc');
+        
+        if ($tenantId) {
+            $query->where('sale_items.tenant_id', $tenantId);
+        }
+        
+        return $query->get();
     }
 }

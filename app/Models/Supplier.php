@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\TenantScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Supplier extends Model
 {
@@ -16,7 +17,7 @@ class Supplier extends Model
         'phone',
         'address',
         'owner_id',
-        'tenant_id', // ← AJOUTER ICI
+        'tenant_id',
     ];
 
     protected $casts = [
@@ -138,7 +139,7 @@ class Supplier extends Model
     }
 
     /**
-     * Dernière commande (date)
+     * Dernière commande (date) - Version optimisée
      */
     public function getLastOrderDateAttribute(): ?string
     {
@@ -153,6 +154,7 @@ class Supplier extends Model
 
     /**
      * Filtrer les fournisseurs de la même quincaillerie (par tenant_id)
+     * Version compatible PostgreSQL
      */
     public function scopeSameCompany($query)
     {
@@ -160,7 +162,7 @@ class Supplier extends Model
             $user = auth()->user();
             
             // Super Admin Global voit tout
-            if ($user->isSuperAdminGlobal()) {
+            if (method_exists($user, 'isSuperAdminGlobal') && $user->isSuperAdminGlobal()) {
                 return $query;
             }
             
@@ -222,12 +224,14 @@ class Supplier extends Model
     }
 
     /**
-     * Fournisseurs avec stock minimum
+     * Fournisseurs avec stock minimum - Version compatible PostgreSQL
      */
     public function scopeMinStockValue($query, $value)
     {
         return $query->whereHas('products', function($q) use ($value) {
-            $q->havingRaw('SUM(stock * purchase_price) >= ?', [$value]);
+            $q->select('supplier_id')
+              ->groupBy('supplier_id')
+              ->havingRaw('SUM(stock * purchase_price) >= ?', [$value]);
         });
     }
 
@@ -384,5 +388,99 @@ class Supplier extends Model
         }
         
         return $query;
+    }
+
+    /**
+     * Récupérer les statistiques globales des fournisseurs
+     * Version optimisée pour PostgreSQL
+     */
+    public static function getGlobalStats($tenantId = null): array
+    {
+        $query = self::query();
+        
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+        
+        $total = (clone $query)->count();
+        $withProducts = (clone $query)->withProducts()->count();
+        $withoutProducts = (clone $query)->withoutProducts()->count();
+        $withPhone = (clone $query)->withPhone()->count();
+        $withContact = (clone $query)->withContact()->count();
+        
+        $totalProducts = DB::table('products')
+            ->whereIn('supplier_id', (clone $query)->pluck('id'))
+            ->count();
+        
+        $totalStockValue = DB::table('products')
+            ->whereIn('supplier_id', (clone $query)->pluck('id'))
+            ->sum(DB::raw('stock * purchase_price'));
+        
+        $topSupplier = (clone $query)
+            ->withCount('products')
+            ->orderBy('products_count', 'desc')
+            ->first();
+        
+        return [
+            'total_suppliers' => $total,
+            'suppliers_with_products' => $withProducts,
+            'suppliers_without_products' => $withoutProducts,
+            'suppliers_with_phone' => $withPhone,
+            'suppliers_with_contact' => $withContact,
+            'total_products' => $totalProducts,
+            'total_stock_value' => $totalStockValue,
+            'formatted_stock_value' => number_format($totalStockValue, 0, ',', ' ') . ' FCFA',
+            'top_supplier' => $topSupplier ? [
+                'name' => $topSupplier->name,
+                'products_count' => $topSupplier->products_count,
+            ] : null,
+        ];
+    }
+
+    /**
+     * Récupérer les fournisseurs les plus actifs
+     * Version optimisée pour PostgreSQL
+     */
+    public static function getTopSuppliers($limit = 10, $tenantId = null)
+    {
+        $query = self::withCount('products')
+            ->orderBy('products_count', 'desc')
+            ->limit($limit);
+        
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+        
+        return $query->get()->map(function($supplier) {
+            return [
+                'id' => $supplier->id,
+                'name' => $supplier->name,
+                'products_count' => $supplier->products_count,
+                'total_stock_value' => $supplier->formatted_total_stock_value,
+                'status' => $supplier->status,
+                'contact' => $supplier->contact_name,
+                'phone' => $supplier->formatted_phone,
+            ];
+        });
+    }
+
+    /**
+     * Vérifier si le fournisseur peut être supprimé
+     */
+    public function canBeDeleted(): bool
+    {
+        return $this->products()->count() === 0;
+    }
+
+    /**
+     * Supprimer le fournisseur avec vérification
+     */
+    public function deleteIfPossible(): bool
+    {
+        if (!$this->canBeDeleted()) {
+            throw new \Exception("Impossible de supprimer ce fournisseur car il a des produits associés.");
+        }
+        
+        return $this->delete();
     }
 }

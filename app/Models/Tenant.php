@@ -4,6 +4,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class Tenant extends Model
@@ -12,7 +13,7 @@ class Tenant extends Model
         'name',
         'company_name',
         'domain',
-        'subdomain', // Ajouté
+        'subdomain',
         'database_name',
         'db_username',
         'db_password',
@@ -24,7 +25,7 @@ class Tenant extends Model
         'subscription_ends_at',
         'settings',
         
-        // 👇 NOUVELLES COLONNES D'ABONNEMENT
+        // Colonnes d'abonnement
         'subscription_price',
         'billing_cycle',
         'subscription_start_date',
@@ -39,6 +40,7 @@ class Tenant extends Model
         'stripe_subscription_id',
         'paypal_subscription_id',
         'subscription_metadata',
+        'owner_id',
     ];
 
     protected $casts = [
@@ -46,14 +48,18 @@ class Tenant extends Model
         'subscription_ends_at' => 'datetime',
         'settings' => 'array',
         
-        // 👇 NOUVEAUX CASTS
-        'subscription_start_date' => 'date',
-        'subscription_end_date' => 'date',
-        'trial_ends_at' => 'date',
-        'last_payment_date' => 'date',
+        // Casts pour l'abonnement
+        'subscription_start_date' => 'datetime',
+        'subscription_end_date' => 'datetime',
+        'trial_ends_at' => 'datetime',
+        'last_payment_date' => 'datetime',
         'subscription_metadata' => 'array',
         'has_trial' => 'boolean',
+        'subscription_price' => 'decimal:2',
+        'last_payment_amount' => 'decimal:2',
     ];
+
+    // ============ RELATIONS ============
 
     /**
      * Tous les utilisateurs de ce tenant
@@ -68,86 +74,58 @@ class Tenant extends Model
      */
     public function owner()
     {
-        return $this->hasOne(User::class)->where('role', 'super_admin');
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
     /**
-     * 👇 TOUTES LES VENTES de ce tenant (via les utilisateurs)
+     * Toutes les ventes de ce tenant (via les utilisateurs)
      */
     public function sales()
     {
         return $this->hasManyThrough(
             Sale::class,
             User::class,
-            'tenant_id', // Clé étrangère sur users
-            'user_id',    // Clé étrangère sur sales
-            'id',         // Clé locale sur tenants
-            'id'          // Clé locale sur users
+            'tenant_id',
+            'user_id',
+            'id',
+            'id'
         );
     }
 
     /**
-     * 👇 TOUS LES PRODUITS de ce tenant (via les utilisateurs)
+     * Tous les produits de ce tenant
      */
     public function products()
     {
-        return $this->hasManyThrough(
-            Product::class,
-            User::class,
-            'tenant_id', // Clé étrangère sur users
-            'owner_id',   // Clé étrangère sur products (owner_id = user_id du propriétaire)
-            'id',         // Clé locale sur tenants
-            'id'          // Clé locale sur users
-        );
+        return $this->hasMany(Product::class);
     }
 
     /**
-     * 👇 TOUS LES CLIENTS de ce tenant
+     * Tous les clients de ce tenant
      */
     public function clients()
     {
-        return $this->hasManyThrough(
-            Client::class,
-            User::class,
-            'tenant_id',
-            'owner_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(Client::class);
     }
 
     /**
-     * 👇 TOUS LES FOURNISSEURS de ce tenant
+     * Tous les fournisseurs de ce tenant
      */
     public function suppliers()
     {
-        return $this->hasManyThrough(
-            Supplier::class,
-            User::class,
-            'tenant_id',
-            'owner_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(Supplier::class);
     }
 
     /**
-     * 👇 TOUS LES MOUVEMENTS DE STOCK de ce tenant
+     * Tous les mouvements de stock de ce tenant
      */
     public function stockMovements()
     {
-        return $this->hasManyThrough(
-            StockMovement::class,
-            User::class,
-            'tenant_id',
-            'owner_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(StockMovement::class);
     }
 
     /**
-     * 👇 HISTORIQUE DES ABONNEMENTS
+     * Historique des abonnements
      */
     public function subscriptions()
     {
@@ -155,7 +133,7 @@ class Tenant extends Model
     }
 
     /**
-     * 👇 ABONNEMENT ACTIF
+     * Abonnement actif
      */
     public function activeSubscription()
     {
@@ -165,9 +143,7 @@ class Tenant extends Model
                     ->latest();
     }
 
-    // =====================================================
-    // ✅ MÉTHODES DE GESTION DES ABONNEMENTS
-    // =====================================================
+    // ============ MÉTHODES DE GESTION DES ABONNEMENTS ============
 
     /**
      * Vérifier si l'abonnement est actif
@@ -222,11 +198,11 @@ class Tenant extends Model
     }
 
     /**
-     * Prix formaté (en euros ou FCFA)
+     * Prix formaté
      */
     public function getFormattedPriceAttribute(): string
     {
-        return number_format($this->subscription_price / 100, 0, ',', ' ') . ' FCFA';
+        return number_format($this->subscription_price, 0, ',', ' ') . ' FCFA';
     }
 
     /**
@@ -244,7 +220,7 @@ class Tenant extends Model
     }
 
     /**
-     * Vérifier si le tenant est actif (ancienne méthode à conserver)
+     * Vérifier si le tenant est actif (ancienne méthode)
      */
     public function isActive(): bool
     {
@@ -253,7 +229,7 @@ class Tenant extends Model
     }
 
     /**
-     * Nom d'affichage (priorité à company_name sinon name)
+     * Nom d'affichage
      */
     public function getDisplayNameAttribute()
     {
@@ -261,7 +237,7 @@ class Tenant extends Model
     }
 
     /**
-     * 👇 STATISTIQUES DU TENANT
+     * Statistiques du tenant - Version optimisée
      */
     public function getStatsAttribute()
     {
@@ -277,7 +253,7 @@ class Tenant extends Model
     }
 
     /**
-     * 👇 DERNIÈRES VENTES (limité)
+     * Dernières ventes (limité)
      */
     public function latestSales($limit = 5)
     {
@@ -289,7 +265,7 @@ class Tenant extends Model
     }
 
     /**
-     * 👇 PRODUITS EN RUPTURE DE STOCK
+     * Produits en rupture de stock
      */
     public function outOfStockProducts()
     {
@@ -297,7 +273,7 @@ class Tenant extends Model
     }
 
     /**
-     * 👇 PRODUITS EN STOCK FAIBLE
+     * Produits en stock faible
      */
     public function lowStockProducts($threshold = 5)
     {
@@ -308,12 +284,10 @@ class Tenant extends Model
                     ->get();
     }
 
-    // =====================================================
-    // 🔍 SCOPES POUR LES REQUÊTES
-    // =====================================================
+    // ============ SCOPES ============
 
     /**
-     * Scope pour les abonnements actifs
+     * Scope pour les abonnements actifs - Version compatible PostgreSQL
      */
     public function scopeActive($query)
     {
@@ -356,7 +330,7 @@ class Tenant extends Model
     }
 
     /**
-     * Scope pour les abonnements expirés
+     * Scope pour les abonnements expirés - Version compatible PostgreSQL
      */
     public function scopeExpired($query)
     {
@@ -368,5 +342,120 @@ class Tenant extends Model
                       ->where('trial_ends_at', '<=', now());
               });
         });
+    }
+
+    // ============ MÉTHODES STATISTIQUES AVANCÉES ============
+
+    /**
+     * Récupérer les statistiques globales des tenants
+     * Version optimisée pour PostgreSQL
+     */
+    public static function getGlobalTenantStats(): array
+    {
+        $total = self::count();
+        $active = self::active()->count();
+        $expired = self::expired()->count();
+        $overdue = self::overdue()->count();
+        $trial = self::where('payment_status', 'trial')->count();
+        
+        $totalRevenue = self::where('payment_status', 'paid')
+            ->sum('subscription_price');
+        
+        $averageRevenue = self::where('payment_status', 'paid')
+            ->avg('subscription_price');
+        
+        // Statistiques par cycle de facturation
+        $statsByCycle = self::select(
+                'billing_cycle',
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(subscription_price) as total_revenue'),
+                DB::raw('AVG(subscription_price) as average_amount')
+            )
+            ->where('payment_status', 'paid')
+            ->groupBy('billing_cycle')
+            ->get()
+            ->mapWithKeys(function($item) {
+                $cycles = [
+                    'monthly' => 'Mensuel',
+                    'quarterly' => 'Trimestriel',
+                    'semester' => 'Semestriel',
+                    'yearly' => 'Annuel',
+                ];
+                
+                $key = $cycles[$item->billing_cycle] ?? $item->billing_cycle;
+                
+                return [$key => [
+                    'total' => $item->total,
+                    'total_revenue' => $item->total_revenue,
+                    'average_amount' => round($item->average_amount, 2),
+                ]];
+            });
+        
+        return [
+            'total_tenants' => $total,
+            'active_tenants' => $active,
+            'expired_tenants' => $expired,
+            'overdue_tenants' => $overdue,
+            'trial_tenants' => $trial,
+            'total_revenue' => $totalRevenue,
+            'formatted_revenue' => number_format($totalRevenue, 0, ',', ' ') . ' FCFA',
+            'average_revenue' => round($averageRevenue, 2),
+            'formatted_average_revenue' => number_format($averageRevenue, 0, ',', ' ') . ' FCFA',
+            'stats_by_cycle' => $statsByCycle,
+        ];
+    }
+
+    /**
+     * Récupérer les tenants avec le plus de revenus
+     */
+    public static function getTopRevenueTenants($limit = 10)
+    {
+        return self::where('payment_status', 'paid')
+            ->orderBy('subscription_price', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function($tenant) {
+                return [
+                    'id' => $tenant->id,
+                    'name' => $tenant->display_name,
+                    'subscription_price' => $tenant->formatted_price,
+                    'billing_cycle' => $tenant->billing_cycle_label,
+                    'status' => $tenant->payment_status,
+                ];
+            });
+    }
+
+    /**
+     * Vérifier la cohérence des données
+     */
+    public function checkConsistency(): array
+    {
+        $issues = [];
+        
+        // Vérifier que le propriétaire existe
+        if ($this->owner_id && !$this->owner) {
+            $issues[] = 'Le propriétaire associé n\'existe pas';
+        }
+        
+        // Vérifier les dates d'abonnement
+        if ($this->payment_status === 'paid' && !$this->subscription_end_date) {
+            $issues[] = 'Abonnement payé sans date de fin';
+        }
+        
+        if ($this->payment_status === 'trial' && !$this->trial_ends_at) {
+            $issues[] = 'Période d\'essai sans date de fin';
+        }
+        
+        // Vérifier la cohérence des dates
+        if ($this->subscription_start_date && $this->subscription_end_date) {
+            if ($this->subscription_start_date->isAfter($this->subscription_end_date)) {
+                $issues[] = 'La date de début est postérieure à la date de fin';
+            }
+        }
+        
+        return [
+            'is_consistent' => empty($issues),
+            'issues' => $issues,
+        ];
     }
 }
