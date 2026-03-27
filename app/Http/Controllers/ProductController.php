@@ -121,7 +121,7 @@ class ProductController extends Controller
         }
         
         // Calcul des statistiques (filtrées par quincaillerie)
-        $totalProductsGlobal = Product::count(); // Déjà filtré par TenantScope
+        $totalProductsGlobal = Product::count();
         $totalStockGlobal = Product::sum('stock');
         $totalValueGlobal = Product::sum(DB::raw('sale_price * stock'));
         
@@ -159,7 +159,7 @@ class ProductController extends Controller
         return view('products.create', compact('categories', 'suppliers'));
     }
 
-    // 💾 Enregistrement d'un nouveau produit AVEC GESTION DES DOUBLONS
+    // 💾 Enregistrement d'un nouveau produit - CORRIGÉ
     public function store(Request $request)
     {
         $this->authorizeStockManagement();
@@ -225,18 +225,22 @@ class ProductController extends Controller
                 
                 $cumulatedProduct = Product::create($productData);
                 
-                // Enregistrer les mouvements de stock
-                $this->addStockMovementWithPrice(
-                    $existingProduct,
-                    'sortie',
-                    $oldStock,
-                    $existingProduct->purchase_price,
-                    $existingProduct->sale_price,
-                    'Transfert vers ligne cumulée',
-                    'CUMUL-' . $cumulatedProduct->id
-                );
+                // Enregistrer les mouvements de stock - CORRIGÉ : on utilise la méthode directe
+                // 1. Sortie de l'ancien produit
+                if ($oldStock > 0) {
+                    $this->addStockMovementDirect(
+                        $existingProduct,
+                        'sortie',
+                        $oldStock,
+                        $existingProduct->purchase_price,
+                        $existingProduct->sale_price,
+                        'Transfert vers ligne cumulée',
+                        'CUMUL-' . $cumulatedProduct->id
+                    );
+                }
                 
-                $this->addStockMovementWithPrice(
+                // 2. Entrée du nouveau stock dans le produit cumulé
+                $this->addStockMovementDirect(
                     $cumulatedProduct,
                     'entree',
                     $request->stock,
@@ -247,7 +251,7 @@ class ProductController extends Controller
                 );
                 
                 if ($oldStock > 0) {
-                    $this->addStockMovementWithPrice(
+                    $this->addStockMovementDirect(
                         $cumulatedProduct,
                         'entree',
                         $oldStock,
@@ -272,15 +276,13 @@ class ProductController extends Controller
                 
                 $existingProduct->update($updateData);
                 
-                $product = $cumulatedProduct;
-                
                 DB::commit();
                 
                 return redirect()->route('products.index')
                     ->with('success', 'Produit existant détecté. Une nouvelle ligne cumulée a été créée avec le stock total ✅');
                     
             } else {
-                // ✅ NOUVEAU PRODUIT : Création normale
+                // ✅ NOUVEAU PRODUIT : Création normale - CORRIGÉ
                 $productData = [
                     'name'           => $request->name,
                     'stock'          => $request->stock,
@@ -298,17 +300,20 @@ class ProductController extends Controller
                 
                 $product = Product::create($productData);
 
-                // Enregistrer le mouvement initial avec prix
+                // 🔧 CORRECTION: Créer le mouvement SANS ajouter de nouveau stock
                 if ($request->stock > 0) {
-                    $this->addStockMovementWithPrice(
-                        $product,
-                        'entree',
-                        $request->stock,
-                        $request->purchase_price,
-                        $request->sale_price,
-                        'Stock initial',
-                        'INITIAL-' . $product->id
-                    );
+                    // On crée directement le mouvement avec le stock final
+                    StockMovement::create([
+                        'product_id' => $product->id,
+                        'type' => 'entree',
+                        'quantity' => $request->stock,
+                        'purchase_price' => $request->purchase_price,
+                        'sale_price' => $request->sale_price,
+                        'stock_after' => $request->stock, // Le stock final est la valeur initiale
+                        'motif' => 'Stock initial',
+                        'reference_document' => 'INITIAL-' . $product->id,
+                        'user_id' => auth()->id()
+                    ]);
                 }
                 
                 DB::commit();
@@ -323,6 +328,42 @@ class ProductController extends Controller
                 ->with('error', 'Erreur lors de l\'ajout du produit: ' . $e->getMessage())
                 ->withInput();
         }
+    }
+
+    // Nouvelle méthode utilitaire pour ajouter un mouvement sans modifier le stock
+    private function addStockMovementDirect(Product $product, $type, $quantity, $purchase_price, $sale_price, $motif = null, $reference = null)
+    {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
+        if ($type === 'sortie' && $product->stock < $quantity) {
+            throw new \Exception("Stock insuffisant. Stock actuel: {$product->stock}");
+        }
+        
+        $newStock = $type === 'entree' 
+            ? $product->stock + $quantity 
+            : $product->stock - $quantity;
+        
+        // Créer le mouvement
+        $movement = StockMovement::create([
+            'product_id' => $product->id,
+            'type' => $type,
+            'quantity' => $quantity,
+            'purchase_price' => $purchase_price,
+            'sale_price' => $sale_price,
+            'stock_after' => $newStock,
+            'motif' => $motif,
+            'reference_document' => $reference,
+            'user_id' => auth()->id()
+        ]);
+        
+        // Mettre à jour le stock du produit
+        $product->update([
+            'stock' => $newStock,
+            'quantity' => $newStock
+        ]);
+        
+        return $movement;
     }
 
     // 👁️ Détails d'un produit AVEC STOCKS GROUPÉS
@@ -419,7 +460,7 @@ class ProductController extends Controller
         return view('products.edit', compact('product', 'categories', 'suppliers'));
     }
 
-    // ✏️ Mise à jour
+    // ✏️ Mise à jour - CORRIGÉE (ne double plus le stock)
     public function update(Request $request, Product $product)
     {
         $this->authorizeProductAccess($product);
@@ -454,26 +495,53 @@ class ProductController extends Controller
         }
         
         $oldStock = $product->stock;
-        $validated['quantity'] = $validated['stock'];
+        $newStock = $validated['stock'];
+        $validated['quantity'] = $newStock;
         
-        if ($oldStock != $validated['stock']) {
-            $difference = $validated['stock'] - $oldStock;
-            $type = $difference > 0 ? 'entree' : 'sortie';
+        DB::beginTransaction();
+        try {
+            // Mettre à jour directement le stock
+            $product->update($validated);
             
-            $this->addStockMovementWithPrice(
-                $product,
-                $type,
-                abs($difference),
-                $validated['purchase_price'],
-                $validated['sale_price'],
-                'Ajustement via édition',
-                'EDIT-' . $product->id
-            );
+            // Enregistrer un mouvement pour tracer la modification (sans doubler)
+            if ($oldStock != $newStock) {
+                $difference = $newStock - $oldStock;
+                $type = $difference > 0 ? 'entree' : 'sortie';
+                $quantity = abs($difference);
+                
+                // Utiliser les prix actuels du produit
+                $movement = StockMovement::create([
+                    'product_id' => $product->id,
+                    'type' => $type,
+                    'quantity' => $quantity,
+                    'purchase_price' => $validated['purchase_price'],
+                    'sale_price' => $validated['sale_price'],
+                    'stock_after' => $newStock, // On utilise directement la nouvelle valeur
+                    'motif' => 'Modification manuelle du stock',
+                    'reference_document' => 'EDIT-' . $product->id . '-' . time(),
+                    'user_id' => auth()->id()
+                ]);
+                
+                \Log::info('Stock modifié manuellement', [
+                    'product_id' => $product->id,
+                    'old_stock' => $oldStock,
+                    'new_stock' => $newStock,
+                    'difference' => $difference,
+                    'user_id' => auth()->id()
+                ]);
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('products.index')
+                ->with('success', 'Produit mis à jour avec succès. Stock: ' . $product->fresh()->stock);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la mise à jour: ' . $e->getMessage())
+                ->withInput();
         }
-        
-        $product->update($validated);
-        
-        return redirect()->route('products.index')->with('success', 'Produit mis à jour avec succès.');
     }
 
     // 🗑️ Suppression d'un produit
