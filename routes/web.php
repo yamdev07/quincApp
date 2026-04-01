@@ -219,7 +219,7 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
     // -----------------------
     // RAPPORTS ET STATISTIQUES
     // ----------------------
-    Route::middleware(['manager'])->prefix('reports')->name('reports.')->group(function () {
+    Route::middleware(['stock.manager'])->prefix('reports')->name('reports.')->group(function () {
         // Page d'accueil des rapports
         Route::get('/', function() {
             return view('reports.index');

@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Client;
+use App\Models\User;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,33 +21,73 @@ class SaleController extends Controller
     }
 
     /**
+     * Récupérer le tenant_id de l'utilisateur connecté
+     */
+    private function getTenantId()
+    {
+        return Auth::user()->tenant_id;
+    }
+
+    /**
      * Vérifier que la vente appartient à la quincaillerie
      */
     private function authorizeSaleAccess(Sale $sale)
     {
-        if (!Auth::user()->hasAccessTo($sale)) {
+        if ($sale->tenant_id != $this->getTenantId()) {
             abort(403, 'Vous n\'avez pas accès à cette vente.');
         }
     }
 
     /**
-     * Vérifier les permissions de gestion des ventes
+     * Vérifier les permissions de visualisation des ventes
      */
-    private function authorizeSalesAccess()
+    private function authorizeViewSales()
     {
-        if (!Auth::user()->canManageSales()) {
-            abort(403, 'Vous n\'avez pas les droits pour gérer les ventes.');
-        }
+        return true;
     }
 
     /**
-     * Vérifier les permissions d'administration (pour suppression)
+     * Vérifier les permissions de création/modification des ventes
      */
-    private function authorizeAdmin()
+    private function authorizeManageSales()
     {
-        if (!Auth::user()->isSuperAdminOrAdmin()) {
-            abort(403, 'Action réservée aux administrateurs.');
+        $userRole = Auth::user()->role;
+        
+        if ($userRole === 'cashier') {
+            abort(403, 'Vous n\'avez pas l\'autorisation de créer ou modifier des ventes.');
         }
+        
+        return true;
+    }
+
+    /**
+     * Vérifier les permissions de suppression (admin uniquement)
+     */
+    private function authorizeDeleteSale()
+    {
+        $userRole = Auth::user()->role;
+        $adminRoles = ['super_admin_global', 'super_admin', 'admin'];
+        
+        if (!in_array($userRole, $adminRoles)) {
+            abort(403, 'Seuls les administrateurs peuvent supprimer des ventes.');
+        }
+        
+        return true;
+    }
+
+    /**
+     * Vérifier les permissions de modification (admin uniquement)
+     */
+    private function authorizeUpdateSale()
+    {
+        $userRole = Auth::user()->role;
+        $adminRoles = ['super_admin_global', 'super_admin', 'admin'];
+        
+        if (!in_array($userRole, $adminRoles)) {
+            abort(403, 'Seuls les administrateurs peuvent modifier des ventes.');
+        }
+        
+        return true;
     }
 
     // ----------------------
@@ -54,10 +95,13 @@ class SaleController extends Controller
     // ----------------------
     public function index(Request $request)
     {
-        $this->authorizeSalesAccess();
+        $this->authorizeViewSales();
+        
+        $tenantId = $this->getTenantId();
         
         $query = Sale::with(['items.product', 'client', 'user'])
-                     ->withSum('items', 'quantity');
+                     ->withSum('items', 'quantity')
+                     ->where('tenant_id', $tenantId);
         
         // Filtres optionnels
         if ($request->filled('client_id')) {
@@ -87,8 +131,10 @@ class SaleController extends Controller
         $sales = $query->latest()->paginate(10);
         
         // Pour les filtres
-        $clients = Client::sameCompany()->get();
-        $users = Auth::user()->employees()->get(); // Les caissiers de la quincaillerie
+        $clients = Client::where('tenant_id', $tenantId)->get();
+        $users = User::where('tenant_id', $tenantId)
+                     ->where('role', '!=', 'super_admin_global')
+                     ->get();
         
         return view('sales.index', compact('sales', 'clients', 'users'));
     }
@@ -98,14 +144,17 @@ class SaleController extends Controller
     // ----------------------
     public function create()
     {
-        $this->authorizeSalesAccess();
+        $this->authorizeManageSales();
         
-        // Seuls les produits avec du STOCK disponible et de la même quincaillerie
+        $tenantId = $this->getTenantId();
+        
+        // ✅ CORRIGÉ: Utiliser tenant_id (qui est toujours défini)
         $products = Product::where('stock', '>', 0)
+                          ->where('tenant_id', $tenantId)
                           ->orderBy('name')
                           ->get();
         
-        $clients = Client::sameCompany()->get();
+        $clients = Client::where('tenant_id', $tenantId)->get();
 
         return view('sales.create', compact('products', 'clients'));
     }
@@ -115,7 +164,7 @@ class SaleController extends Controller
     // ----------------------
     public function store(Request $request)
     {
-        $this->authorizeSalesAccess();
+        $this->authorizeManageSales();
         
         \Log::info('=== DÉBUT VENTE ===');
         \Log::info('Données brutes reçues:', $request->all());
@@ -128,29 +177,28 @@ class SaleController extends Controller
             'products.*.unit_price' => 'required|numeric|min:0',
         ]);
         
+        $tenantId = $this->getTenantId();
+        $userId = Auth::id();
+        
         // Vérifier que le client appartient à la même quincaillerie
         if ($request->client_id) {
-            $client = Client::sameCompany()->find($request->client_id);
+            $client = Client::where('tenant_id', $tenantId)->find($request->client_id);
             if (!$client) {
                 return back()->with('error', 'Client invalide.')->withInput();
             }
         }
         
-        \Log::info('Données validées:', $validated);
-        
-        DB::transaction(function () use ($validated) {
-            \Log::info('Transaction DB démarrée');
-            
-            // Créer la vente (owner_id sera auto-assigné par le Trait)
+        DB::transaction(function () use ($validated, $tenantId, $userId) {
+            // Créer la vente
             $sale = Sale::create([
                 'client_id' => $validated['client_id'],
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'total_price' => 0,
+                'tenant_id' => $tenantId,
             ]);
             
             \Log::info("Vente créée - ID: {$sale->id}");
             
-            // Récupérer le client pour le motif
             $clientName = 'Client';
             if ($validated['client_id']) {
                 $client = Client::find($validated['client_id']);
@@ -160,40 +208,29 @@ class SaleController extends Controller
             $grandTotal = 0;
             
             foreach ($validated['products'] as $index => $productData) {
-                \Log::info("Produit #{$index}:", $productData);
-                
-                // Récupérer le produit avec verrou et vérifier qu'il appartient à la même quincaillerie
+                // Récupérer le produit avec verrou
                 $product = Product::lockForUpdate()->find($productData['product_id']);
                 
                 if (!$product) {
-                    \Log::error("Produit non trouvé: " . $productData['product_id']);
-                    continue;
+                    throw new \Exception("Produit non trouvé: " . $productData['product_id']);
                 }
                 
-                // Vérifier que le produit appartient à la même quincaillerie
-                if (!Auth::user()->hasAccessTo($product)) {
+                // ✅ Vérifier que le produit appartient à la même quincaillerie
+                if ($product->tenant_id != $tenantId) {
                     throw new \Exception("Le produit '{$product->name}' n'est pas disponible.");
                 }
-                
-                \Log::info("Produit trouvé: {$product->name} (ID: {$product->id})");
-                \Log::info("Stock AVANT vente: {$product->stock}");
                 
                 $quantityToSell = $productData['quantity'];
                 $unitPrice = $productData['unit_price'];
                 
                 // Vérifier le stock
                 if ($product->stock < $quantityToSell) {
-                    $message = "Stock insuffisant pour '{$product->name}'. Stock: {$product->stock}, Demandé: {$quantityToSell}";
-                    \Log::error($message);
-                    throw new \Exception($message);
+                    throw new \Exception("Stock insuffisant pour '{$product->name}'. Stock: {$product->stock}, Demandé: {$quantityToSell}");
                 }
                 
-                // Calculer le stock après vente
                 $stockAfter = $product->stock - $quantityToSell;
                 
-                // ============================================
                 // ENREGISTRER LE MOUVEMENT DE STOCK
-                // ============================================
                 StockMovement::create([
                     'product_id' => $product->id,
                     'type' => 'sortie',
@@ -203,11 +240,9 @@ class SaleController extends Controller
                     'stock_after' => $stockAfter,
                     'motif' => "Vente #{$sale->id} à {$clientName}",
                     'reference_document' => 'VTE-' . $sale->id,
-                    'user_id' => Auth::id(),
-                    'owner_id' => $product->owner_id, // Important pour l'isolation
+                    'user_id' => $userId,
+                    'tenant_id' => $tenantId,
                 ]);
-                
-                \Log::info("Mouvement de stock enregistré pour produit ID: {$product->id}");
                 
                 // Créer l'item de vente
                 SaleItem::create([
@@ -216,28 +251,18 @@ class SaleController extends Controller
                     'quantity' => $quantityToSell,
                     'unit_price' => $unitPrice,
                     'total_price' => $unitPrice * $quantityToSell,
+                    'tenant_id' => $tenantId,
                 ]);
-                
-                \Log::info("SaleItem créé pour produit ID: {$product->id}");
                 
                 // DÉDUCTION DU STOCK
                 $product->decrement('stock', $quantityToSell);
-                
-                // Recharger le produit depuis la base
-                $product->refresh();
-                
-                \Log::info("Stock APRÈS vente: {$product->stock}");
-                \Log::info("---");
                 
                 $grandTotal += ($unitPrice * $quantityToSell);
             }
             
             // Mettre à jour le total de la vente
             $sale->update(['total_price' => $grandTotal]);
-            \Log::info("Total vente: {$grandTotal} CFA");
         });
-        
-        \Log::info('=== FIN VENTE ===');
         
         return redirect()->route('sales.index')->with('success', 'Vente enregistrée avec succès !');
     }
@@ -247,12 +272,14 @@ class SaleController extends Controller
     // ----------------------
     public function show($id)
     {
-        $this->authorizeSalesAccess();
+        $this->authorizeViewSales();
         
-        $sale = Sale::with(['items.product', 'client', 'user'])->findOrFail($id);
-        $this->authorizeSaleAccess($sale);
+        $tenantId = $this->getTenantId();
         
-        // Calculer la quantité totale pour la vue
+        $sale = Sale::with(['items.product', 'client', 'user'])
+                    ->where('tenant_id', $tenantId)
+                    ->findOrFail($id);
+        
         $totalQuantity = $sale->items->sum('quantity');
         
         return view('sales.show', compact('sale', 'totalQuantity'));
@@ -263,30 +290,25 @@ class SaleController extends Controller
     // ----------------------
     public function destroy($id)
     {
-        $this->authorizeAdmin(); // Seuls les admins peuvent supprimer
+        $this->authorizeDeleteSale();
         
-        $sale = Sale::findOrFail($id);
-        $this->authorizeSaleAccess($sale);
+        $tenantId = $this->getTenantId();
+        $userId = Auth::id();
+        
+        $sale = Sale::where('tenant_id', $tenantId)->findOrFail($id);
 
-        DB::transaction(function () use ($sale) {
-            // Récupérer le client pour le motif
+        DB::transaction(function () use ($sale, $tenantId, $userId) {
             $clientName = $sale->client ? $sale->client->name : 'Client';
             
-            // RÉTABLIR le STOCK pour chaque produit vendu
             foreach ($sale->items as $item) {
                 $product = Product::lockForUpdate()->find($item->product_id);
                 if ($product) {
-                    // Vérifier que le produit appartient à la même quincaillerie
-                    if (!Auth::user()->hasAccessTo($product)) {
+                    if ($product->tenant_id != $tenantId) {
                         throw new \Exception("Le produit '{$product->name}' ne vous appartient pas.");
                     }
                     
-                    // Calculer le nouveau stock après annulation
                     $stockAfter = $product->stock + $item->quantity;
                     
-                    // ============================================
-                    // ENREGISTRER LE MOUVEMENT D'ANNULATION
-                    // ============================================
                     StockMovement::create([
                         'product_id' => $product->id,
                         'type' => 'entree',
@@ -296,19 +318,15 @@ class SaleController extends Controller
                         'stock_after' => $stockAfter,
                         'motif' => "Annulation vente #{$sale->id} à {$clientName}",
                         'reference_document' => 'ANNUL-VTE-' . $sale->id,
-                        'user_id' => Auth::id(),
-                        'owner_id' => $product->owner_id,
+                        'user_id' => $userId,
+                        'tenant_id' => $tenantId,
                     ]);
                     
-                    // REMETTRE dans le STOCK la quantité qui avait été vendue
                     $product->increment('stock', $item->quantity);
                 }
             }
 
-            // Supprimer les items de vente
             $sale->items()->delete();
-
-            // Supprimer la vente
             $sale->delete();
         });
 
@@ -316,14 +334,45 @@ class SaleController extends Controller
     }
 
     // ----------------------
+    // Mettre à jour une vente
+    // ----------------------
+    public function update(Request $request, $id)
+    {
+        $this->authorizeUpdateSale();
+        
+        $tenantId = $this->getTenantId();
+        
+        $sale = Sale::where('tenant_id', $tenantId)->findOrFail($id);
+        
+        $validated = $request->validate([
+            'client_id' => 'nullable|exists:clients,id',
+        ]);
+        
+        if ($request->client_id) {
+            $client = Client::where('tenant_id', $tenantId)->find($request->client_id);
+            if (!$client) {
+                return back()->with('error', 'Client invalide.');
+            }
+        }
+        
+        $sale->update($validated);
+        
+        return redirect()->route('sales.show', $sale->id)
+            ->with('success', 'Vente mise à jour avec succès.');
+    }
+
+    // ----------------------
     // Générer une facture
     // ----------------------
     public function invoice($id)
     {
-        $this->authorizeSalesAccess();
+        $this->authorizeViewSales();
         
-        $sale = Sale::with(['items.product', 'client', 'user'])->findOrFail($id);
-        $this->authorizeSaleAccess($sale);
+        $tenantId = $this->getTenantId();
+        
+        $sale = Sale::with(['items.product', 'client', 'user'])
+                    ->where('tenant_id', $tenantId)
+                    ->findOrFail($id);
         
         $totalQuantity = $sale->items->sum('quantity');
         
@@ -335,15 +384,19 @@ class SaleController extends Controller
     // ----------------------
     public function getStats()
     {
-        $this->authorizeSalesAccess();
+        $this->authorizeViewSales();
+        
+        $tenantId = $this->getTenantId();
         
         $stats = [
-            'total_sales' => Sale::count(),
-            'total_revenue' => Sale::sum('total_price'),
-            'total_quantity_sold' => SaleItem::sum('quantity'),
-            'average_sale' => Sale::avg('total_price'),
-            'unique_clients' => Sale::distinct('client_id')->count('client_id'),
-            'active_cashiers' => Sale::distinct('user_id')->count('user_id'),
+            'total_sales' => Sale::where('tenant_id', $tenantId)->count(),
+            'total_revenue' => Sale::where('tenant_id', $tenantId)->sum('total_price'),
+            'total_quantity_sold' => SaleItem::whereHas('sale', function($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            })->sum('quantity'),
+            'average_sale' => Sale::where('tenant_id', $tenantId)->avg('total_price'),
+            'unique_clients' => Sale::where('tenant_id', $tenantId)->distinct('client_id')->count('client_id'),
+            'active_cashiers' => Sale::where('tenant_id', $tenantId)->distinct('user_id')->count('user_id'),
         ];
         
         return response()->json($stats);
@@ -354,11 +407,12 @@ class SaleController extends Controller
     // ----------------------
     public function salesByPeriod(Request $request)
     {
-        $this->authorizeSalesAccess();
+        $this->authorizeViewSales();
         
+        $tenantId = $this->getTenantId();
         $period = $request->get('period', 'today');
         
-        $query = Sale::query();
+        $query = Sale::where('tenant_id', $tenantId);
         
         switch ($period) {
             case 'today':
@@ -381,56 +435,28 @@ class SaleController extends Controller
         
         return view('sales.index', compact('sales', 'period'));
     }
-    
-    // ----------------------
-    // Mettre à jour une vente
-    // ----------------------
-    public function update(Request $request, $id)
-    {
-        $this->authorizeAdmin(); // Seuls les admins peuvent modifier
-        
-        $sale = Sale::findOrFail($id);
-        $this->authorizeSaleAccess($sale);
-        
-        $validated = $request->validate([
-            'client_id' => 'nullable|exists:clients,id',
-            // Ajoutez d'autres règles selon vos besoins
-        ]);
-        
-        // Vérifier le client
-        if ($request->client_id) {
-            $client = Client::sameCompany()->find($request->client_id);
-            if (!$client) {
-                return back()->with('error', 'Client invalide.');
-            }
-        }
-        
-        DB::transaction(function () use ($sale, $validated) {
-            // Logique pour mettre à jour une vente existante
-            // À implémenter selon vos besoins spécifiques
-            
-            $sale->update($validated);
-        });
-        
-        return redirect()->route('sales.show', $sale->id)
-            ->with('success', 'Vente mise à jour avec succès.');
-    }
 
     // ----------------------
     // Rapport des ventes
     // ----------------------
     public function salesReport(Request $request)
     {
-        if (!Auth::user()->canViewReports()) {
+        $userRole = Auth::user()->role;
+        $reportRoles = ['super_admin_global', 'super_admin', 'admin', 'manager'];
+        
+        if (!in_array($userRole, $reportRoles)) {
             abort(403, 'Vous n\'avez pas les droits pour voir les rapports.');
         }
+        
+        $tenantId = $this->getTenantId();
         
         $request->validate([
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
         
-        $query = Sale::with(['client', 'user', 'items.product']);
+        $query = Sale::with(['client', 'user', 'items.product'])
+                     ->where('tenant_id', $tenantId);
         
         if ($request->filled('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);
@@ -450,12 +476,10 @@ class SaleController extends Controller
         
         $sales = $query->latest()->get();
         
-        // Calculer les statistiques
         $totalRevenue = $sales->sum('total_price');
         $totalItems = $sales->flatMap->items->sum('quantity');
         $averageSale = $sales->avg('total_price') ?? 0;
         
-        // Ventes par jour
         $salesByDay = $sales->groupBy(function($sale) {
             return $sale->created_at->format('Y-m-d');
         })->map(function($daySales) {
@@ -465,9 +489,10 @@ class SaleController extends Controller
             ];
         });
         
-        // Produits les plus vendus
         $topProducts = DB::table('sale_items')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->where('sales.tenant_id', $tenantId)
             ->select('products.name', DB::raw('SUM(sale_items.quantity) as total_quantity'), DB::raw('SUM(sale_items.total_price) as total_revenue'))
             ->groupBy('products.id', 'products.name')
             ->orderBy('total_quantity', 'desc')
@@ -485,9 +510,10 @@ class SaleController extends Controller
             'top_products' => $topProducts,
         ];
         
-        // Pour les filtres
-        $clients = Client::sameCompany()->get();
-        $users = Auth::user()->employees()->get();
+        $clients = Client::where('tenant_id', $tenantId)->get();
+        $users = User::where('tenant_id', $tenantId)
+                     ->where('role', '!=', 'super_admin_global')
+                     ->get();
         
         return view('reports.sales', compact('sales', 'reportData', 'clients', 'users'));
     }
