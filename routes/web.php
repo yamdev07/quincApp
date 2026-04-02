@@ -180,6 +180,9 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
         Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
         Route::get('/{client}/sales', [ClientController::class, 'sales'])->name('sales');
         Route::get('/{client}/statistics', [ClientController::class, 'statistics'])->name('statistics');
+
+        Route::get('/{client}/export', [ClientController::class, 'export'])->name('export');
+
     });
 
     // ----------------------

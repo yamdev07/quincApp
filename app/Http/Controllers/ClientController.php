@@ -313,4 +313,98 @@ class ClientController extends Controller
         
         return response()->json($topClients);
     }
+
+    /**
+     * Rapport des clients
+     */
+    public function clientsReport(Request $request)
+    {
+        $userRole = Auth::user()->role;
+        $reportRoles = ['super_admin_global', 'super_admin', 'admin', 'manager'];
+        
+        if (!in_array($userRole, $reportRoles)) {
+            abort(403, 'Vous n\'avez pas les droits pour voir les rapports.');
+        }
+        
+        $tenantId = Auth::user()->tenant_id;
+        
+        $query = Client::where('tenant_id', $tenantId);
+        
+        // Filtre recherche
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('email', 'LIKE', "%{$search}%")
+                ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        // Filtre statut
+        if ($request->filled('status')) {
+            if ($request->status == 'active') {
+                // Clients ayant acheté au moins une fois
+                $query->has('sales');
+            } elseif ($request->status == 'inactive') {
+                // Clients n'ayant jamais acheté
+                $query->doesntHave('sales');
+            }
+        }
+        
+        // Filtre période
+        if ($request->filled('period')) {
+            switch ($request->period) {
+                case 'today':
+                    $query->whereDate('created_at', today());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                    break;
+                case 'month':
+                    $query->whereMonth('created_at', now()->month);
+                    break;
+            }
+        }
+        
+        // Charger les relations et les stats
+        $clients = $query->withCount('sales')
+                        ->withSum('sales', 'total_price')
+                        ->orderBy('created_at', 'desc')
+                        ->paginate(15);
+        
+        // Calculer les totaux
+        $totalClients = Client::where('tenant_id', $tenantId)->count();
+        $activeClients = Client::where('tenant_id', $tenantId)->has('sales')->count();
+        $totalSpent = Client::where('tenant_id', $tenantId)->withSum('sales', 'total_price')->get()->sum('sales_sum_total_price');
+        $averageSpent = $totalClients > 0 ? $totalSpent / $totalClients : 0;
+        
+        // Top 10 clients
+        $topClients = Client::where('tenant_id', $tenantId)
+            ->withSum('sales', 'total_price')
+            ->withCount('sales')
+            ->orderBy('sales_sum_total_price', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($client) {
+                return [
+                    'name' => $client->name,
+                    'email' => $client->email,
+                    'phone' => $client->phone,
+                    'total_spent' => $client->sales_sum_total_price ?? 0,
+                    'total_orders' => $client->sales_count,
+                    'last_order' => $client->sales()->latest()->first()?->created_at?->format('d/m/Y')
+                ];
+            });
+        
+        $reportData = [
+            'total_clients' => $totalClients,
+            'active_clients' => $activeClients,
+            'total_spent' => $totalSpent,
+            'formatted_total_spent' => number_format($totalSpent, 0, ',', ' ') . ' FCFA',
+            'average_spent' => $averageSpent,
+            'formatted_average_spent' => number_format($averageSpent, 0, ',', ' ') . ' FCFA',
+        ];
+        
+        return view('reports.clients', compact('clients', 'topClients', 'reportData'));
+    }
 }

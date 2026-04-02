@@ -61,30 +61,15 @@ class SaleController extends Controller
     }
 
     /**
-     * Vérifier les permissions de suppression (admin uniquement)
+     * Vérifier les permissions d'annulation (admin, manager, storekeeper)
      */
-    private function authorizeDeleteSale()
+    private function authorizeCancelSale()
     {
         $userRole = Auth::user()->role;
-        $adminRoles = ['super_admin_global', 'super_admin', 'admin'];
+        $allowedRoles = ['super_admin_global', 'super_admin', 'admin', 'manager', 'storekeeper'];
         
-        if (!in_array($userRole, $adminRoles)) {
-            abort(403, 'Seuls les administrateurs peuvent supprimer des ventes.');
-        }
-        
-        return true;
-    }
-
-    /**
-     * Vérifier les permissions de modification (admin uniquement)
-     */
-    private function authorizeUpdateSale()
-    {
-        $userRole = Auth::user()->role;
-        $adminRoles = ['super_admin_global', 'super_admin', 'admin'];
-        
-        if (!in_array($userRole, $adminRoles)) {
-            abort(403, 'Seuls les administrateurs peuvent modifier des ventes.');
+        if (!in_array($userRole, $allowedRoles)) {
+            abort(403, 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');
         }
         
         return true;
@@ -148,7 +133,6 @@ class SaleController extends Controller
         
         $tenantId = $this->getTenantId();
         
-        // ✅ CORRIGÉ: Utiliser tenant_id (qui est toujours défini)
         $products = Product::where('stock', '>', 0)
                           ->where('tenant_id', $tenantId)
                           ->orderBy('name')
@@ -208,14 +192,12 @@ class SaleController extends Controller
             $grandTotal = 0;
             
             foreach ($validated['products'] as $index => $productData) {
-                // Récupérer le produit avec verrou
                 $product = Product::lockForUpdate()->find($productData['product_id']);
                 
                 if (!$product) {
                     throw new \Exception("Produit non trouvé: " . $productData['product_id']);
                 }
                 
-                // ✅ Vérifier que le produit appartient à la même quincaillerie
                 if ($product->tenant_id != $tenantId) {
                     throw new \Exception("Le produit '{$product->name}' n'est pas disponible.");
                 }
@@ -223,14 +205,12 @@ class SaleController extends Controller
                 $quantityToSell = $productData['quantity'];
                 $unitPrice = $productData['unit_price'];
                 
-                // Vérifier le stock
                 if ($product->stock < $quantityToSell) {
                     throw new \Exception("Stock insuffisant pour '{$product->name}'. Stock: {$product->stock}, Demandé: {$quantityToSell}");
                 }
                 
                 $stockAfter = $product->stock - $quantityToSell;
                 
-                // ENREGISTRER LE MOUVEMENT DE STOCK
                 StockMovement::create([
                     'product_id' => $product->id,
                     'type' => 'sortie',
@@ -244,7 +224,6 @@ class SaleController extends Controller
                     'tenant_id' => $tenantId,
                 ]);
                 
-                // Créer l'item de vente
                 SaleItem::create([
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
@@ -254,13 +233,11 @@ class SaleController extends Controller
                     'tenant_id' => $tenantId,
                 ]);
                 
-                // DÉDUCTION DU STOCK
                 $product->decrement('stock', $quantityToSell);
                 
                 $grandTotal += ($unitPrice * $quantityToSell);
             }
             
-            // Mettre à jour le total de la vente
             $sale->update(['total_price' => $grandTotal]);
         });
         
@@ -286,22 +263,23 @@ class SaleController extends Controller
     }
 
     // ----------------------
-    // Supprimer une vente (annulation)
+    // ANNULER une vente
     // ----------------------
-    public function destroy($id)
+    public function cancel($id)
     {
-        $this->authorizeDeleteSale();
+        $this->authorizeCancelSale();
         
         $tenantId = $this->getTenantId();
         $userId = Auth::id();
         
         $sale = Sale::where('tenant_id', $tenantId)->findOrFail($id);
-
+        
         DB::transaction(function () use ($sale, $tenantId, $userId) {
             $clientName = $sale->client ? $sale->client->name : 'Client';
             
             foreach ($sale->items as $item) {
                 $product = Product::lockForUpdate()->find($item->product_id);
+                
                 if ($product) {
                     if ($product->tenant_id != $tenantId) {
                         throw new \Exception("Le produit '{$product->name}' ne vous appartient pas.");
@@ -314,7 +292,7 @@ class SaleController extends Controller
                         'type' => 'entree',
                         'quantity' => $item->quantity,
                         'purchase_price' => $product->purchase_price,
-                        'sale_price' => $product->sale_price,
+                        'sale_price' => $item->unit_price,
                         'stock_after' => $stockAfter,
                         'motif' => "Annulation vente #{$sale->id} à {$clientName}",
                         'reference_document' => 'ANNUL-VTE-' . $sale->id,
@@ -325,40 +303,12 @@ class SaleController extends Controller
                     $product->increment('stock', $item->quantity);
                 }
             }
-
-            $sale->items()->delete();
+            
+            // Supprimer la vente
             $sale->delete();
         });
-
-        return redirect()->route('sales.index')->with('success', 'Vente annulée et stock rétabli avec succès !');
-    }
-
-    // ----------------------
-    // Mettre à jour une vente
-    // ----------------------
-    public function update(Request $request, $id)
-    {
-        $this->authorizeUpdateSale();
         
-        $tenantId = $this->getTenantId();
-        
-        $sale = Sale::where('tenant_id', $tenantId)->findOrFail($id);
-        
-        $validated = $request->validate([
-            'client_id' => 'nullable|exists:clients,id',
-        ]);
-        
-        if ($request->client_id) {
-            $client = Client::where('tenant_id', $tenantId)->find($request->client_id);
-            if (!$client) {
-                return back()->with('error', 'Client invalide.');
-            }
-        }
-        
-        $sale->update($validated);
-        
-        return redirect()->route('sales.show', $sale->id)
-            ->with('success', 'Vente mise à jour avec succès.');
+        return redirect()->route('sales.index')->with('success', 'Vente annulée et stock restauré.');
     }
 
     // ----------------------
@@ -403,41 +353,7 @@ class SaleController extends Controller
     }
 
     // ----------------------
-    // Ventes par période
-    // ----------------------
-    public function salesByPeriod(Request $request)
-    {
-        $this->authorizeViewSales();
-        
-        $tenantId = $this->getTenantId();
-        $period = $request->get('period', 'today');
-        
-        $query = Sale::where('tenant_id', $tenantId);
-        
-        switch ($period) {
-            case 'today':
-                $query->whereDate('created_at', today());
-                break;
-            case 'week':
-                $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereMonth('created_at', now()->month);
-                break;
-            case 'year':
-                $query->whereYear('created_at', now()->year);
-                break;
-        }
-        
-        $sales = $query->with(['items.product', 'client'])
-                       ->latest()
-                       ->paginate(10);
-        
-        return view('sales.index', compact('sales', 'period'));
-    }
-
-    // ----------------------
-    // Rapport des ventes
+    // Rapport des ventes - SANS STATUS
     // ----------------------
     public function salesReport(Request $request)
     {
@@ -474,13 +390,18 @@ class SaleController extends Controller
             $query->where('user_id', $request->user_id);
         }
         
-        $sales = $query->latest()->get();
+        // Pagination pour l'affichage
+        $sales = $query->latest()->paginate(15);
         
-        $totalRevenue = $sales->sum('total_price');
-        $totalItems = $sales->flatMap->items->sum('quantity');
-        $averageSale = $sales->avg('total_price') ?? 0;
+        // Toutes les ventes pour les statistiques
+        $allSales = Sale::where('tenant_id', $tenantId)->get();
         
-        $salesByDay = $sales->groupBy(function($sale) {
+        $totalRevenue = $allSales->sum('total_price');
+        $totalItems = $allSales->flatMap->items->sum('quantity');
+        $averageSale = $allSales->avg('total_price') ?? 0;
+        
+        // Ventes par jour
+        $salesByDay = $allSales->groupBy(function($sale) {
             return $sale->created_at->format('Y-m-d');
         })->map(function($daySales) {
             return [
@@ -489,6 +410,7 @@ class SaleController extends Controller
             ];
         });
         
+        // Produits les plus vendus - SANS condition de status
         $topProducts = DB::table('sale_items')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
@@ -500,7 +422,7 @@ class SaleController extends Controller
             ->get();
         
         $reportData = [
-            'total_sales' => $sales->count(),
+            'total_sales' => $allSales->count(),
             'total_revenue' => $totalRevenue,
             'formatted_total_revenue' => number_format($totalRevenue, 0, ',', ' ') . ' FCFA',
             'total_items' => $totalItems,
@@ -510,6 +432,7 @@ class SaleController extends Controller
             'top_products' => $topProducts,
         ];
         
+        // Pour les filtres
         $clients = Client::where('tenant_id', $tenantId)->get();
         $users = User::where('tenant_id', $tenantId)
                      ->where('role', '!=', 'super_admin_global')
