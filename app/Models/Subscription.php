@@ -22,7 +22,7 @@ class Subscription extends Model
         'payment_method',
         'transaction_id',
         'metadata',
-        'owner_id',
+        // 'owner_id',  // SUPPRIMÉ - cette colonne n'existe pas dans la base
     ];
 
     protected $casts = [
@@ -44,11 +44,13 @@ class Subscription extends Model
 
     /**
      * Propriétaire (super_admin) qui a créé l'abonnement
+     * NOTE: Cette relation est commentée car la colonne owner_id n'existe pas
+     * Si vous voulez l'utiliser, il faut d'abord ajouter la colonne owner_id dans la table subscriptions
      */
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'owner_id');
-    }
+    // public function owner(): BelongsTo
+    // {
+    //     return $this->belongsTo(User::class, 'owner_id');
+    // }
 
     // ============ ACCESSORS ============
 
@@ -326,7 +328,7 @@ class Subscription extends Model
     }
 
     /**
-     * Renouveler l'abonnement
+     * Renouveler l'abonnement - Version SANS owner_id
      */
     public function renew($amount = null, $paymentMethod = null, $transactionId = null): self
     {
@@ -403,8 +405,6 @@ class Subscription extends Model
      */
     public function calculateRenewalAmount(): float
     {
-        // Ici, vous pouvez ajouter une logique de calcul personnalisée
-        // Par exemple, appliquer une réduction pour les clients fidèles
         return $this->amount;
     }
 
@@ -434,7 +434,6 @@ class Subscription extends Model
 
     /**
      * Récupérer les statistiques globales des abonnements
-     * Version optimisée pour PostgreSQL
      */
     public static function getGlobalStats($tenantId = null): array
     {
@@ -458,7 +457,6 @@ class Subscription extends Model
         $averageAmount = (clone $query)->where('status', 'active')
             ->avg('amount');
         
-        // Statistiques par type de plan
         $statsByPlan = (clone $query)
             ->select(
                 'plan_type',
@@ -521,7 +519,7 @@ class Subscription extends Model
     }
 
     /**
-     * Créer un abonnement pour un tenant
+     * Créer un abonnement pour un tenant - Version SANS owner_id
      */
     public static function createForTenant(
         $tenantId, 
@@ -565,7 +563,7 @@ class Subscription extends Model
             'payment_method' => $paymentMethod,
             'transaction_id' => $transactionId,
             'metadata' => $metadata,
-            'owner_id' => auth()->id(),
+            // 'owner_id' => auth()->id(),  // SUPPRIMÉ
         ]);
     }
 }

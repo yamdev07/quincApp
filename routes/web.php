@@ -12,6 +12,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\PaymentController;
 use App\Models\Sale;
 use App\Models\Product;
 use App\Models\Client;
@@ -36,6 +37,14 @@ Route::get('/inscription/succes', [LandingController::class, 'registerSuccess'])
 
 // Route de test
 Route::view('/welcome', 'welcome');
+
+// ROUTES DE PAIEMENT FEDAPAY
+Route::middleware(['auth'])->prefix('payment')->name('payment.')->group(function () {
+    Route::get('/form', [PaymentController::class, 'showPaymentForm'])->name('form');
+    Route::post('/initialize', [PaymentController::class, 'initializePayment'])->name('initialize');
+    // Accepte GET et POST pour le callback
+    Route::match(['get', 'post'], '/callback', [PaymentController::class, 'paymentCallback'])->name('callback');
+});
 
 // ======================
 // Routes AJAX pour le dashboard - PROTÉGÉES PAR AUTH + TRIAL
@@ -468,3 +477,92 @@ Route::get('/debug-categories-routes', function () {
 // Routes d'authentification
 // ======================
 require __DIR__ . '/auth.php';
+
+// ======================
+// TEST FEDAPAY CONNECTION
+// ======================
+Route::get('/fedapay-test', function() {
+    try {
+        \FedaPay\FedaPay::setApiKey(config('services.fedapay.secret_key'));
+        \FedaPay\FedaPay::setEnvironment(config('services.fedapay.mode'));
+        
+        $customer = \FedaPay\Customer::create([
+            'firstname' => 'Test',
+            'lastname' => 'API',
+            'email' => 'test@fedapay.com',
+        ]);
+        
+        return [
+            'success' => true,
+            'message' => 'Connexion FedaPay réussie !',
+            'customer_id' => $customer->id,
+            'api_key_configured' => !empty(config('services.fedapay.secret_key')),
+            'mode' => config('services.fedapay.mode')
+        ];
+    } catch (\Exception $e) {
+        return [
+            'success' => false,
+            'error' => $e->getMessage(),
+            'api_key_configured' => !empty(config('services.fedapay.secret_key')),
+            'mode' => config('services.fedapay.mode')
+        ];
+    }
+});
+
+// Dans routes/web.php
+Route::get('/test-callback', function() {
+    return [
+        'session' => session()->all(),
+        'user' => auth()->user() ? auth()->user()->id : null,
+        'subscription_status' => auth()->user() ? auth()->user()->subscription_status : null,
+    ];
+});
+
+// ======================
+// ACTIVATION FORCÉE (pour dépannage)
+// ======================
+Route::get('/force-activation', function() {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return response()->json(['error' => 'Non connecté'], 401);
+    }
+    
+    $tenant = $user->tenant;
+    $endDate = now()->addMonths(1);
+    
+    // Mettre à jour l'utilisateur
+    $user->update([
+        'subscription_status' => 'active',
+        'subscription_ends_at' => $endDate,
+        'last_payment_at' => now(),
+    ]);
+    
+    // Mettre à jour le tenant
+    if ($tenant) {
+        $tenant->update([
+            'subscription_status' => 'active',
+            'subscription_ends_at' => $endDate,
+            'last_payment_at' => now(),
+        ]);
+    }
+    
+    return [
+        'success' => true,
+        'message' => 'Abonnement activé !',
+        'user_id' => $user->id,
+        'user_email' => $user->email,
+        'subscription_status' => $user->fresh()->subscription_status,
+        'subscription_ends_at' => $endDate->format('d/m/Y'),
+        'tenant_id' => $tenant ? $tenant->id : null,
+        'tenant_status' => $tenant ? $tenant->fresh()->subscription_status : null,
+    ];
+})->middleware('auth');
+// Dans routes/web.php
+Route::get('/view-payment-logs', function() {
+    $logFile = storage_path('logs/payment_debug.log');
+    if (file_exists($logFile)) {
+        return '<pre>' . htmlspecialchars(file_get_contents($logFile)) . '</pre>';
+    }
+    return 'Aucun log trouvé. Faites un paiement d\'abord.';
+})->middleware('auth');

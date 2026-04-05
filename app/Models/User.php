@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
+use App\Traits\HasSubscription;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasSubscription;
 
     protected $fillable = [
         'name',
@@ -22,6 +23,12 @@ class User extends Authenticatable
         'is_active',
         'last_login_at',
         'last_login_ip',
+        // Nouveaux champs pour l'abonnement
+        'trial_ends_at',
+        'subscription_ends_at',
+        'subscription_status',
+        'fedapay_transaction_id',
+        'last_payment_at',
     ];
 
     protected $hidden = [
@@ -34,6 +41,10 @@ class User extends Authenticatable
         'last_login_at' => 'datetime',
         'can_manage_users' => 'boolean',
         'is_active' => 'boolean',
+        // Nouveaux casts
+        'trial_ends_at' => 'datetime',
+        'subscription_ends_at' => 'datetime',
+        'last_payment_at' => 'datetime',
     ];
 
     /**
@@ -312,6 +323,41 @@ class User extends Authenticatable
     }
 
     /**
+     * Scope pour les utilisateurs en essai
+     */
+    public function scopeOnTrial($query)
+    {
+        return $query->where('subscription_status', 'trial')
+                     ->whereNotNull('trial_ends_at')
+                     ->where('trial_ends_at', '>', now());
+    }
+
+    /**
+     * Scope pour les utilisateurs avec abonnement actif
+     */
+    public function scopeSubscribed($query)
+    {
+        return $query->where('subscription_status', 'active')
+                     ->whereNotNull('subscription_ends_at')
+                     ->where('subscription_ends_at', '>', now());
+    }
+
+    /**
+     * Scope pour les utilisateurs avec abonnement expiré
+     */
+    public function scopeExpired($query)
+    {
+        return $query->where(function($q) {
+            $q->where('subscription_status', 'expired')
+              ->orWhere('subscription_status', 'trial')
+              ->where(function($sub) {
+                  $sub->whereNull('trial_ends_at')
+                      ->orWhere('trial_ends_at', '<=', now());
+              });
+        });
+    }
+
+    /**
      * Scope pour la recherche
      */
     public function scopeSearch($query, $term)
@@ -456,9 +502,191 @@ class User extends Authenticatable
 
     /**
      * =====================================================
-     * MÉTHODES POUR L'ABONNEMENT
+     * MÉTHODES POUR L'ABONNEMENT (surcharge du trait)
      * =====================================================
      */
+
+    /**
+     * Vérifie si l'utilisateur a accès (version multi-tenant)
+     */
+    public function hasAccess()
+    {
+        // Super admin global a toujours accès
+        if ($this->isSuperAdminGlobal()) {
+            return true;
+        }
+        
+        // Vérifier l'abonnement du tenant
+        if ($this->tenant && $this->tenant->hasActiveSubscription()) {
+            return true;
+        }
+        
+        // Vérifier l'abonnement individuel
+        if ($this->isSubscribed()) {
+            return true;
+        }
+        
+        // Vérifier la période d'essai
+        if ($this->isOnTrial()) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Vérifie si l'utilisateur est en période d'essai
+     */
+    public function isOnTrial(): bool
+    {
+        return $this->subscription_status === 'trial' && 
+               $this->trial_ends_at && 
+               $this->trial_ends_at->isFuture();
+    }
+
+    /**
+     * Vérifie si l'abonnement est actif
+     */
+    public function isSubscribed(): bool
+    {
+        return $this->subscription_status === 'active' && 
+               $this->subscription_ends_at && 
+               $this->subscription_ends_at->isFuture();
+    }
+
+    /**
+     * Jours restants d'essai
+     */
+    public function trialDaysRemaining(): int
+    {
+        if (!$this->trial_ends_at) {
+            return 0;
+        }
+        
+        $days = now()->diffInDays($this->trial_ends_at, false);
+        return $days > 0 ? $days : 0;
+    }
+
+    /**
+     * Jours restants d'abonnement
+     */
+    public function subscriptionDaysRemaining(): int
+    {
+        if (!$this->subscription_ends_at) {
+            return 0;
+        }
+        
+        $days = now()->diffInDays($this->subscription_ends_at, false);
+        return $days > 0 ? $days : 0;
+    }
+
+    /**
+     * Activer l'abonnement après paiement
+     */
+    public function activateSubscription($transactionId, $months = 1): self
+    {
+        $this->update([
+            'subscription_status' => 'active',
+            'subscription_ends_at' => now()->addMonths($months),
+            'fedapay_transaction_id' => $transactionId,
+            'last_payment_at' => now(),
+        ]);
+        
+        // Mettre à jour aussi le tenant si nécessaire
+        if ($this->tenant) {
+            $this->tenant->update([
+                'subscription_status' => 'active',
+                'subscription_ends_at' => now()->addMonths($months),
+            ]);
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Démarrer la période d'essai
+     */
+    public function startTrial($days = 14): self
+    {
+        $this->update([
+            'subscription_status' => 'trial',
+            'trial_ends_at' => now()->addDays($days),
+            'subscription_ends_at' => null,
+            'fedapay_transaction_id' => null,
+            'last_payment_at' => null,
+        ]);
+        
+        return $this;
+    }
+
+    /**
+     * Expirer l'abonnement
+     */
+    public function expireSubscription(): self
+    {
+        $this->update([
+            'subscription_status' => 'expired',
+        ]);
+        
+        return $this;
+    }
+
+    /**
+     * Vérifier si l'abonnement expire bientôt (dans 3 jours)
+     */
+    public function subscriptionExpiresSoon(): bool
+    {
+        if (!$this->subscription_ends_at) {
+            return false;
+        }
+        
+        return now()->diffInDays($this->subscription_ends_at, false) <= 3 && 
+               $this->subscription_ends_at->isFuture();
+    }
+
+    /**
+     * Récupérer le statut de l'abonnement en français
+     */
+    public function getSubscriptionStatusLabelAttribute(): string
+    {
+        return match($this->subscription_status) {
+            'trial' => 'Période d\'essai',
+            'active' => 'Abonnement actif',
+            'expired' => 'Abonnement expiré',
+            'cancelled' => 'Résilié',
+            default => 'Inconnu'
+        };
+    }
+
+    /**
+     * Récupérer la couleur du badge de statut d'abonnement
+     */
+    public function getSubscriptionStatusColorAttribute(): string
+    {
+        return match($this->subscription_status) {
+            'trial' => 'yellow',
+            'active' => 'green',
+            'expired' => 'red',
+            'cancelled' => 'gray',
+            default => 'gray'
+        };
+    }
+
+    /**
+     * Vérifier si l'utilisateur a besoin de payer
+     */
+    public function needsPayment(): bool
+    {
+        return !$this->isOnTrial() && !$this->isSubscribed() && !$this->isSuperAdminGlobal();
+    }
+
+    /**
+     * Récupérer l'URL de paiement
+     */
+    public function getPaymentUrlAttribute(): string
+    {
+        return route('payment.form');
+    }
 
     /**
      * Vérifie si le tenant de l'utilisateur a un abonnement actif
