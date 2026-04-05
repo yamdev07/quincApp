@@ -10,33 +10,56 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * Vérifier les permissions pour la gestion du stock
+     */
+    private function authorizeStockManagement()
+    {
+        if (!Auth::user()->canManageStock()) {
+            abort(403, 'Vous n\'avez pas les droits pour gérer le stock.');
+        }
+    }
+
+    /**
+     * Vérifier que le produit appartient à la quincaillerie
+     */
+    private function authorizeProductAccess(Product $product)
+    {
+        if (!Auth::user()->hasAccessTo($product)) {
+            abort(403, 'Vous n\'avez pas accès à ce produit.');
+        }
+    }
+
     // 🧱 Liste des produits AVEC RECHERCHE ET REGROUPEMENT PAR LOT
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $filter = $request->input('filter');
-        $sortBy = $request->input('sort_by', 'created_at');
+        $user = Auth::user();
         
-        $query = Product::query();
+        // Le scope TenantScope s'applique automatiquement !
+        $query = Product::with(['category', 'supplier']);
         
         // Recherche
-        if ($search) {
-            $searchTerm = $search;
-            
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('id', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('sale_price', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('purchase_price', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('stock', 'LIKE', "%{$searchTerm}%");
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('id', 'LIKE', "%{$search}%")
+                  ->orWhere('sale_price', 'LIKE', "%{$search}%")
+                  ->orWhere('purchase_price', 'LIKE', "%{$search}%")
+                  ->orWhere('stock', 'LIKE', "%{$search}%");
             });
         }
         
         // Filtres
-        if ($filter) {
+        if ($filter = $request->input('filter')) {
             switch ($filter) {
                 case 'low_stock':
                     $query->where('stock', '<=', 10);
@@ -58,8 +81,6 @@ class ProductController extends Controller
                 case 'cumulated':
                     if (Schema::hasColumn('products', 'is_cumulated')) {
                         $query->where('is_cumulated', true);
-                    } else {
-                        $query->whereRaw('1=0');
                     }
                     break;
                 case 'non_cumulated':
@@ -71,6 +92,7 @@ class ProductController extends Controller
         }
         
         // Tri
+        $sortBy = $request->input('sort_by', 'created_at');
         switch ($sortBy) {
             case 'name':
                 $query->orderBy('name', 'asc');
@@ -98,7 +120,7 @@ class ProductController extends Controller
             $product->has_multiple_batches = $product->hasMultipleBatches();
         }
         
-        // Calcul des statistiques
+        // Calcul des statistiques (filtrées par quincaillerie)
         $totalProductsGlobal = Product::count();
         $totalStockGlobal = Product::sum('stock');
         $totalValueGlobal = Product::sum(DB::raw('sale_price * stock'));
@@ -129,15 +151,19 @@ class ProductController extends Controller
     // 🆕 Page d'ajout
     public function create()
     {
-        $categories = Category::all();
-        $suppliers  = Supplier::all();
+        $this->authorizeStockManagement();
+        
+        $categories = Category::sameCompany()->get();
+        $suppliers  = Supplier::sameCompany()->get();
 
         return view('products.create', compact('categories', 'suppliers'));
     }
 
-    // 💾 Enregistrement d'un nouveau produit AVEC GESTION DES DOUBLONS
+    // 💾 Enregistrement d'un nouveau produit - CORRIGÉ
     public function store(Request $request)
     {
+        $this->authorizeStockManagement();
+        
         $request->validate([
             'name'           => 'required|string|max:255',
             'stock'          => 'required|integer|min:0',
@@ -148,6 +174,18 @@ class ProductController extends Controller
             'supplier_id'    => 'required|exists:suppliers,id',
         ]);
 
+        // Vérifier que la catégorie appartient à la même quincaillerie
+        $category = Category::sameCompany()->find($request->category_id);
+        if (!$category) {
+            return back()->with('error', 'Catégorie invalide.');
+        }
+
+        // Vérifier que le fournisseur appartient à la même quincaillerie
+        $supplier = Supplier::sameCompany()->find($request->supplier_id);
+        if (!$supplier) {
+            return back()->with('error', 'Fournisseur invalide.');
+        }
+
         $existingProduct = Product::where('name', $request->name)
             ->where('category_id', $request->category_id)
             ->where('supplier_id', $request->supplier_id)
@@ -156,6 +194,9 @@ class ProductController extends Controller
         DB::beginTransaction();
         try {
             if ($existingProduct) {
+                // Vérifier que le produit existant appartient à la même quincaillerie
+                $this->authorizeProductAccess($existingProduct);
+                
                 // ✅ PRODUIT EXISTANT : Créer une ligne cumulée
                 $oldStock = $existingProduct->stock;
                 $newStock = $oldStock + $request->stock;
@@ -163,7 +204,7 @@ class ProductController extends Controller
                 $productData = [
                     'name'           => $request->name,
                     'stock'          => $newStock,
-                    'quantity'       => $newStock, // Ajout de quantity
+                    'quantity'       => $newStock,
                     'purchase_price' => ($existingProduct->purchase_price + $request->purchase_price) / 2,
                     'sale_price'     => ($existingProduct->sale_price + $request->sale_price) / 2,
                     'description'    => $request->description ?? $existingProduct->description,
@@ -184,18 +225,22 @@ class ProductController extends Controller
                 
                 $cumulatedProduct = Product::create($productData);
                 
-                // Enregistrer les mouvements de stock
-                $this->addStockMovementWithPrice(
-                    $existingProduct,
-                    'sortie',
-                    $oldStock,
-                    $existingProduct->purchase_price,
-                    $existingProduct->sale_price,
-                    'Transfert vers ligne cumulée',
-                    'CUMUL-' . $cumulatedProduct->id
-                );
+                // Enregistrer les mouvements de stock - CORRIGÉ : on utilise la méthode directe
+                // 1. Sortie de l'ancien produit
+                if ($oldStock > 0) {
+                    $this->addStockMovementDirect(
+                        $existingProduct,
+                        'sortie',
+                        $oldStock,
+                        $existingProduct->purchase_price,
+                        $existingProduct->sale_price,
+                        'Transfert vers ligne cumulée',
+                        'CUMUL-' . $cumulatedProduct->id
+                    );
+                }
                 
-                $this->addStockMovementWithPrice(
+                // 2. Entrée du nouveau stock dans le produit cumulé
+                $this->addStockMovementDirect(
                     $cumulatedProduct,
                     'entree',
                     $request->stock,
@@ -206,7 +251,7 @@ class ProductController extends Controller
                 );
                 
                 if ($oldStock > 0) {
-                    $this->addStockMovementWithPrice(
+                    $this->addStockMovementDirect(
                         $cumulatedProduct,
                         'entree',
                         $oldStock,
@@ -220,7 +265,7 @@ class ProductController extends Controller
                 // Mettre à jour l'ancien produit
                 $updateData = [
                     'stock' => 0,
-                    'quantity' => 0 // Ajout de quantity
+                    'quantity' => 0
                 ];
                 if (Schema::hasColumn('products', 'has_been_cumulated')) {
                     $updateData['has_been_cumulated'] = true;
@@ -231,19 +276,17 @@ class ProductController extends Controller
                 
                 $existingProduct->update($updateData);
                 
-                $product = $cumulatedProduct;
-                
                 DB::commit();
                 
                 return redirect()->route('products.index')
                     ->with('success', 'Produit existant détecté. Une nouvelle ligne cumulée a été créée avec le stock total ✅');
                     
             } else {
-                // ✅ NOUVEAU PRODUIT : Création normale
+                // ✅ NOUVEAU PRODUIT : Création normale - CORRIGÉ
                 $productData = [
                     'name'           => $request->name,
                     'stock'          => $request->stock,
-                    'quantity'       => $request->stock, // Ajout de quantity
+                    'quantity'       => $request->stock,
                     'purchase_price' => $request->purchase_price,
                     'sale_price'     => $request->sale_price,
                     'description'    => $request->description,
@@ -257,17 +300,20 @@ class ProductController extends Controller
                 
                 $product = Product::create($productData);
 
-                // Enregistrer le mouvement initial avec prix
+                // 🔧 CORRECTION: Créer le mouvement SANS ajouter de nouveau stock
                 if ($request->stock > 0) {
-                    $this->addStockMovementWithPrice(
-                        $product,
-                        'entree',
-                        $request->stock,
-                        $request->purchase_price,
-                        $request->sale_price,
-                        'Stock initial',
-                        'INITIAL-' . $product->id
-                    );
+                    // On crée directement le mouvement avec le stock final
+                    StockMovement::create([
+                        'product_id' => $product->id,
+                        'type' => 'entree',
+                        'quantity' => $request->stock,
+                        'purchase_price' => $request->purchase_price,
+                        'sale_price' => $request->sale_price,
+                        'stock_after' => $request->stock, // Le stock final est la valeur initiale
+                        'motif' => 'Stock initial',
+                        'reference_document' => 'INITIAL-' . $product->id,
+                        'user_id' => auth()->id()
+                    ]);
                 }
                 
                 DB::commit();
@@ -284,12 +330,50 @@ class ProductController extends Controller
         }
     }
 
+    // Nouvelle méthode utilitaire pour ajouter un mouvement sans modifier le stock
+    private function addStockMovementDirect(Product $product, $type, $quantity, $purchase_price, $sale_price, $motif = null, $reference = null)
+    {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
+        if ($type === 'sortie' && $product->stock < $quantity) {
+            throw new \Exception("Stock insuffisant. Stock actuel: {$product->stock}");
+        }
+        
+        $newStock = $type === 'entree' 
+            ? $product->stock + $quantity 
+            : $product->stock - $quantity;
+        
+        // Créer le mouvement
+        $movement = StockMovement::create([
+            'product_id' => $product->id,
+            'type' => $type,
+            'quantity' => $quantity,
+            'purchase_price' => $purchase_price,
+            'sale_price' => $sale_price,
+            'stock_after' => $newStock,
+            'motif' => $motif,
+            'reference_document' => $reference,
+            'user_id' => auth()->id()
+        ]);
+        
+        // Mettre à jour le stock du produit
+        $product->update([
+            'stock' => $newStock,
+            'quantity' => $newStock
+        ]);
+        
+        return $movement;
+    }
+
     // 👁️ Détails d'un produit AVEC STOCKS GROUPÉS
     public function show($id)
     {
         $product = Product::with(['category', 'supplier'])
             ->withCount('stockMovements')
             ->findOrFail($id);
+        
+        $this->authorizeProductAccess($product);
         
         $stockByPrice = DB::table('stock_movements')
             ->select(
@@ -361,27 +445,29 @@ class ProductController extends Controller
     // ✏️ Page d'édition
     public function edit(Product $product)
     {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
         if (Schema::hasColumn('products', 'has_been_cumulated') && 
-            Schema::hasColumn('products', 'cumulated_to') && 
-            $product->has_been_cumulated && 
-            $product->cumulated_to) {
+            $product->has_been_cumulated) {
             return redirect()->route('products.show', $product)
                 ->with('warning', 'Ce produit a été cumulé et ne peut plus être modifié directement.');
         }
         
-        $categories = Category::all();
-        $suppliers  = Supplier::all();
+        $categories = Category::sameCompany()->get();
+        $suppliers  = Supplier::sameCompany()->get();
 
         return view('products.edit', compact('product', 'categories', 'suppliers'));
     }
 
-    // ✏️ Mise à jour (SIMPLIFIÉE)
+    // ✏️ Mise à jour - CORRIGÉE (ne double plus le stock)
     public function update(Request $request, Product $product)
     {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
         if (Schema::hasColumn('products', 'has_been_cumulated') && 
-            Schema::hasColumn('products', 'cumulated_to') && 
-            $product->has_been_cumulated && 
-            $product->cumulated_to) {
+            $product->has_been_cumulated) {
             return redirect()->route('products.show', $product)
                 ->with('warning', 'Ce produit a été cumulé et ne peut plus être modifié.');
         }
@@ -396,37 +482,76 @@ class ProductController extends Controller
             'supplier_id'    => 'required|exists:suppliers,id',
         ]);
         
-        $oldStock = $product->stock;
-        
-        $validated['quantity'] = $validated['stock'];
-        
-        if ($oldStock != $validated['stock']) {
-            $difference = $validated['stock'] - $oldStock;
-            $type = $difference > 0 ? 'entree' : 'sortie';
-            
-            $this->addStockMovementWithPrice(
-                $product,
-                $type,
-                abs($difference),
-                $validated['purchase_price'],
-                $validated['sale_price'],
-                'Ajustement via édition',
-                'EDIT-' . $product->id
-            );
-        } else {
-            $product->update($validated);
+        // Vérifier que la catégorie appartient à la même quincaillerie
+        $category = Category::sameCompany()->find($request->category_id);
+        if (!$category) {
+            return back()->with('error', 'Catégorie invalide.');
+        }
+
+        // Vérifier que le fournisseur appartient à la même quincaillerie
+        $supplier = Supplier::sameCompany()->find($request->supplier_id);
+        if (!$supplier) {
+            return back()->with('error', 'Fournisseur invalide.');
         }
         
-        return redirect()->route('products.index')->with('success', 'Produit mis à jour avec succès.');
+        $oldStock = $product->stock;
+        $newStock = $validated['stock'];
+        $validated['quantity'] = $newStock;
+        
+        DB::beginTransaction();
+        try {
+            // Mettre à jour directement le stock
+            $product->update($validated);
+            
+            // Enregistrer un mouvement pour tracer la modification (sans doubler)
+            if ($oldStock != $newStock) {
+                $difference = $newStock - $oldStock;
+                $type = $difference > 0 ? 'entree' : 'sortie';
+                $quantity = abs($difference);
+                
+                // Utiliser les prix actuels du produit
+                $movement = StockMovement::create([
+                    'product_id' => $product->id,
+                    'type' => $type,
+                    'quantity' => $quantity,
+                    'purchase_price' => $validated['purchase_price'],
+                    'sale_price' => $validated['sale_price'],
+                    'stock_after' => $newStock, // On utilise directement la nouvelle valeur
+                    'motif' => 'Modification manuelle du stock',
+                    'reference_document' => 'EDIT-' . $product->id . '-' . time(),
+                    'user_id' => auth()->id()
+                ]);
+                
+                \Log::info('Stock modifié manuellement', [
+                    'product_id' => $product->id,
+                    'old_stock' => $oldStock,
+                    'new_stock' => $newStock,
+                    'difference' => $difference,
+                    'user_id' => auth()->id()
+                ]);
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('products.index')
+                ->with('success', 'Produit mis à jour avec succès. Stock: ' . $product->fresh()->stock);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la mise à jour: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     // 🗑️ Suppression d'un produit
     public function destroy(Product $product)
     {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
         if (Schema::hasColumn('products', 'has_been_cumulated') && 
-            Schema::hasColumn('products', 'cumulated_to') && 
-            $product->has_been_cumulated && 
-            $product->cumulated_to) {
+            $product->has_been_cumulated) {
             return redirect()->route('products.index')
                 ->with('warning', 'Ce produit a été cumulé et ne peut pas être supprimé.');
         }
@@ -456,13 +581,26 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Produit supprimé avec succès.');
     }
 
-    // 📊 Rapport des produits AVEC STOCKS GROUPÉS
-    public function productsReport()
+    // 📊 Rapport des produits
+    public function productsReport(Request $request)
     {
+        if (!Auth::user()->canViewReports()) {
+            abort(403, 'Vous n\'avez pas les droits pour voir les rapports.');
+        }
+        
         $query = Product::query();
         
         if (Schema::hasColumn('products', 'has_been_cumulated')) {
             $query->where('has_been_cumulated', false);
+        }
+        
+        // Filtres optionnels
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+        
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
         }
         
         $products = $query->with(['category', 'supplier'])
@@ -490,10 +628,14 @@ class ProductController extends Controller
             'cumulated_products' => $cumulatedProductsCount,
         ];
 
-        return view('reports.products', compact('products', 'reportData'));
+        // Données pour les filtres
+        $categories = Category::sameCompany()->get();
+        $suppliers = Supplier::sameCompany()->get();
+
+        return view('reports.products', compact('products', 'reportData', 'categories', 'suppliers'));
     }
 
-    // 📈 Statistiques rapides AVEC INFOS BATCHES
+    // 📈 Statistiques rapides
     public function getQuickStats()
     {
         $query = Product::query();
@@ -529,6 +671,8 @@ class ProductController extends Controller
 
     public function history(Product $product, Request $request)
     {
+        $this->authorizeProductAccess($product);
+        
         $request->validate([
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -574,6 +718,10 @@ class ProductController extends Controller
     
     public function globalHistory(Request $request)
     {
+        if (!Auth::user()->canViewReports()) {
+            abort(403, 'Vous n\'avez pas les droits pour voir l\'historique global.');
+        }
+        
         $request->validate([
             'product_id' => 'nullable|exists:products,id',
             'start_date' => 'nullable|date',
@@ -630,6 +778,10 @@ class ProductController extends Controller
     
     public function groupedStocksReport(Request $request)
     {
+        if (!Auth::user()->canViewReports()) {
+            abort(403, 'Vous n\'avez pas les droits pour voir ce rapport.');
+        }
+        
         $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
@@ -704,8 +856,8 @@ class ProductController extends Controller
             'average_batches_per_product' => $totalBatches > 0 ? round($totalBatches / count($productsData), 1) : 0,
         ];
         
-        $categories = Category::all();
-        $suppliers = Supplier::all();
+        $categories = Category::sameCompany()->get();
+        $suppliers = Supplier::sameCompany()->get();
         
         return view('reports.grouped-stocks', compact(
             'productsData', 
@@ -717,25 +869,22 @@ class ProductController extends Controller
     }
     
     // ============================================
-    // MÉTHODES CORRIGÉES POUR LA GESTION DU STOCK
+    // MÉTHODES DE GESTION DU STOCK
     // ============================================
     
-    /**
-     * Méthode privée pour ajouter un mouvement de stock AVEC PRIX (CORRIGÉE)
-     */
     private function addStockMovementWithPrice(Product $product, $type, $quantity, $purchase_price, $sale_price, $motif = null, $reference = null)
     {
-        // Vérifier le stock pour les sorties
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
         if ($type === 'sortie' && $product->stock < $quantity) {
             throw new \Exception("Stock insuffisant. Stock actuel: {$product->stock}");
         }
         
-        // Calculer le nouveau stock
         $newStock = $type === 'entree' 
             ? $product->stock + $quantity 
             : $product->stock - $quantity;
         
-        // Créer le mouvement avec les prix
         $movement = StockMovement::create([
             'product_id' => $product->id,
             'type' => $type,
@@ -748,18 +897,14 @@ class ProductController extends Controller
             'user_id' => auth()->id()
         ]);
         
-        // CORRECTION : Mettre à jour les DEUX champs de stock
         $product->update([
             'stock' => $newStock,
-            'quantity' => $newStock  // Synchroniser quantity avec stock
+            'quantity' => $newStock
         ]);
         
         return $movement;
     }
     
-    /**
-     * Méthode privée pour ajouter un mouvement de stock (version héritée)
-     */
     private function addStockMovement(Product $product, $type, $quantity, $motif = null, $reference = null)
     {
         return $this->addStockMovementWithPrice(
@@ -773,15 +918,12 @@ class ProductController extends Controller
         );
     }
     
-    /**
-     * Gestion manuelle du stock (ajustement) - CORRIGÉE
-     */
     public function adjustStock(Request $request, Product $product)
     {
-        if (Schema::hasColumn('products', 'has_been_cumulated') && 
-            Schema::hasColumn('products', 'cumulated_to') && 
-            $product->has_been_cumulated && 
-            $product->cumulated_to) {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
+        if (Schema::hasColumn('products', 'has_been_cumulated') && $product->has_been_cumulated) {
             return redirect()->route('products.show', $product)
                 ->with('warning', 'Ce produit a été cumulé et ne peut plus être modifié.');
         }
@@ -835,7 +977,6 @@ class ProductController extends Controller
                             $motif = 'Ajustement (définition stock): ' . ($request->reason ?? '');
                             $quantity = abs($difference);
                         } else {
-                            // Pas de changement mais mise à jour des prix si nécessaire
                             if ($request->filled('purchase_price') || $request->filled('sale_price')) {
                                 $updateData = [];
                                 if ($request->filled('purchase_price')) {
@@ -851,7 +992,6 @@ class ProductController extends Controller
                         break;
                 }
                 
-                // Ajouter le mouvement avec prix
                 $this->addStockMovementWithPrice(
                     $product,
                     $type,
@@ -862,7 +1002,6 @@ class ProductController extends Controller
                     $request->reference_document
                 );
                 
-                // Mettre à jour les prix du produit si fournis
                 if ($request->filled('purchase_price')) {
                     $product->update(['purchase_price' => $purchase_price]);
                 }
@@ -870,7 +1009,6 @@ class ProductController extends Controller
                     $product->update(['sale_price' => $sale_price]);
                 }
                 
-                // Rafraîchir le produit
                 $product->refresh();
             });
             
@@ -886,15 +1024,12 @@ class ProductController extends Controller
         }
     }
     
-    /**
-     * Réapprovisionnement AVEC GESTION DES PRIX - CORRIGÉE
-     */
     public function restock(Request $request, Product $product)
     {
-        if (Schema::hasColumn('products', 'has_been_cumulated') && 
-            Schema::hasColumn('products', 'cumulated_to') && 
-            $product->has_been_cumulated && 
-            $product->cumulated_to) {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
+        if (Schema::hasColumn('products', 'has_been_cumulated') && $product->has_been_cumulated) {
             return redirect()->route('products.show', $product)
                 ->with('warning', 'Ce produit a été cumulé et ne peut plus être réapprovisionné.');
         }
@@ -908,9 +1043,15 @@ class ProductController extends Controller
             'reference_document' => 'nullable|string|max:100'
         ]);
         
+        // Vérifier le fournisseur si fourni
+        if ($request->filled('supplier_id')) {
+            $supplier = Supplier::sameCompany()->find($request->supplier_id);
+            if (!$supplier) {
+                return back()->with('error', 'Fournisseur invalide.');
+            }
+        }
+        
         DB::transaction(function () use ($request, $product) {
-            $oldStock = $product->stock;
-            
             $purchase_price = $request->filled('purchase_price') 
                 ? $request->purchase_price 
                 : $product->purchase_price;
@@ -919,7 +1060,6 @@ class ProductController extends Controller
                 ? $request->sale_price 
                 : $product->sale_price;
             
-            // Ajouter le mouvement d'entrée avec prix
             $this->addStockMovementWithPrice(
                 $product,
                 'entree',
@@ -930,10 +1070,6 @@ class ProductController extends Controller
                 $request->reference_document
             );
             
-            // CORRECTION : Ne pas utiliser increment sur quantity
-            // La méthode addStockMovementWithPrice met déjà à jour stock et quantity
-            
-            // Mettre à jour les prix si fournis
             if ($request->filled('purchase_price')) {
                 $product->update(['purchase_price' => $purchase_price]);
             }
@@ -941,12 +1077,10 @@ class ProductController extends Controller
                 $product->update(['sale_price' => $sale_price]);
             }
             
-            // Mettre à jour le fournisseur si fourni
             if ($request->filled('supplier_id')) {
                 $product->update(['supplier_id' => $request->supplier_id]);
             }
             
-            // Rafraîchir le produit
             $product->refresh();
         });
         
@@ -954,15 +1088,15 @@ class ProductController extends Controller
             ->with('success', "Réapprovisionnement réussi : +{$request->amount} unités. Stock actuel : {$product->stock}");
     }
     
-    /**
-     * Vente rapide - CORRIGÉE
-     */
     public function quickSale(Request $request, Product $product)
     {
-        if (Schema::hasColumn('products', 'has_been_cumulated') && 
-            Schema::hasColumn('products', 'cumulated_to') && 
-            $product->has_been_cumulated && 
-            $product->cumulated_to) {
+        $this->authorizeProductAccess($product);
+        
+        if (!Auth::user()->canManageSales()) {
+            abort(403, 'Vous n\'avez pas les droits pour effectuer des ventes.');
+        }
+        
+        if (Schema::hasColumn('products', 'has_been_cumulated') && $product->has_been_cumulated) {
             $cumulatedProduct = Product::find($product->cumulated_to);
             if ($cumulatedProduct) {
                 return redirect()->route('products.show', $cumulatedProduct)
@@ -977,7 +1111,6 @@ class ProductController extends Controller
         ]);
         
         DB::transaction(function () use ($request, $product) {
-            // Ajouter le mouvement de sortie
             $this->addStockMovement(
                 $product,
                 'sortie',
@@ -986,7 +1119,6 @@ class ProductController extends Controller
                 $request->reference
             );
             
-            // Rafraîchir le produit
             $product->refresh();
         });
         
@@ -994,11 +1126,11 @@ class ProductController extends Controller
             ->with('success', "Vente enregistrée : -{$request->quantity} unités. Stock actuel : {$product->stock}");
     }
     
-    /**
-     * NOUVELLE : Fonction pour défaire un cumul
-     */
     public function uncumulateProduct(Product $product)
     {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
         if (!Schema::hasColumn('products', 'is_cumulated') || !$product->is_cumulated) {
             return redirect()->back()
                 ->with('error', 'Ce produit n\'est pas un produit cumulé.');
@@ -1060,11 +1192,10 @@ class ProductController extends Controller
         }
     }
     
-    /**
-     * NOUVELLE : Fusionner manuellement des produits
-     */
     public function mergeProducts(Request $request)
     {
+        $this->authorizeStockManagement();
+        
         $request->validate([
             'product_ids' => 'required|array|min:2',
             'product_ids.*' => 'exists:products,id',
@@ -1072,6 +1203,18 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'supplier_id' => 'required|exists:suppliers,id',
         ]);
+        
+        // Vérifier la catégorie
+        $category = Category::sameCompany()->find($request->category_id);
+        if (!$category) {
+            return back()->with('error', 'Catégorie invalide.');
+        }
+        
+        // Vérifier le fournisseur
+        $supplier = Supplier::sameCompany()->find($request->supplier_id);
+        if (!$supplier) {
+            return back()->with('error', 'Fournisseur invalide.');
+        }
         
         DB::beginTransaction();
         try {
@@ -1084,18 +1227,14 @@ class ProductController extends Controller
             $products = $query->get();
             
             if ($products->count() < 2) {
-                $alreadyMerged = [];
-                foreach ($products as $product) {
-                    if (Schema::hasColumn('products', 'has_been_cumulated') && $product->has_been_cumulated) {
-                        $alreadyMerged[] = $product->name;
-                    }
-                }
-                
-                if (!empty($alreadyMerged)) {
-                    throw new \Exception("Certains produits ont déjà été fusionnés: " . implode(', ', $alreadyMerged));
-                }
-                
                 throw new \Exception('Sélectionnez au moins 2 produits non-cumulés à fusionner.');
+            }
+            
+            // Vérifier que tous les produits appartiennent à la même quincaillerie
+            foreach ($products as $product) {
+                if (!Auth::user()->hasAccessTo($product)) {
+                    throw new \Exception("Le produit {$product->name} ne vous appartient pas.");
+                }
             }
             
             $totalStock = $products->sum('stock');
@@ -1170,11 +1309,10 @@ class ProductController extends Controller
         }
     }
     
-    /**
-     * Vérifier la cohérence du stock - NOUVELLE MÉTHODE
-     */
     public function checkStockConsistency(Product $product)
     {
+        $this->authorizeProductAccess($product);
+        
         $totalEntrees = $product->stockMovements()
             ->where('type', 'entree')
             ->sum('quantity');
@@ -1194,11 +1332,11 @@ class ProductController extends Controller
         ];
     }
     
-    /**
-     * Synchroniser le stock avec les mouvements - NOUVELLE MÉTHODE
-     */
     public function syncStock(Product $product)
     {
+        $this->authorizeProductAccess($product);
+        $this->authorizeStockManagement();
+        
         $consistency = $this->checkStockConsistency($product);
         
         if ($consistency['is_consistent']) {

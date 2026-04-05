@@ -51,6 +51,34 @@
         padding: 32px 24px 64px;
     }
 
+    /* Access denied */
+    .sc-access-denied {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        text-align: center;
+        animation: fadeUp 0.35s ease both;
+        margin-bottom: 24px;
+    }
+    .sc-access-denied svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin: 0 auto 16px;
+    }
+    .sc-access-denied h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .sc-access-denied p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 24px;
+    }
+
     /* Header */
     .sc-header {
         display: flex;
@@ -496,6 +524,23 @@
 @section('content')
 <div class="sc-page">
 
+    {{-- Vérification d'accès --}}
+    @if(!auth()->user()->canManageSales())
+        <div class="sc-access-denied">
+            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2>Accès refusé</h2>
+            <p>Vous n'avez pas les droits pour gérer les clients.</p>
+            <a href="{{ route('dashboard') }}" class="btn-outline">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour au tableau de bord
+            </a>
+        </div>
+    @else
+
     {{-- HEADER --}}
     <div class="sc-header">
         <div class="sc-header-l">
@@ -512,7 +557,7 @@
                 <div class="sc-sub">Consultez et gérez votre base de clients</div>
             </div>
         </div>
-        @if(Auth::user() && Auth::user()->role === 'admin')
+        @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
             <a href="{{ route('clients.create') }}" class="btn-primary">
                 <svg viewBox="0 0 24 24" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -529,6 +574,15 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="sc-alert" style="background: #fef2f2; border-left-color: var(--danger); color: #991b1b;">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {{ session('error') }}
         </div>
     @endif
 
@@ -605,6 +659,11 @@
                 </thead>
                 <tbody>
                     @forelse($clients as $client)
+                        @php
+                            $canEdit = auth()->user()->isSuperAdminGlobal() || 
+                                      auth()->user()->isSuperAdmin() || 
+                                      auth()->user()->isAdmin();
+                        @endphp
                         <tr>
                             <td>
                                 <div class="sc-client">
@@ -645,7 +704,7 @@
                                 <div class="sc-time">{{ $client->created_at->format('H:i') }}</div>
                             </td>
                             <td>
-                                @if(Auth::user() && Auth::user()->role === 'admin')
+                                @if($canEdit)
                                     <div class="sc-actions">
                                         <a href="{{ route('clients.edit', $client->id) }}" class="sc-btn sc-btn-edit" title="Éditer">
                                             <svg viewBox="0 0 24 24" stroke-width="2">
@@ -663,6 +722,8 @@
                                             </button>
                                         </form>
                                     </div>
+                                @else
+                                    <span class="sc-contact-empty">-</span>
                                 @endif
                             </td>
                         </tr>
@@ -677,7 +738,7 @@
                                     </div>
                                     <h3>Aucun client trouvé</h3>
                                     <p>Commencez par ajouter votre premier client</p>
-                                    @if(Auth::user() && Auth::user()->role === 'admin')
+                                    @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                                         <a href="{{ route('clients.create') }}" class="btn-primary">
                                             <svg viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -700,5 +761,7 @@
             </div>
         @endif
     </div>
+
+    @endif {{-- Fin de la condition d'autorisation --}}
 </div>
 @endsection

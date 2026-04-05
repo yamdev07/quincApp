@@ -51,6 +51,9 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
     }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 
     /* Page */
     .sp-create-page {
@@ -147,6 +150,12 @@
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 12px 28px rgba(249,115,22,0.4);
+    }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
     .btn-secondary {
@@ -265,6 +274,36 @@
     .sp-create-error {
         background: #fef2f2;
         border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        animation: fadeIn 0.3s ease-out;
+    }
+    .sp-create-error svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin-bottom: 16px;
+    }
+    .sp-create-error h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .sp-create-error p {
+        color: #991b1b;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .sp-create-error-field {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
         border-radius: var(--radius-sm);
         padding: 20px;
         margin-bottom: 24px;
@@ -272,20 +311,21 @@
         gap: 16px;
         align-items: flex-start;
         animation: fadeIn 0.3s ease-out;
+        position: relative;
     }
-    .sp-create-error svg {
+    .sp-create-error-field svg {
         width: 24px;
         height: 24px;
         stroke: var(--danger);
         flex-shrink: 0;
     }
-    .sp-create-error h3 {
+    .sp-create-error-field h4 {
         font-size: 15px;
         font-weight: 700;
         color: var(--danger);
         margin-bottom: 8px;
     }
-    .sp-create-error ul {
+    .sp-create-error-field ul {
         list-style: disc;
         padding-left: 20px;
         color: #991b1b;
@@ -299,6 +339,8 @@
         opacity: 0.7;
         cursor: pointer;
         transition: opacity 0.2s;
+        background: none;
+        border: none;
     }
     .sp-create-error-close:hover {
         opacity: 1;
@@ -345,7 +387,6 @@
     }
     .sp-create-field-wrapper:focus-within .sp-create-ico {
         color: var(--orange);
-        animation: pulse 2s infinite;
     }
 
     .sp-create-input, .sp-create-select, .sp-create-textarea {
@@ -405,6 +446,8 @@
         margin-top: 6px;
         font-size: 12px;
         color: var(--text-3);
+        display: flex;
+        justify-content: space-between;
     }
     .sp-create-error-message {
         margin-top: 6px;
@@ -574,6 +617,24 @@
 @section('content')
 <div class="sp-create-page">
 
+    {{-- ✅ VÉRIFICATION D'ACCÈS CORRIGÉE POUR LE MAGASINIER --}}
+    @if(!auth()->user()->canManageStock())
+        <div class="sp-create-error">
+            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h3>Accès refusé</h3>
+            <p>Vous n'avez pas les droits pour créer un produit.</p>
+            <a href="{{ route('products.index') }}" class="btn-primary">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+        @php return; @endphp
+    @endif
+
     {{-- HEADER --}}
     <div class="sp-create-header">
         <div class="sp-create-header-l">
@@ -600,12 +661,12 @@
 
     {{-- ERROR ALERT --}}
     @if($errors->any())
-        <div class="sp-create-error" id="errorAlert">
+        <div class="sp-create-error-field" id="errorAlert">
             <svg viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div style="flex:1;">
-                <h3>Veuillez corriger les erreurs suivantes :</h3>
+                <h4>Veuillez corriger les erreurs suivantes :</h4>
                 <ul>
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -637,7 +698,7 @@
         </div>
 
         <div class="sp-create-card-body">
-            <form action="{{ route('products.store') }}" method="POST" id="createProductForm">
+            <form action="{{ route('admin.products.store') }}" method="POST" id="createProductForm">
                 @csrf
 
                 {{-- Nom du produit --}}
@@ -941,7 +1002,7 @@
                             </svg>
                             Réinitialiser
                         </button>
-                        <button type="submit" class="btn-primary">
+                        <button type="submit" class="btn-primary" id="submitBtn">
                             <svg viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                             </svg>
@@ -1001,14 +1062,17 @@ document.addEventListener('DOMContentLoaded', function() {
         previewStock.textContent = stock + ' unités';
         
         // Compteur de caractères
-        const descLength = descriptionInput.value.length;
-        charCount.textContent = descLength + '/500 caractères';
+        if (descriptionInput) {
+            const descLength = descriptionInput.value.length;
+            charCount.textContent = descLength + '/500 caractères';
+        }
     }
 
     // Écouteurs d'événements
-    [nameInput, salePriceInput, stockInput, descriptionInput].forEach(input => {
-        if (input) input.addEventListener('input', updatePreview);
-    });
+    if (nameInput) nameInput.addEventListener('input', updatePreview);
+    if (salePriceInput) salePriceInput.addEventListener('input', updatePreview);
+    if (stockInput) stockInput.addEventListener('input', updatePreview);
+    if (descriptionInput) descriptionInput.addEventListener('input', updatePreview);
 
     // Effet d'échelle au focus
     const wrappers = document.querySelectorAll('.focus-scale');
@@ -1030,7 +1094,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const salePrice = parseFloat(salePriceInput.value) || 0;
         const purchasePrice = parseFloat(document.getElementById('purchase_price').value) || 0;
         const stock = parseInt(stockInput.value) || 0;
+        const categoryId = document.getElementById('category_id').value;
+        const supplierId = document.getElementById('supplier_id').value;
         
+        // Validations
         if (!name) {
             alert('❌ Le nom du produit est requis.');
             e.preventDefault();
@@ -1055,6 +1122,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
         
+        if (!categoryId) {
+            alert('❌ Veuillez sélectionner une catégorie.');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!supplierId) {
+            alert('❌ Veuillez sélectionner un fournisseur.');
+            e.preventDefault();
+            return false;
+        }
+        
         if (salePrice < purchasePrice) {
             if (!confirm('⚠️ Le prix de vente est inférieur au prix d\'achat. Voulez-vous continuer ?')) {
                 e.preventDefault();
@@ -1063,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Effet de chargement
-        const submitBtn = this.querySelector('button[type="submit"]');
+        const submitBtn = document.getElementById('submitBtn');
         if (submitBtn) {
             submitBtn.innerHTML = `
                 <svg viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px; animation:spin 1s linear infinite;">

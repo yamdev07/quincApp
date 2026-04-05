@@ -20,9 +20,7 @@
         --danger:        #dc2626;
         --info:          #2563eb;
         --purple:        #7c3aed;
-        --pink:          #db2777;
-        --indigo:        #6366f1;
-        --yellow:        #eab308;
+        --violet:        #8b5cf6;
         --shadow-sm:     0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
         --shadow-md:     0 4px 16px rgba(15,23,42,.08);
         --shadow-orange: 0 8px 24px rgba(249,115,22,.25);
@@ -177,9 +175,7 @@
         border-radius: var(--radius-sm);
         margin-bottom: 24px;
         animation: fadeUp 0.35s 0.07s ease both;
-        border-left: 4px solid var(--success);
-        background: #f0fdf4;
-        color: #166534;
+        border-left: 4px solid;
     }
     .sf-alert svg {
         width: 20px;
@@ -187,6 +183,16 @@
         stroke: currentColor;
         fill: none;
         flex-shrink: 0;
+    }
+    .sf-alert-success {
+        background: #f0fdf4;
+        border-color: var(--success);
+        color: #166534;
+    }
+    .sf-alert-error {
+        background: #fef2f2;
+        border-color: var(--danger);
+        color: #991b1b;
     }
 
     /* Stats Cards */
@@ -490,11 +496,68 @@
         color: var(--orange);
         background: var(--orange-pale);
     }
+
+    /* Badge pour super admin */
+    .sf-tenant-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        margin-left: 8px;
+        background: var(--violet);
+        color: white;
+    }
+
+    /* Access denied */
+    .sf-access-denied {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius);
+        padding: 32px;
+        text-align: center;
+        animation: fadeUp 0.35s ease both;
+    }
+    .sf-access-denied svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--danger);
+        margin: 0 auto 16px;
+    }
+    .sf-access-denied h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--danger);
+        margin-bottom: 8px;
+    }
+    .sf-access-denied p {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 24px;
+    }
 </style>
 @endsection
 
 @section('content')
 <div class="sf-page">
+
+    {{-- Vérification d'accès --}}
+    @if(!auth()->user()->canManageStock())
+        <div class="sf-access-denied">
+            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2>Accès refusé</h2>
+            <p>Vous n'avez pas les droits pour gérer les fournisseurs.</p>
+            <a href="{{ route('dashboard') }}" class="btn-outline">
+                <svg viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour au tableau de bord
+            </a>
+        </div>
+        @php return; @endphp
+    @endif
 
     {{-- HEADER --}}
     <div class="sf-header">
@@ -510,10 +573,15 @@
                     Gestion des <span>fournisseurs</span>
                 </div>
                 <div class="sf-sub">Consultez et gérez vos partenaires fournisseurs</div>
+                @if(auth()->user()->isSuperAdminGlobal())
+                    <div class="sf-tenant-badge">
+                        <i class="bi bi-globe2"></i> Vue globale
+                    </div>
+                @endif
             </div>
         </div>
-        @if(Auth::user() && Auth::user()->role === 'admin')
-            <a href="{{ route('suppliers.create') }}" class="btn-primary">
+        @if(auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdminOrAdmin()))
+            <a href="{{ route('admin.suppliers.create') }}" class="btn-primary">
                 <svg viewBox="0 0 24 24" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
@@ -524,11 +592,20 @@
 
     {{-- ALERT --}}
     @if(session('success'))
-        <div class="sf-alert">
+        <div class="sf-alert sf-alert-success">
             <svg viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="sf-alert sf-alert-error">
+            <svg viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('error') }}
         </div>
     @endif
 
@@ -600,11 +677,18 @@
                         <th>Fournisseur</th>
                         <th>Coordonnées</th>
                         <th>Date d'ajout</th>
+                        @if(auth()->user()->isSuperAdminGlobal())
+                            <th>Quincaillerie</th>
+                        @endif
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($suppliers as $supplier)
+                        @php
+                            $canEdit = auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->hasAccessTo($supplier));
+                            $canDelete = auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->hasAccessTo($supplier));
+                        @endphp
                         <tr>
                             <td>
                                 <div class="sf-supplier">
@@ -644,31 +728,51 @@
                                 <div class="sf-date">{{ $supplier->created_at->format('d/m/Y') }}</div>
                                 <div class="sf-time">{{ $supplier->created_at->format('H:i') }}</div>
                             </td>
+                            
+                            @if(auth()->user()->isSuperAdminGlobal())
+                                <td>
+                                    @if($supplier->owner && $supplier->owner->tenant)
+                                        <span class="sf-contact">
+                                            <i class="bi bi-building"></i>
+                                            {{ $supplier->owner->tenant->company_name ?? 'N/A' }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">-</span>
+                                    @endif
+                                </td>
+                            @endif
+
                             <td>
-                                @if(Auth::user() && Auth::user()->role === 'admin')
+                                @if($canEdit || $canDelete)
                                     <div class="sf-actions">
-                                        <a href="{{ route('suppliers.edit', $supplier->id) }}" class="sf-btn sf-btn-edit" title="Éditer">
-                                            <svg viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                        </a>
-                                        <form action="{{ route('suppliers.destroy', $supplier->id) }}" method="POST" 
-                                              onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce fournisseur ?');" style="display: inline;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="sf-btn sf-btn-delete" title="Supprimer">
+                                        @if($canEdit)
+                                            <a href="{{ route('admin.suppliers.edit', $supplier->id) }}" class="sf-btn sf-btn-edit" title="Éditer">
                                                 <svg viewBox="0 0 24 24" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
-                                            </button>
-                                        </form>
+                                            </a>
+                                        @endif
+                                        @if($canDelete)
+                                            <form action="{{ route('admin.suppliers.destroy', $supplier->id) }}" method="POST" 
+                                                  onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce fournisseur ?');" style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="sf-btn sf-btn-delete" title="Supprimer">
+                                                    <svg viewBox="0 0 24 24" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
+                                @else
+                                    <span class="text-gray-400 text-sm">-</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4">
+                            <td colspan="{{ auth()->user()->isSuperAdminGlobal() ? 5 : 4 }}">
                                 <div class="sf-empty">
                                     <div class="sf-empty-ico">
                                         <svg viewBox="0 0 24 24" stroke-width="1.5">
@@ -677,8 +781,8 @@
                                     </div>
                                     <h3>Aucun fournisseur trouvé</h3>
                                     <p>Commencez par ajouter votre premier fournisseur</p>
-                                    @if(Auth::user() && Auth::user()->role === 'admin')
-                                        <a href="{{ route('suppliers.create') }}" class="btn-primary">
+                                    @if(auth()->user()->canManageStock() && (auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdminOrAdmin()))
+                                        <a href="{{ route('admin.suppliers.create') }}" class="btn-primary">
                                             <svg viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                             </svg>
@@ -700,5 +804,5 @@
             </div>
         @endif
     </div>
-</div>
+</div> 
 @endsection

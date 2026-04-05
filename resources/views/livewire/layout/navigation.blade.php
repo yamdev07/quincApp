@@ -41,7 +41,7 @@ new class extends Component
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-1 sm:-my-px sm:ms-6 sm:flex">
-                    <!-- Dashboard -->
+                    <!-- Dashboard - Tous les utilisateurs -->
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -52,7 +52,7 @@ new class extends Component
                         </div>
                     </x-nav-link>
 
-                    <!-- Produits -->
+                    <!-- Produits - Tous les utilisateurs -->
                     <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -63,7 +63,8 @@ new class extends Component
                         </div>
                     </x-nav-link>
 
-                    <!-- Fournisseurs -->
+                    <!-- Fournisseurs - Accessible uniquement aux admins et super admins -->
+                    @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
                     <x-nav-link :href="route('suppliers.index')" :active="request()->routeIs('suppliers.*')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -73,8 +74,10 @@ new class extends Component
                             <span>Fournisseurs</span>
                         </div>
                     </x-nav-link>
+                    @endif
 
-                    <!-- Catégories -->
+                    <!-- Catégories - Accessible uniquement aux admins et super admins -->
+                    @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
                     <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -84,8 +87,9 @@ new class extends Component
                             <span>Catégories</span>
                         </div>
                     </x-nav-link>
+                    @endif
 
-                    <!-- Ventes -->
+                    <!-- Ventes - Tous les utilisateurs -->
                     <x-nav-link :href="route('sales.index')" :active="request()->routeIs('sales.*')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -96,7 +100,7 @@ new class extends Component
                         </div>
                     </x-nav-link>
 
-                    <!-- Clients -->
+                    <!-- Clients - Tous les utilisateurs -->
                     <x-nav-link :href="route('clients.index')" :active="request()->routeIs('clients.*')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -107,7 +111,8 @@ new class extends Component
                         </div>
                     </x-nav-link>
 
-                    <!-- Historique -->
+                    <!-- Historique - Accessible uniquement aux admins et super admins -->
+                    @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
                     <x-nav-link :href="route('products.global-history')" :active="request()->routeIs('products.global-history')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -117,6 +122,33 @@ new class extends Component
                             <span>Historique</span>
                         </div>
                     </x-nav-link>
+                    @endif
+
+                    <!-- Rapports - Accessible uniquement aux super_admin_global, super_admin, admin -->
+                    @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
+                    <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')" wire:navigate 
+                        class="qapp-nav-link">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            <span>Rapports</span>
+                        </div>
+                    </x-nav-link>
+                    @endif
+
+                    <!-- Super Admin Global Dashboard - Uniquement pour super_admin_global -->
+                    @if(auth()->user()->role === 'super_admin_global')
+                    <x-nav-link :href="route('super-admin.dashboard')" :active="request()->routeIs('super-admin.*')" wire:navigate 
+                        class="qapp-nav-link">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9" />
+                            </svg>
+                            <span>Super Admin</span>
+                        </div>
+                    </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -131,7 +163,30 @@ new class extends Component
                                 </div>
                                 <div class="text-left">
                                     <div class="qapp-user-name">{{ auth()->user()->name ?? 'Utilisateur' }}</div>
-                                    <div class="qapp-user-role">{{ auth()->user()->role ?? 'Administrateur' }}</div>
+                                    <div class="qapp-user-role">
+                                        @switch(auth()->user()->role)
+                                            @case('super_admin_global')
+                                                Super Administrateur Global
+                                                @break
+                                            @case('super_admin')
+                                                Super Administrateur
+                                                @break
+                                            @case('admin')
+                                                Administrateur
+                                                @break
+                                            @case('manager')
+                                                Manager
+                                                @break
+                                            @case('storekeeper')
+                                                Magasinier
+                                                @break
+                                            @case('cashier')
+                                                Caissier
+                                                @break
+                                            @default
+                                                Utilisateur
+                                        @endswitch
+                                    </div>
                                 </div>
                                 <svg class="w-4 h-4 text-[#55535f] group-hover:text-[#f97316] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -198,6 +253,7 @@ new class extends Component
             </x-responsive-nav-link>
 
             <!-- Fournisseurs -->
+            @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
             <x-responsive-nav-link :href="route('suppliers.index')" :active="request()->routeIs('suppliers.*')" wire:navigate 
                 class="qapp-responsive-nav-link">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,8 +261,10 @@ new class extends Component
                 </svg>
                 Fournisseurs
             </x-responsive-nav-link>
+            @endif
 
             <!-- Catégories -->
+            @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
             <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')" wire:navigate 
                 class="qapp-responsive-nav-link">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,6 +272,7 @@ new class extends Component
                 </svg>
                 Catégories
             </x-responsive-nav-link>
+            @endif
 
             <!-- Ventes -->
             <x-responsive-nav-link :href="route('sales.index')" :active="request()->routeIs('sales.*')" wire:navigate 
@@ -234,6 +293,7 @@ new class extends Component
             </x-responsive-nav-link>
 
             <!-- Historique -->
+            @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
             <x-responsive-nav-link :href="route('products.global-history')" :active="request()->routeIs('products.global-history')" wire:navigate 
                 class="qapp-responsive-nav-link">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,6 +301,29 @@ new class extends Component
                 </svg>
                 Historique
             </x-responsive-nav-link>
+            @endif
+
+            <!-- Rapports -->
+            @if(in_array(auth()->user()->role, ['super_admin_global', 'super_admin', 'admin']))
+            <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')" wire:navigate 
+                class="qapp-responsive-nav-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Rapports
+            </x-responsive-nav-link>
+            @endif
+
+            <!-- Super Admin Global Dashboard -->
+            @if(auth()->user()->role === 'super_admin_global')
+            <x-responsive-nav-link :href="route('super-admin.dashboard')" :active="request()->routeIs('super-admin.*')" wire:navigate 
+                class="qapp-responsive-nav-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9" />
+                </svg>
+                Super Admin
+            </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

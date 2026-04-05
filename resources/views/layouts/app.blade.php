@@ -35,6 +35,128 @@
             background: var(--bg);
             color: var(--text);
         }
+
+        /* Badges de rôle - MISE À JOUR AVEC SUPER_ADMIN_GLOBAL */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .role-super_admin_global {
+            background-color: #8b5cf6;
+            color: white;
+            border: 1px solid #a78bfa;
+        }
+
+        .role-super_admin {
+            background-color: #f5f3ff;
+            color: #6b21a8;
+            border: 1px solid #c084fc;
+        }
+
+        .role-admin {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+
+        .role-manager {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #60a5fa;
+        }
+
+        .role-cashier {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #4ade80;
+        }
+
+        .role-storekeeper {
+            background-color: #fff7ed;
+            color: #9a3412;
+            border: 1px solid #fdba74;
+        }
+
+        /* User info bar */
+        .user-info-bar {
+            background-color: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .user-info-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .user-info-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .user-company {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .permission-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            background-color: #f1f5f9;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .permission-badge i {
+            font-size: 0.7rem;
+        }
+
+        /* 👑 Badge spécial pour super_admin_global */
+        .global-crown {
+            color: #8b5cf6;
+            margin-right: 2px;
+        }
     </style>
     
     @yield('styles')
@@ -44,6 +166,77 @@
     <div class="min-h-screen bg-[#f1f5f9]">
         <!-- Navigation Livewire -->
         <livewire:layout.navigation />
+
+        @auth
+            <!-- Barre d'information utilisateur - MISE À JOUR -->
+            <div class="user-info-bar">
+                <div class="user-info-container">
+                    <div class="user-info-left">
+                        <div class="user-avatar">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">{{ auth()->user()->name }}</span>
+                            
+                            {{-- Badge avec icône spéciale pour super_admin_global --}}
+                            @if(auth()->user()->isSuperAdminGlobal())
+                                <span class="role-badge role-super_admin_global">
+                                    <i class="bi bi-crown-fill global-crown"></i> Super Admin Global
+                                </span>
+                            @else
+                                <span class="role-badge role-{{ auth()->user()->role }}">
+                                    {{ auth()->user()->role_label }}
+                                </span>
+                            @endif
+                            
+                            @if(auth()->user()->canManageUsers())
+                                <span class="permission-badge">
+                                    <i class="bi bi-people"></i> Gère les utilisateurs
+                                </span>
+                            @endif
+                            
+                            @if(auth()->user()->canManageStock())
+                                <span class="permission-badge">
+                                    <i class="bi bi-box-seam"></i> Gère le stock
+                                </span>
+                            @endif
+                            
+                            @if(auth()->user()->canManageSales())
+                                <span class="permission-badge">
+                                    <i class="bi bi-cart"></i> Gère les ventes
+                                </span>
+                            @endif
+                            
+                            @if(auth()->user()->canViewReports())
+                                <span class="permission-badge">
+                                    <i class="bi bi-graph-up"></i> Rapports
+                                </span>
+                            @endif
+
+                            {{-- Indicateur global pour super_admin_global --}}
+                            @if(auth()->user()->isSuperAdminGlobal())
+                                <span class="permission-badge" style="background-color:#8b5cf6; color:white;">
+                                    <i class="bi bi-globe2"></i> Vue globale
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    @if(auth()->user()->tenant && !auth()->user()->isSuperAdminGlobal())
+                        <div class="user-company">
+                            <i class="bi bi-building"></i>
+                            {{ auth()->user()->tenant->company_name ?? 'Ma Quincaillerie' }}
+                        </div>
+                    @endif
+
+                    @if(auth()->user()->isSuperAdminGlobal())
+                        <div class="user-company" style="color:#8b5cf6; font-weight:600;">
+                            <i class="bi bi-globe2"></i> Toutes les quincailleries
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endauth
 
         <!-- Page Heading -->
         @if (isset($header))
