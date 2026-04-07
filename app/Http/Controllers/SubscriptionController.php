@@ -16,8 +16,25 @@ class SubscriptionController extends Controller
         $this->middleware('auth');
     }
 
+    /**
+     * Vérifier que l'utilisateur a les droits (super_admin_global, super_admin ou admin)
+     */
+    private function checkAccess()
+    {
+        $user = Auth::user();
+        
+        if (!$user->isSuperAdminGlobal() && !$user->isSuperAdmin() && !$user->isAdmin()) {
+            abort(403, 'Vous n\'avez pas accès à cette page. Seuls les administrateurs peuvent voir cette section.');
+        }
+        
+        return true;
+    }
+
     public function show()
     {
+        // Vérifier les droits d'accès
+        $this->checkAccess();
+        
         $user = Auth::user();
         $tenant = $user->tenant;
         
@@ -75,6 +92,9 @@ class SubscriptionController extends Controller
     
     public function cancel(Request $request)
     {
+        // Vérifier les droits d'accès
+        $this->checkAccess();
+        
         $user = Auth::user();
         $tenant = $user->tenant;
         

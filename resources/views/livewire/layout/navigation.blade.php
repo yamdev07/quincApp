@@ -150,8 +150,11 @@ new class extends Component
                     </x-nav-link>
                     @endif
 
-                    <!-- LIEN MON ABONNEMENT -->
-                    @if(!auth()->user()->isSuperAdminGlobal())
+                    <!-- ===================================================== -->
+                    <!-- LIEN MON ABONNEMENT - UNIQUEMENT POUR ADMINISTRATEURS -->
+                    <!-- super_admin_global, super_admin et admin uniquement -->
+                    <!-- ===================================================== -->
+                    @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                     <x-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate 
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
@@ -338,8 +341,11 @@ new class extends Component
             </x-responsive-nav-link>
             @endif
 
-            <!-- LIEN MON ABONNEMENT - RESPONSIVE -->
-            @if(!auth()->user()->isSuperAdminGlobal())
+            <!-- ===================================================== -->
+            <!-- LIEN MON ABONNEMENT - RESPONSIVE (VERSION MOBILE) -->
+            <!-- UNIQUEMENT POUR ADMINISTRATEURS -->
+            <!-- ===================================================== -->
+            @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
             <x-responsive-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate 
                 class="qapp-responsive-nav-link">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

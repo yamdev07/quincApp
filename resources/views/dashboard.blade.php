@@ -620,6 +620,7 @@
 
     {{-- ===================================================== --}}
     {{-- CARTE ABONNEMENT STYLE DASHBOARD --}}
+    {{-- UNIQUEMENT POUR ADMINISTRATEURS --}}
     {{-- ===================================================== --}}
     @php
         $user = Auth::user();
@@ -656,7 +657,8 @@
         }
     @endphp
 
-    @if($tenant)
+    {{-- AFFICHAGE UNIQUEMENT POUR SUPER_ADMIN_GLOBAL, SUPER_ADMIN ET ADMIN --}}
+    @if($tenant && (auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
     <div style="background: linear-gradient(145deg, #0f172a 0%, #1a2540 100%); border-radius: 20px; border: 1px solid rgba(249,115,22,0.18); overflow: hidden; margin-bottom: 24px;">
 
         {{-- Top --}}
