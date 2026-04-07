@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PaymentConfirmationMail;
 use App\Models\Subscription;
 
 class PaymentController extends Controller
@@ -76,6 +78,9 @@ class PaymentController extends Controller
                 
                 file_put_contents($logFile, "Ancien abonnement désactivé\n", FILE_APPEND);
                 
+                // Générer un ID de transaction
+                $transactionId = 'fedapay_' . time();
+                
                 // Créer nouvel abonnement avec DB direct
                 $insertId = DB::table('subscriptions')->insertGetId([
                     'tenant_id' => $tenant->id,
@@ -85,7 +90,7 @@ class PaymentController extends Controller
                     'end_date' => $endDate->toDateString(),
                     'status' => 'active',
                     'payment_method' => 'fedapay',
-                    'transaction_id' => 'fedapay_' . time(),
+                    'transaction_id' => $transactionId,
                     'metadata' => json_encode([
                         'paid_at' => now()->toDateTimeString(),
                         'user_id' => $user->id,
@@ -100,16 +105,16 @@ class PaymentController extends Controller
                 
                 // MISE À JOUR COMPLÈTE DU TENANT - TOUTES LES COLONNES
                 $tenant->update([
-                    'subscription_status' => 'active',           // Pour le middleware
-                    'payment_status' => 'paid',                  // Pour compatibilité
-                    'subscription_ends_at' => $endDate,          // Pour le middleware
-                    'subscription_end_date' => $endDate->toDateString(), // Pour compatibilité
-                    'is_active' => 1,                            // Réactiver le compte
+                    'subscription_status' => 'active',
+                    'payment_status' => 'paid',
+                    'subscription_ends_at' => $endDate,
+                    'subscription_end_date' => $endDate->toDateString(),
+                    'is_active' => 1,
                     'last_payment_at' => now(),
                     'last_payment_amount' => $amount,
                 ]);
                 
-                file_put_contents($logFile, "Tenant mis à jour - subscription_status: active, payment_status: paid, is_active: 1\n", FILE_APPEND);
+                file_put_contents($logFile, "Tenant mis à jour\n", FILE_APPEND);
             }
             
             // Mettre à jour l'utilisateur
@@ -120,10 +125,28 @@ class PaymentController extends Controller
             ]);
             
             file_put_contents($logFile, "Utilisateur mis à jour - Statut: active\n", FILE_APPEND);
+            
+            // =============================================
+            // ENVOI DE L'EMAIL DE CONFIRMATION
+            // =============================================
+            try {
+                // Créer un objet transaction pour l'email (sans multiplier par 100)
+                $transaction = (object) [
+                    'id' => $transactionId,
+                    'amount' => $amount,  // ✅ Montant correct (10000, 28500, etc.)
+                    'status' => 'approved'
+                ];
+                
+                Mail::to($user->email)->send(new PaymentConfirmationMail($user, $transaction));
+                file_put_contents($logFile, "✅ Email de confirmation envoyé à: " . $user->email . "\n", FILE_APPEND);
+            } catch (\Exception $mailError) {
+                file_put_contents($logFile, "❌ ERREUR ENVOI EMAIL: " . $mailError->getMessage() . "\n", FILE_APPEND);
+            }
+            
             file_put_contents($logFile, "=== SUCCÈS ===\n\n", FILE_APPEND);
             
             return redirect()->route('dashboard')
-                ->with('success', '🎉 Abonnement ' . $planName . ' activé jusqu\'au ' . $endDate->format('d/m/Y'));
+                ->with('success', '🎉 Abonnement ' . $planName . ' activé jusqu\'au ' . $endDate->format('d/m/Y') . '. Un email de confirmation vous a été envoyé.');
                 
         } catch (\Exception $e) {
             file_put_contents($logFile, "ERREUR: " . $e->getMessage() . "\n", FILE_APPEND);

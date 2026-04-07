@@ -528,4 +528,35 @@ class DashboardController extends Controller
         
         return response()->json($notifications);
     }
+
+    /**
+     * API pour les statistiques du dashboard (utilisée par la page des rapports)
+     */
+    public function dashboardStats(Request $request)
+    {
+        $user = Auth::user();
+        $tenantId = $user->tenant_id;
+        
+        // Si super_admin_global, stats globales
+        if ($user->isSuperAdminGlobal()) {
+            return response()->json([
+                'total_sales' => Sale::count(),
+                'total_revenue' => Sale::sum('final_price'),
+                'total_quantity_sold' => SaleItem::sum('quantity'),
+                'low_stock_count' => Product::where('stock', '<=', 5)->count(),
+            ]);
+        }
+        
+        // Sinon, stats du tenant
+        return response()->json([
+            'total_sales' => Sale::where('tenant_id', $tenantId)->count(),
+            'total_revenue' => Sale::where('tenant_id', $tenantId)->sum('final_price'),
+            'total_quantity_sold' => SaleItem::whereHas('sale', function($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            })->sum('quantity'),
+            'low_stock_count' => Product::where('tenant_id', $tenantId)
+                ->where('stock', '<=', 5)
+                ->count(),
+        ]);
+    }
 }

@@ -21,8 +21,8 @@ new class extends Component
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
-                <!-- Logo QuincaPro -->
-                <div class="shrink-0 flex items-center">
+                <!-- Logo QuincaPro - EXTRÊME GAUCHE -->
+                <div class="shrink-0 flex items-center -ml-4 sm:ml-0">
                     <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-3 group">
                         <div class="relative">
                             <div class="qapp-logo-hex w-10 h-10">
@@ -146,6 +146,19 @@ new class extends Component
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9" />
                             </svg>
                             <span>Super Admin</span>
+                        </div>
+                    </x-nav-link>
+                    @endif
+
+                    <!-- LIEN MON ABONNEMENT -->
+                    @if(!auth()->user()->isSuperAdminGlobal())
+                    <x-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate 
+                        class="qapp-nav-link">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Mon abonnement</span>
                         </div>
                     </x-nav-link>
                     @endif
@@ -324,6 +337,17 @@ new class extends Component
                 Super Admin
             </x-responsive-nav-link>
             @endif
+
+            <!-- LIEN MON ABONNEMENT - RESPONSIVE -->
+            @if(!auth()->user()->isSuperAdminGlobal())
+            <x-responsive-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate 
+                class="qapp-responsive-nav-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Mon abonnement
+            </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
@@ -398,6 +422,17 @@ new class extends Component
     .qapp-logo-hex svg {
         stroke: white;
         fill: none;
+    }
+
+    /* Correction pour que le logo soit à l'extrême gauche */
+    .qapp-nav .shrink-0:first-child {
+        margin-left: -0.5rem;
+    }
+
+    @media (min-width: 640px) {
+        .qapp-nav .shrink-0:first-child {
+            margin-left: 0;
+        }
     }
 
     .qapp-nav-link {

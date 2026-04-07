@@ -48,12 +48,16 @@ class SaleController extends Controller
 
     /**
      * Vérifier les permissions de création/modification des ventes
+     * ✅ CAISSIER MAINTENANT AUTORISÉ
      */
     private function authorizeManageSales()
     {
         $userRole = Auth::user()->role;
         
-        if ($userRole === 'cashier') {
+        // Tous les rôles qui peuvent créer/modifier des ventes
+        $allowedRoles = ['super_admin_global', 'super_admin', 'admin', 'manager', 'cashier'];
+        
+        if (!in_array($userRole, $allowedRoles)) {
             abort(403, 'Vous n\'avez pas l\'autorisation de créer ou modifier des ventes.');
         }
         
@@ -62,6 +66,7 @@ class SaleController extends Controller
 
     /**
      * Vérifier les permissions d'annulation (admin, manager, storekeeper)
+     * ⚠️ Les caissiers ne peuvent PAS annuler les ventes
      */
     private function authorizeCancelSale()
     {
@@ -353,7 +358,7 @@ class SaleController extends Controller
     }
 
     // ----------------------
-    // Rapport des ventes - SANS STATUS
+    // Rapport des ventes
     // ----------------------
     public function salesReport(Request $request)
     {
@@ -410,7 +415,7 @@ class SaleController extends Controller
             ];
         });
         
-        // Produits les plus vendus - SANS condition de status
+        // Produits les plus vendus
         $topProducts = DB::table('sale_items')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
