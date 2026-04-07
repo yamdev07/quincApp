@@ -11,6 +11,61 @@ use App\Models\Subscription;
 
 class PaymentController extends Controller
 {
+    /**
+     * Afficher le formulaire de paiement
+     */
+    public function showPaymentForm(Request $request)
+    {
+        $user = Auth::user();
+        $tenant = $user->tenant;
+        
+        // Vérifier si c'est un renouvellement
+        $isRenewal = $request->get('renewal', false);
+        $currentAmount = null;
+        $currentPlanType = null;
+        $currentPlanName = null;
+        
+        if ($isRenewal && $tenant) {
+            // Récupérer l'abonnement actif
+            $currentSubscription = Subscription::where('tenant_id', $tenant->id)
+                ->where('status', 'active')
+                ->latest()
+                ->first();
+            
+            if ($currentSubscription) {
+                $currentAmount = $currentSubscription->amount;
+                $currentPlanType = $currentSubscription->plan_type;
+                $currentPlanName = match($currentSubscription->plan_type) {
+                    'monthly' => 'Mensuel',
+                    'quarterly' => 'Trimestriel',
+                    'semester' => 'Semestriel',
+                    'yearly' => 'Annuel',
+                    default => 'Mensuel'
+                };
+            }
+        }
+        
+        // Récupérer le plan sélectionné depuis l'URL
+        $selectedPlan = $request->get('plan', $currentPlanType ?? 'monthly');
+        $amount = $request->get('amount', $currentAmount ?? 10000);
+        $currency = 'XOF';
+        
+        $plans = [
+            'monthly' => ['name' => 'Mensuel', 'price' => 10000, 'duration' => '1 mois'],
+            'quarterly' => ['name' => 'Trimestriel', 'price' => 28500, 'duration' => '3 mois', 'saving' => 'Économisez 1 500 FCFA'],
+            'semester' => ['name' => 'Semestriel', 'price' => 54000, 'duration' => '6 mois', 'saving' => 'Économisez 6 000 FCFA', 'popular' => true],
+            'yearly' => ['name' => 'Annuel', 'price' => 102000, 'duration' => '12 mois', 'saving' => 'Économisez 18 000 FCFA'],
+        ];
+        
+        $currentPlan = $plans[$selectedPlan] ?? $plans['monthly'];
+        
+        // Passage des variables à la vue
+        return view('payment.form', compact(
+            'user', 'tenant', 'currentPlan', 'selectedPlan', 'amount', 'currency',
+            'isRenewal', 'currentAmount', 'currentPlanName'
+        ));
+    }
+
     public function paymentCallback(Request $request)
     {
         // =============================================
@@ -37,6 +92,7 @@ class PaymentController extends Controller
         
         $amount = $request->input('amount');
         $planType = $request->input('plan_type');
+        $isRenewal = $request->input('is_renewal', false);
         
         $user = Auth::user();
         
@@ -49,7 +105,7 @@ class PaymentController extends Controller
         
         file_put_contents($logFile, "User ID: " . $user->id . "\n", FILE_APPEND);
         file_put_contents($logFile, "Tenant ID: " . ($tenant ? $tenant->id : 'null') . "\n", FILE_APPEND);
-        file_put_contents($logFile, "Amount: $amount, Plan: $planType\n", FILE_APPEND);
+        file_put_contents($logFile, "Amount: $amount, Plan: $planType, Renewal: " . ($isRenewal ? 'Yes' : 'No') . "\n", FILE_APPEND);
         
         $duration = match($planType) {
             'monthly' => 1,
@@ -71,12 +127,17 @@ class PaymentController extends Controller
         
         try {
             if ($tenant) {
-                // Désactiver ancien abonnement
-                Subscription::where('tenant_id', $tenant->id)
+                // Récupérer l'ancien abonnement avant de le désactiver
+                $oldSubscription = Subscription::where('tenant_id', $tenant->id)
                     ->where('status', 'active')
-                    ->update(['status' => 'expired']);
+                    ->first();
                 
-                file_put_contents($logFile, "Ancien abonnement désactivé\n", FILE_APPEND);
+                $oldAmount = null;
+                if ($oldSubscription) {
+                    $oldAmount = $oldSubscription->amount;
+                    $oldSubscription->update(['status' => 'expired']);
+                    file_put_contents($logFile, "Ancien abonnement désactivé - Montant: " . $oldAmount . " FCFA\n", FILE_APPEND);
+                }
                 
                 // Générer un ID de transaction
                 $transactionId = 'fedapay_' . time();
@@ -95,13 +156,15 @@ class PaymentController extends Controller
                         'paid_at' => now()->toDateTimeString(),
                         'user_id' => $user->id,
                         'user_email' => $user->email,
-                        'plan_name' => $planName
+                        'plan_name' => $planName,
+                        'is_renewal' => $isRenewal,
+                        'previous_amount' => $oldAmount
                     ]),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
                 
-                file_put_contents($logFile, "Nouvel abonnement créé: ID $insertId\n", FILE_APPEND);
+                file_put_contents($logFile, "Nouvel abonnement créé: ID $insertId - Montant: $amount FCFA\n", FILE_APPEND);
                 
                 // MISE À JOUR COMPLÈTE DU TENANT - TOUTES LES COLONNES
                 $tenant->update([
@@ -109,12 +172,14 @@ class PaymentController extends Controller
                     'payment_status' => 'paid',
                     'subscription_ends_at' => $endDate,
                     'subscription_end_date' => $endDate->toDateString(),
+                    'subscription_price' => $amount,
+                    'billing_cycle' => $planType,
                     'is_active' => 1,
                     'last_payment_at' => now(),
                     'last_payment_amount' => $amount,
                 ]);
                 
-                file_put_contents($logFile, "Tenant mis à jour\n", FILE_APPEND);
+                file_put_contents($logFile, "Tenant mis à jour - Nouveau prix: $amount FCFA\n", FILE_APPEND);
             }
             
             // Mettre à jour l'utilisateur
@@ -130,11 +195,12 @@ class PaymentController extends Controller
             // ENVOI DE L'EMAIL DE CONFIRMATION
             // =============================================
             try {
-                // Créer un objet transaction pour l'email (sans multiplier par 100)
+                // Créer un objet transaction pour l'email
                 $transaction = (object) [
                     'id' => $transactionId,
-                    'amount' => $amount,  // ✅ Montant correct (10000, 28500, etc.)
-                    'status' => 'approved'
+                    'amount' => $amount,
+                    'status' => 'approved',
+                    'is_renewal' => $isRenewal
                 ];
                 
                 Mail::to($user->email)->send(new PaymentConfirmationMail($user, $transaction));
@@ -145,8 +211,12 @@ class PaymentController extends Controller
             
             file_put_contents($logFile, "=== SUCCÈS ===\n\n", FILE_APPEND);
             
-            return redirect()->route('dashboard')
-                ->with('success', '🎉 Abonnement ' . $planName . ' activé jusqu\'au ' . $endDate->format('d/m/Y') . '. Un email de confirmation vous a été envoyé.');
+            // Message personnalisé selon que c'est un renouvellement ou non
+            $message = $isRenewal 
+                ? '🎉 Abonnement renouvelé avec succès ! Votre abonnement ' . $planName . ' est actif jusqu\'au ' . $endDate->format('d/m/Y')
+                : '🎉 Abonnement activé avec succès ! Votre abonnement ' . $planName . ' est actif jusqu\'au ' . $endDate->format('d/m/Y');
+            
+            return redirect()->route('dashboard')->with('success', $message);
                 
         } catch (\Exception $e) {
             file_put_contents($logFile, "ERREUR: " . $e->getMessage() . "\n", FILE_APPEND);

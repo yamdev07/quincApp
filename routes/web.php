@@ -574,3 +574,10 @@ Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->grou
     Route::get('/', [App\Http\Controllers\SubscriptionController::class, 'show'])->name('show');
     Route::post('/cancel', [App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('cancel');
 });
+
+// Routes factures
+Route::middleware(['auth'])->prefix('invoices')->name('invoices.')->group(function () {
+    Route::get('/', [App\Http\Controllers\InvoiceController::class, 'index'])->name('index');
+    Route::get('/last', [App\Http\Controllers\InvoiceController::class, 'showLastInvoice'])->name('last');
+    Route::get('/download/{id}', [App\Http\Controllers\InvoiceController::class, 'downloadInvoice'])->name('download');
+});
