@@ -566,3 +566,11 @@ Route::get('/view-payment-logs', function() {
     }
     return 'Aucun log trouvé. Faites un paiement d\'abord.';
 })->middleware('auth');
+
+Route::get('/api/dashboard-stats', [App\Http\Controllers\DashboardController::class, 'dashboardStats'])->middleware('auth');
+
+// Routes abonnement
+Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->group(function () {
+    Route::get('/', [App\Http\Controllers\SubscriptionController::class, 'show'])->name('show');
+    Route::post('/cancel', [App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('cancel');
+});

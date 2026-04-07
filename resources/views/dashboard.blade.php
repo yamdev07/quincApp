@@ -14,19 +14,16 @@
         --border-light: #e2e8f0;
         --border-soft: #cbd5e1;
         
-        /* Noir - textes principaux */
         --text-primary: #0f172a;
         --text-secondary: #334155;
         --text-tertiary: #64748b;
         
-        /* Orange - accent principal */
         --accent: #f97316;
         --accent-dark: #ea580c;
         --accent-light: #ffedd5;
         --accent-soft: #fed7aa;
         --accent-gradient: linear-gradient(135deg, #f97316, #ea580c);
         
-        /* Dégradé noir-orange */
         --gradient-dark: linear-gradient(145deg, #0f172a, #1e293b);
         
         --badge-low: #b91c1c;
@@ -38,9 +35,7 @@
         --shadow-hover: 0 10px 15px -3px rgba(249, 115, 22, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
-    * {
-        box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
         background: var(--bg-page);
@@ -54,9 +49,6 @@
         padding: 32px 24px;
     }
 
-    /* =====================================================
-       HEADER - NOIR & ORANGE
-    ===================================================== */
     .dash-header {
         display: flex;
         justify-content: space-between;
@@ -127,15 +119,11 @@
         text-decoration: none;
         transition: all 0.2s ease;
         box-shadow: 0 8px 16px rgba(249, 115, 22, 0.25);
-        letter-spacing: 0.3px;
-        cursor: pointer;
     }
-
     .btn-primary i { font-size: 18px; }
     .btn-primary:hover {
         background: linear-gradient(135deg, #ea580c, #c2410c);
         transform: translateY(-2px);
-        box-shadow: 0 12px 20px rgba(249, 115, 22, 0.35);
     }
 
     .btn-outline {
@@ -160,28 +148,6 @@
         color: var(--accent-dark);
     }
 
-    .btn-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 40px;
-        background: transparent;
-        border: 1.5px solid var(--border-soft);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-primary);
-        font-size: 20px;
-        transition: all 0.2s;
-    }
-    .btn-icon:hover {
-        background: var(--accent-light);
-        border-color: var(--accent);
-        color: var(--accent);
-    }
-
-    /* =====================================================
-       CARTES STATISTIQUES
-    ===================================================== */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(1, 1fr);
@@ -208,7 +174,6 @@
         border-color: var(--accent);
         transform: translateY(-2px);
     }
-
     .stat-card::before {
         content: '';
         position: absolute;
@@ -220,9 +185,7 @@
         opacity: 0;
         transition: opacity 0.2s;
     }
-    .stat-card:hover::before {
-        opacity: 1;
-    }
+    .stat-card:hover::before { opacity: 1; }
 
     .stat-row {
         display: flex;
@@ -271,19 +234,13 @@
         align-items: center;
         gap: 4px;
     }
-    .trend-up { 
-        color: var(--accent); 
-        font-weight: 600; 
-    }
+    .trend-up { color: var(--accent); font-weight: 600; }
 
     .stat-card.stock-warning {
         background: linear-gradient(145deg, #fff7ed, #ffedd5);
         border-left: 5px solid var(--accent);
     }
 
-    /* =====================================================
-       ZONE PRINCIPALE
-    ===================================================== */
     .main-panel {
         display: grid;
         grid-template-columns: 1fr;
@@ -291,9 +248,7 @@
         margin-bottom: 32px;
     }
     @media (min-width: 1024px) {
-        .main-panel {
-            grid-template-columns: 1.6fr 1fr;
-        }
+        .main-panel { grid-template-columns: 1.6fr 1fr; }
     }
 
     .chart-card {
@@ -407,7 +362,6 @@
         border-radius: 40px;
         font-size: 12px;
         font-weight: 600;
-        letter-spacing: 0.3px;
     }
 
     .avg-sale-large {
@@ -437,7 +391,6 @@
         font-weight: 800;
         color: var(--accent);
         line-height: 1;
-        text-shadow: 2px 2px 4px rgba(249, 115, 22, 0.1);
     }
     .stock-message {
         font-weight: 600;
@@ -476,9 +429,6 @@
         color: var(--accent); 
     }
 
-    /* =====================================================
-       ONGLETS STYLE
-    ===================================================== */
     .tabs-minimal {
         display: flex;
         gap: 32px;
@@ -493,16 +443,12 @@
         cursor: pointer;
         transition: 0.2s;
         font-size: 15px;
-        letter-spacing: 0.3px;
     }
     .tab-minimal.active {
         color: var(--accent);
         border-bottom-color: var(--accent);
     }
 
-    /* =====================================================
-       TABLES
-    ===================================================== */
     .twin-tables {
         display: grid;
         grid-template-columns: 1fr;
@@ -544,9 +490,7 @@
         font-weight: 600;
     }
 
-    .table-responsive {
-        overflow-x: auto;
-    }
+    .table-responsive { overflow-x: auto; }
     .table-mini {
         width: 100%;
         border-collapse: collapse;
@@ -569,9 +513,7 @@
         font-size: 14px;
         font-weight: 500;
     }
-    .table-mini tr:hover td {
-        background: var(--accent-light);
-    }
+    .table-mini tr:hover td { background: var(--accent-light); }
     .table-mini tr:last-child td { border-bottom: none; }
 
     .badge-stock {
@@ -608,15 +550,12 @@
         padding: 16px 0;
         border-top: 1px solid var(--border-light);
     }
-    .security-note i {
-        color: var(--accent);
-    }
+    .security-note i { color: var(--accent); }
 
     .text-accent { color: var(--accent); }
     .bg-accent-light { background: var(--accent-light); }
     .border-accent { border-color: var(--accent); }
 
-    /* Info utilisateur supplémentaire */
     .user-company-info {
         display: flex;
         align-items: center;
@@ -626,9 +565,7 @@
         border-radius: 40px;
         font-size: 13px;
     }
-    .user-company-info i {
-        color: var(--accent);
-    }
+    .user-company-info i { color: var(--accent); }
 </style>
 @endsection
 
@@ -668,13 +605,11 @@
                     <i class="bi bi-plus-circle"></i> Nouvelle vente
                 </a>
             @endif
-            
             @if(auth()->user()->canManageUsers())
                 <a href="{{ route('users.index') }}" class="btn-outline">
                     <i class="bi bi-people"></i> Équipe
                 </a>
             @endif
-            
             @if(auth()->user()->isSuperAdminGlobal())
                 <a href="{{ route('super-admin.tenants') }}" class="btn-outline" title="Toutes les quincailleries">
                     <i class="bi bi-grid-3x3-gap-fill"></i>
@@ -682,6 +617,119 @@
             @endif
         </div>
     </div>
+
+    {{-- ===================================================== --}}
+    {{-- CARTE ABONNEMENT STYLE DASHBOARD --}}
+    {{-- ===================================================== --}}
+    @php
+        $user = Auth::user();
+        $tenant = $user->tenant;
+        
+        if ($tenant) {
+            $subscriptionStatus = $tenant->payment_status;
+            $subscriptionEndDate = $tenant->subscription_end_date ? \Carbon\Carbon::parse($tenant->subscription_end_date) : null;
+            $trialEndDate = $tenant->trial_ends_at ? \Carbon\Carbon::parse($tenant->trial_ends_at) : null;
+            $subscriptionStartDate = $tenant->subscription_start_date ? \Carbon\Carbon::parse($tenant->subscription_start_date) : null;
+            
+            $daysRemaining = 0;
+            $isExpiringSoon = false;
+            $expiryDate = null;
+            
+            if ($subscriptionStatus === 'paid' && $subscriptionEndDate) {
+                $daysRemaining = now()->diffInDays($subscriptionEndDate, false);
+                $isExpiringSoon = $daysRemaining <= 7 && $daysRemaining > 0;
+                $expiryDate = $subscriptionEndDate;
+            } elseif ($subscriptionStatus === 'trial' && $trialEndDate) {
+                $daysRemaining = now()->diffInDays($trialEndDate, false);
+                $isExpiringSoon = $daysRemaining <= 3 && $daysRemaining > 0;
+                $expiryDate = $trialEndDate;
+            }
+            
+            $totalDays = $subscriptionStartDate && $expiryDate 
+                ? $subscriptionStartDate->diffInDays($expiryDate) 
+                : 90;
+            $elapsed = $subscriptionStartDate 
+                ? $subscriptionStartDate->diffInDays(now()) 
+                : 0;
+            $pct = $totalDays > 0 ? min(100, round(($elapsed / $totalDays) * 100)) : 0;
+            $fillColor = $pct > 80 ? '#ef4444' : '#f97316';
+        }
+    @endphp
+
+    @if($tenant)
+    <div style="background: linear-gradient(145deg, #0f172a 0%, #1a2540 100%); border-radius: 20px; border: 1px solid rgba(249,115,22,0.18); overflow: hidden; margin-bottom: 24px;">
+
+        {{-- Top --}}
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:18px 22px 14px; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:11px; font-weight:700; letter-spacing:1.2px; color:rgba(255,255,255,0.4); text-transform:uppercase;">
+                <i class="bi bi-calendar-check" style="opacity:0.5"></i> Mon abonnement
+            </span>
+            <span style="display:flex; align-items:center; gap:5px; background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.25); color:#4ade80; padding:4px 12px; border-radius:30px; font-size:11px; font-weight:700;">
+                @if($subscriptionStatus === 'paid')
+                    <span style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block;"></span> ACTIF
+                @else
+                    <span style="width:6px;height:6px;background:#f97316;border-radius:50%;display:inline-block;"></span> ESSAI
+                @endif
+            </span>
+        </div>
+
+        {{-- Body : 2 colonnes --}}
+        <div style="display:grid; grid-template-columns:1fr 1px 1fr;">
+            <div style="padding:18px 22px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                    <span style="font-size:12px;color:rgba(255,255,255,0.38);font-weight:500;">Formule</span>
+                    <span style="font-size:13px;color:rgba(255,255,255,0.88);font-weight:600;">{{ ucfirst($tenant->billing_cycle ?? 'Mensuel') }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                    <span style="font-size:12px;color:rgba(255,255,255,0.38);font-weight:500;">Prix</span>
+                    <span style="font-size:13px;color:#f97316;font-weight:600;">{{ number_format($tenant->subscription_price ?? 0, 0, ',', ' ') }} FCFA</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                    <span style="font-size:12px;color:rgba(255,255,255,0.38);font-weight:500;">Cycle</span>
+                    <span style="font-size:13px;color:rgba(255,255,255,0.88);font-weight:600;">{{ ucfirst($tenant->billing_cycle ?? 'Mensuel') }}</span>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.06);"></div>
+            <div style="padding:18px 22px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                    <span style="font-size:12px;color:rgba(255,255,255,0.38);font-weight:500;">Expiration</span>
+                    <span style="font-size:13px;color:#f97316;font-weight:600;">{{ $expiryDate ? $expiryDate->format('d/m/Y') : 'N/A' }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                    <span style="font-size:12px;color:rgba(255,255,255,0.38);font-weight:500;">Prochain paiement</span>
+                    <span style="font-size:13px;color:#f97316;font-weight:600;">{{ $expiryDate ? $expiryDate->format('d/m/Y') : 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Barre de progression --}}
+        <div style="padding:0 22px 18px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:11px;color:rgba(255,255,255,0.35);">Validité de la période en cours</span>
+                <span style="font-size:12px;color:rgba(255,255,255,0.55);font-weight:600;">
+                    <span style="color:#f97316;">{{ max(0, $daysRemaining) }}</span> jours restants
+                </span>
+            </div>
+            <div style="height:5px;background:rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;">
+                <div style="height:100%;width:{{ $pct }}%;background:linear-gradient(90deg,{{ $fillColor }},{{ $fillColor }}cc);border-radius:10px;"></div>
+            </div>
+        </div>
+
+        {{-- Footer --}}
+        <div style="background:rgba(249,115,22,0.06);border-top:1px solid rgba(249,115,22,0.12);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <span style="font-size:12px;color:rgba(255,255,255,0.45);">
+                <i class="bi bi-info-circle" style="color:#f97316;margin-right:5px;"></i>
+                Expire le <strong style="color:rgba(255,255,255,0.7);">{{ $expiryDate ? $expiryDate->format('d/m/Y') : 'N/A' }}</strong> — Renouvelez avant expiration pour éviter toute interruption
+            </span>
+            @if($isExpiringSoon)
+            <a href="{{ route('payment.form') }}" style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;padding:8px 18px;border-radius:30px;font-size:12px;font-weight:700;white-space:nowrap;text-decoration:none;transition:all 0.2s;">
+                Renouveler
+            </a>
+            @endif
+        </div>
+
+    </div>
+    @endif
 
     {{-- STATS CARTES --}}
     <div class="stats-grid">
@@ -727,7 +775,6 @@
 
     {{-- PANEL PRINCIPAL : GRAPHE + INFOS DROITE --}}
     <div class="main-panel">
-        {{-- Graphique --}}
         <div class="chart-card">
             <div class="chart-header">
                 <h3>Évolution des ventes</h3>
@@ -753,7 +800,6 @@
             </div>
         </div>
 
-        {{-- Sidebar info --}}
         <div class="info-sidebar">
             <div class="info-card">
                 <div class="info-card-header">
@@ -827,7 +873,6 @@
 
     {{-- TABLES --}}
     <div class="twin-tables">
-        {{-- Table ventes récentes --}}
         <div class="table-card-mini" id="recentSalesCard">
             <div class="table-header-mini">
                 <h3><i class="bi bi-clock-history text-accent"></i> Dernières transactions <span class="badge-count">{{ count($recentSales ?? []) }}</span></h3>
@@ -856,7 +901,6 @@
             </div>
         </div>
 
-        {{-- Table stock faible --}}
         <div class="table-card-mini" id="lowStockCard" style="display:none;">
             <div class="table-header-mini">
                 <h3><i class="bi bi-exclamation-triangle-fill text-accent"></i> Réapprovisionnement <span class="badge-count">{{ count($lowStockProducts ?? []) }}</span></h3>
@@ -880,7 +924,6 @@
         </div>
     </div>
 
-    {{-- petite mention sécurité --}}
     <div class="security-note">
         <i class="bi bi-shield-check"></i> Toutes les données sont chiffrées et synchronisées en temps réel
         <span class="badge-warning" style="margin-left: 10px; padding: 2px 10px;">v2.0</span>
@@ -909,7 +952,6 @@
 
     const formatMoney = v => Number(v||0).toLocaleString('fr-FR') + ' FCFA';
 
-    // maj stats simples
     async function refreshStats() {
         try {
             const res = await fetch('/ajax/dashboard/stats', { 
@@ -1008,9 +1050,7 @@
 
     async function loadRecent() {
         try {
-            const res = await fetch('/ajax/dashboard/recent-sales', { 
-                headers: getHeaders() 
-            });
+            const res = await fetch('/ajax/dashboard/recent-sales', { headers: getHeaders() });
             if (!res.ok) return;
             const data = await res.json();
             const tbody = document.querySelector('#recentSalesCard tbody');
@@ -1026,7 +1066,7 @@
                     <td><strong>${s.product_name || 'Vente'}</strong></td>
                     <td>${s.client_name || 'Client'}</td>
                     <td><strong class="text-accent">${formatMoney(s.total_price)}</strong></td>
-                    <td>${s.formatted_date || s.created_at ? new Date(s.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''}</td>
+                    <td>${s.formatted_date || (s.created_at ? new Date(s.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '')}</td>
                 </tr>
             `).join('');
         } catch (e) {}
@@ -1034,9 +1074,7 @@
 
     async function loadLowStock() {
         try {
-            const res = await fetch('/ajax/dashboard/low-stock', { 
-                headers: getHeaders() 
-            });
+            const res = await fetch('/ajax/dashboard/low-stock', { headers: getHeaders() });
             if (!res.ok) return;
             const data = await res.json();
             const tbody = document.querySelector('#lowStockCard tbody');
@@ -1057,7 +1095,6 @@
         } catch (e) {}
     }
 
-    // tab switching
     document.querySelectorAll('.tab-minimal').forEach(tab => {
         tab.addEventListener('click', e => {
             document.querySelectorAll('.tab-minimal').forEach(t => t.classList.remove('active'));
@@ -1068,7 +1105,6 @@
         });
     });
 
-    // init chart + périodique
     document.addEventListener('DOMContentLoaded', () => {
         loadChart(7);
         refreshStats();

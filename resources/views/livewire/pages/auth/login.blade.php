@@ -544,11 +544,6 @@ new #[Layout('layouts.guest')] class extends Component
 
             <div class="qapp-divider"><span>ou</span></div>
 
-            <p class="qapp-reg">
-                Pas encore de compte ?
-                <a href="{{ route('register') }}" wire:navigate>Créer un compte →</a>
-            </p>
-
             <div class="qapp-sec">
                 <svg viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"

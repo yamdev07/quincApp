@@ -55,7 +55,7 @@
             
             <div style="background: white; padding: 15px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0;">📋 Détails de la transaction</h3>
-                <p><strong>Montant :</strong> {{ number_format($transaction->amount / 100, 0) }} XOF</p>
+                <p><strong>Montant :</strong> {{ number_format($transaction->amount, 0, ',', ' ') }} FCFA</p>
                 <p><strong>Date :</strong> {{ now()->format('d/m/Y à H:i') }}</p>
                 <p><strong>Transaction :</strong> {{ $transaction->id }}</p>
                 <p><strong>Statut :</strong> <span style="color: green;">Approuvé ✅</span></p>
