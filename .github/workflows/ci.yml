@@ -66,7 +66,7 @@ jobs:
           echo "BROADCAST_DRIVER=log" >> .env
 
       - name: Install Composer Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader 
 
       - name: Generate App Key
         run: php artisan key:generate --force
