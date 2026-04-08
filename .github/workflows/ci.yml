@@ -32,29 +32,32 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extensions: pdo_mysql, mbstring, bcmath, zip
+          extensions: pdo_mysql, mbstring, bcmath, zip, fileinfo
           coverage: none
 
-      - name: Copy .env
-        run: cp .env.example .env
-
-      - name: Force env for CI
+      - name: Use .env.testing
         run: |
-          echo "APP_URL=http://localhost" >> .env
-          echo "APP_ENV=testing" >> .env
-          echo "APP_DEBUG=false" >> .env
+          if [ -f .env.testing ]; then
+            cp .env.testing .env
+            echo "✅ .env.testing copié vers .env"
+          else
+            echo "❌ .env.testing n'existe pas !"
+            exit 1
+          fi
 
-          echo "DB_CONNECTION=mysql" >> .env
+      - name: Override CI specific settings
+        run: |
+          echo "APP_ENV=testing" >> .env
+          echo "APP_DEBUG=true" >> .env
           echo "DB_HOST=127.0.0.1" >> .env
           echo "DB_PORT=3306" >> .env
           echo "DB_DATABASE=testing" >> .env
           echo "DB_USERNAME=root" >> .env
           echo "DB_PASSWORD=root" >> .env
-
-          # Recommandé en CI (évite dépendances DB inutiles)
-          echo "SESSION_DRIVER=array" >> .env
           echo "CACHE_STORE=array" >> .env
+          echo "SESSION_DRIVER=array" >> .env
           echo "QUEUE_CONNECTION=sync" >> .env
+          echo "MAIL_MAILER=array" >> .env
 
       - name: Install Composer Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
@@ -74,11 +77,13 @@ jobs:
       - name: Build Vite Assets
         run: npm run build
 
-      - name: Prepare Database
+      - name: Clear Config Cache
         run: |
           php artisan config:clear
           php artisan cache:clear
-          php artisan migrate:fresh --force
+
+      - name: Prepare Database
+        run: php artisan migrate:fresh --force
 
       - name: Run Tests
         run: php artisan test
