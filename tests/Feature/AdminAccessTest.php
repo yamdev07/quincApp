@@ -13,7 +13,7 @@ class AdminAccessTest extends TestCase
     /** @test */
     public function admin_can_access_users_index()
     {
-        // Crée un utilisateur admin
+        // Create admin user with 'admin' role (exists in ENUM)
         $admin = User::factory()->create([
             'role' => 'admin',
         ]);
@@ -26,9 +26,9 @@ class AdminAccessTest extends TestCase
     /** @test */
     public function non_admin_cannot_access_users_index()
     {
-        // Crée un utilisateur cashier (changé de 'caissier' à 'cashier')
+        // Create cashier user with 'cashier' role (exists in ENUM)
         $user = User::factory()->create([
-            'role' => 'cashier',  // Changed from 'caissier' to 'cashier'
+            'role' => 'cashier',
         ]);
 
         $response = $this->actingAs($user)->get(route('users.index'));
