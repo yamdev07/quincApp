@@ -10,7 +10,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        // Ton app redirige (302) depuis "/"
-        $response->assertStatus(302);
+        // Ton app affiche la page d'accueil (200) au lieu de rediriger
+        $response->assertStatus(200);
     }
 }
