@@ -137,19 +137,6 @@ new class extends Component
                     </x-nav-link>
                     @endif
 
-                    <!-- Super Admin Global Dashboard - Uniquement pour super_admin_global -->
-                    @if(auth()->user()->role === 'super_admin_global')
-                    <x-nav-link :href="route('super-admin.dashboard')" :active="request()->routeIs('super-admin.*')" wire:navigate 
-                        class="qapp-nav-link">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9" />
-                            </svg>
-                            <span>Super Admin</span>
-                        </div>
-                    </x-nav-link>
-                    @endif
-
                     <!-- ===================================================== -->
                     <!-- LIEN MON ABONNEMENT - UNIQUEMENT POUR ADMINISTRATEURS -->
                     <!-- super_admin_global, super_admin et admin uniquement -->
@@ -327,17 +314,6 @@ new class extends Component
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 Rapports
-            </x-responsive-nav-link>
-            @endif
-
-            <!-- Super Admin Global Dashboard -->
-            @if(auth()->user()->role === 'super_admin_global')
-            <x-responsive-nav-link :href="route('super-admin.dashboard')" :active="request()->routeIs('super-admin.*')" wire:navigate 
-                class="qapp-responsive-nav-link">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9" />
-                </svg>
-                Super Admin
             </x-responsive-nav-link>
             @endif
 

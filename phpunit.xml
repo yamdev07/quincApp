@@ -28,7 +28,7 @@
         <env name="DB_PORT" value="3306"/>
         <env name="DB_DATABASE" value="testing"/>
         <env name="DB_USERNAME" value="root"/>
-        <env name="DB_PASSWORD" value=""/>  <!-- Changed: removed "root" -->
+        <env name="DB_PASSWORD" value="root"/>  <!-- Changed: removed "root" -->
 
         <env name="CACHE_STORE" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
