@@ -910,7 +910,7 @@
                         <a href="{{ route('payment.form', ['renewal' => true, 'amount' => $currentPrice, 'plan' => strtolower($currentPlan)]) }}" class="btn-primary" style="justify-content:center;">
                             <i class="bi bi-arrow-repeat"></i> Renouveler l'abonnement ({{ number_format($currentPrice, 0, ',', ' ') }} FCFA)
                         </a>
-                        <a href="{{ route('reports.invoice') }}" class="btn-secondary" style="justify-content:center;">
+                        <a href="{{ route('invoices.last') }}" class="btn-secondary" style="justify-content:center;">
                             <i class="bi bi-file-pdf"></i> Télécharger ma dernière facture
                         </a>
                         <button class="btn-danger" style="justify-content:center; width:100%;" data-bs-toggle="modal" data-bs-target="#cancelModal">

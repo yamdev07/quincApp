@@ -244,6 +244,8 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
         Route::get('/grouped-stocks', [ProductController::class, 'groupedStocksReport'])->name('grouped-stocks');
         Route::get('/grouped-stocks/export/{format?}', [ProductController::class, 'exportGroupedStocks'])
             ->name('grouped-stocks.export');
+
+        Route::get('/invoice/{id}', [App\Http\Controllers\InvoiceController::class, 'downloadInvoice'])->name('invoice');
     });
 
     // ----------------------

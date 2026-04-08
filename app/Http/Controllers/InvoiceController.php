@@ -36,7 +36,8 @@ class InvoiceController extends Controller
             return redirect()->route('subscription.show')->with('info', 'Aucune facture disponible pour le moment.');
         }
         
-        return view('reports.invoice', compact('lastPayment', 'tenant'));
+        // Change this line to match your view
+        return view('invoices.show', compact('lastPayment', 'tenant'));
     }
     
     /**
@@ -51,6 +52,7 @@ class InvoiceController extends Controller
             ->where('id', $id)
             ->firstOrFail();
         
+        // Create a PDF view - you need to create this blade file
         $pdf = Pdf::loadView('invoices.pdf', compact('payment', 'tenant'));
         
         return $pdf->download('facture_' . $payment->id . '_' . date('Y-m-d') . '.pdf');
@@ -68,6 +70,6 @@ class InvoiceController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
-        return view('reports.show', compact('payments', 'tenant'));
+        return view('invoices.index', compact('payments', 'tenant'));
     }
 }
