@@ -244,6 +244,8 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
         Route::get('/grouped-stocks', [ProductController::class, 'groupedStocksReport'])->name('grouped-stocks');
         Route::get('/grouped-stocks/export/{format?}', [ProductController::class, 'exportGroupedStocks'])
             ->name('grouped-stocks.export');
+
+        Route::get('/invoice/{id}', [App\Http\Controllers\InvoiceController::class, 'downloadInvoice'])->name('invoice');
     });
 
     // ----------------------
@@ -573,4 +575,11 @@ Route::get('/api/dashboard-stats', [App\Http\Controllers\DashboardController::cl
 Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->group(function () {
     Route::get('/', [App\Http\Controllers\SubscriptionController::class, 'show'])->name('show');
     Route::post('/cancel', [App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('cancel');
+});
+
+// Routes factures
+Route::middleware(['auth'])->prefix('invoices')->name('invoices.')->group(function () {
+    Route::get('/', [App\Http\Controllers\InvoiceController::class, 'index'])->name('index');
+    Route::get('/last', [App\Http\Controllers\InvoiceController::class, 'showLastInvoice'])->name('last');
+    Route::get('/download/{id}', [App\Http\Controllers\InvoiceController::class, 'downloadInvoice'])->name('download');
 });

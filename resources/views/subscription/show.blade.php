@@ -169,7 +169,7 @@
     }
 
     /* =====================================================
-       ALERTE EXPIRATION - style warning-box dashboard
+       ALERTE EXPIRATION
     ===================================================== */
     .warning-box {
         background: linear-gradient(145deg, #fff7ed, #ffedd5);
@@ -377,7 +377,7 @@
     .sub-dark-footer-text strong { color: rgba(255,255,255,0.7); }
 
     /* =====================================================
-       CARTES BLANCHES - style info-card dashboard
+       CARTES BLANCHES
     ===================================================== */
     .card {
         background: var(--bg-card);
@@ -491,7 +491,7 @@
     }
 
     /* =====================================================
-       FORMULES / PLANS
+       FORMULES / PLANS - AVEC INDICATEUR ACTUEL
     ===================================================== */
     .plan-grid {
         display: flex;
@@ -505,21 +505,48 @@
         border: 1.5px solid var(--border-light);
         padding: 18px 20px;
         transition: all 0.2s;
-        cursor: pointer;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
     }
+
     .plan-card:hover {
         border-color: var(--accent);
         box-shadow: var(--shadow-hover);
         transform: translateY(-2px);
     }
+
     .plan-card.popular {
         border: 2px solid var(--accent);
         background: linear-gradient(145deg, #fff7ed, #ffffff);
+    }
+
+    /* Style pour la formule actuelle */
+    .plan-card.current-plan {
+        border: 2px solid #f97316;
+        background: linear-gradient(145deg, #ffedd5, #fff7ed);
+        box-shadow: 0 4px 15px rgba(249,115,22,0.15);
+    }
+
+    .current-plan-badge {
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: #f97316;
+        color: white;
+        padding: 4px 14px;
+        border-radius: 30px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(249,115,22,0.3);
+    }
+
+    .current-plan-badge i {
+        font-size: 10px;
+        margin-right: 4px;
     }
 
     .plan-badge-pop {
@@ -541,23 +568,44 @@
         color: var(--text-primary);
         margin-bottom: 3px;
     }
+
     .plan-info .plan-saving {
         font-size: 12px;
         color: #16a34a;
         font-weight: 600;
     }
 
-    .plan-right { text-align: right; }
+    .plan-right {
+        text-align: right;
+    }
+
     .plan-right .plan-price {
         font-size: 22px;
         font-weight: 800;
         color: var(--accent);
         line-height: 1.1;
     }
+
     .plan-right .plan-price small {
         font-size: 11px;
         font-weight: 500;
         color: var(--text-tertiary);
+    }
+
+    .plan-current-badge {
+        display: inline-block;
+        background: rgba(249,115,22,0.15);
+        border: 1px solid rgba(249,115,22,0.3);
+        color: #f97316;
+        padding: 6px 16px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+
+    .plan-current-badge i {
+        margin-right: 5px;
     }
 
     .plan-btn {
@@ -576,6 +624,7 @@
         cursor: pointer;
         width: 100%;
     }
+
     .plan-btn:hover {
         background: var(--accent);
         color: white;
@@ -633,9 +682,7 @@
 @section('content')
 <div class="sub-container">
 
-    {{-- ===================================================== --}}
-    {{-- HEADER                                                  --}}
-    {{-- ===================================================== --}}
+    {{-- HEADER --}}
     <div class="dash-header">
         <div class="dash-header-left">
             <h1>Mon abonnement</h1>
@@ -648,9 +695,7 @@
         </div>
     </div>
 
-    {{-- ===================================================== --}}
-    {{-- ALERTE EXPIRATION (si applicable)                       --}}
-    {{-- ===================================================== --}}
+    {{-- ALERTE EXPIRATION --}}
     @if($daysRemaining > 0 && $daysRemaining <= 7)
     <div class="warning-box">
         <div class="warning-box-text">
@@ -662,15 +707,13 @@
                 <div class="warning-sub">Renouvelez avant le {{ $endDate ? $endDate->format('d/m/Y') : 'N/A' }} pour éviter toute interruption de service</div>
             </div>
         </div>
-        <a href="{{ route('payment.form') }}" class="btn-primary">
+        <a href="{{ route('payment.form', ['renewal' => true, 'amount' => $currentPrice, 'plan' => strtolower($currentPlan)]) }}" class="btn-primary">
             <i class="bi bi-credit-card"></i> Renouveler maintenant
         </a>
     </div>
     @endif
 
-    {{-- ===================================================== --}}
-    {{-- GRILLE PRINCIPALE                                       --}}
-    {{-- ===================================================== --}}
+    {{-- GRILLE PRINCIPALE --}}
     @php
         $pct = 0;
         $fillColor = '#f97316';
@@ -684,10 +727,10 @@
 
     <div class="sub-grid">
 
-        {{-- ─── COLONNE GAUCHE ─────────────────────────────────── --}}
+        {{-- COLONNE GAUCHE --}}
         <div class="sub-col-left">
 
-            {{-- CARTE ABONNEMENT SOMBRE (style dashboard) --}}
+            {{-- CARTE ABONNEMENT SOMBRE --}}
             <div class="sub-dark-card">
 
                 <div class="sub-dark-top">
@@ -765,7 +808,7 @@
                         Expire le <strong>{{ $endDate ? $endDate->format('d/m/Y') : 'N/A' }}</strong> — Renouvelez avant expiration pour éviter toute interruption
                     </span>
                     @if($daysRemaining > 0 && $daysRemaining <= 7)
-                    <a href="{{ route('payment.form') }}" style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:8px 20px;border-radius:30px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">
+                    <a href="{{ route('payment.form', ['renewal' => true, 'amount' => $currentPrice, 'plan' => strtolower($currentPlan)]) }}" style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:8px 20px;border-radius:30px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">
                         Renouveler
                     </a>
                     @endif
@@ -854,7 +897,7 @@
 
         </div>{{-- /col-left --}}
 
-        {{-- ─── COLONNE DROITE ─────────────────────────────────── --}}
+        {{-- COLONNE DROITE --}}
         <div class="sub-col-right">
 
             {{-- ACTIONS --}}
@@ -864,10 +907,10 @@
                 </div>
                 <div class="card-body">
                     <div class="actions-list">
-                        <a href="{{ route('payment.form') }}" class="btn-primary" style="justify-content:center;">
-                            <i class="bi bi-credit-card"></i> Renouveler l'abonnement
+                        <a href="{{ route('payment.form', ['renewal' => true, 'amount' => $currentPrice, 'plan' => strtolower($currentPlan)]) }}" class="btn-primary" style="justify-content:center;">
+                            <i class="bi bi-arrow-repeat"></i> Renouveler l'abonnement ({{ number_format($currentPrice, 0, ',', ' ') }} FCFA)
                         </a>
-                        <a href="#" class="btn-secondary" style="justify-content:center;">
+                        <a href="{{ route('invoices.last') }}" class="btn-secondary" style="justify-content:center;">
                             <i class="bi bi-file-pdf"></i> Télécharger ma dernière facture
                         </a>
                         <button class="btn-danger" style="justify-content:center; width:100%;" data-bs-toggle="modal" data-bs-target="#cancelModal">
@@ -877,7 +920,7 @@
                 </div>
             </div>
 
-            {{-- CHANGER DE FORMULE --}}
+            {{-- CHANGER DE FORMULE AVEC INDICATEUR ACTUEL --}}
             <div class="card">
                 <div class="card-header">
                     <h3><i class="bi bi-arrow-repeat"></i> Changer de formule</h3>
@@ -885,28 +928,45 @@
                 <div class="card-body">
                     <div class="plan-grid">
                         @foreach($availablePlans as $plan)
-                        <div class="plan-card {{ isset($plan['popular']) ? 'popular' : '' }}">
-                            @if(isset($plan['popular']))
-                                <div class="plan-badge-pop">⭐ Le plus populaire</div>
-                            @endif
-                            <div class="plan-info">
-                                <div class="plan-name">{{ $plan['name'] }}</div>
-                                @if(isset($plan['saving']))
-                                    <div class="plan-saving">{{ $plan['saving'] }}</div>
+                            @php
+                                $isCurrentPlan = ($plan['type'] === strtolower($currentPlan));
+                            @endphp
+                            <div class="plan-card {{ isset($plan['popular']) ? 'popular' : '' }} {{ $isCurrentPlan ? 'current-plan' : '' }}">
+                                @if(isset($plan['popular']))
+                                    <div class="plan-badge-pop">⭐ Le plus populaire</div>
                                 @endif
-                            </div>
-                            <div class="plan-right">
-                                <div class="plan-price">
-                                    {{ number_format($plan['price'], 0, ',', ' ') }} FCFA
-                                    <small>/ {{ $plan['duration'] }}</small>
+                                
+                                @if($isCurrentPlan)
+                                    <div class="current-plan-badge">
+                                        <i class="bi bi-check-circle-fill"></i> Votre formule actuelle
+                                    </div>
+                                @endif
+                                
+                                <div class="plan-info">
+                                    <div class="plan-name">{{ $plan['name'] }}</div>
+                                    @if(isset($plan['saving']))
+                                        <div class="plan-saving">{{ $plan['saving'] }}</div>
+                                    @endif
                                 </div>
-                                <form action="{{ route('payment.form') }}" method="GET">
-                                    <input type="hidden" name="plan" value="{{ $plan['type'] }}">
-                                    <input type="hidden" name="amount" value="{{ $plan['price'] }}">
-                                    <button type="submit" class="plan-btn">Choisir</button>
-                                </form>
+                                <div class="plan-right">
+                                    <div class="plan-price">
+                                        {{ number_format($plan['price'], 0, ',', ' ') }} FCFA
+                                        <small>/ {{ $plan['duration'] }}</small>
+                                    </div>
+                                    @if($isCurrentPlan)
+                                        <span class="plan-current-badge">
+                                            <i class="bi bi-calendar-check"></i> En cours
+                                        </span>
+                                    @else
+                                        <form action="{{ route('payment.form') }}" method="GET">
+                                            <input type="hidden" name="plan" value="{{ $plan['type'] }}">
+                                            <input type="hidden" name="amount" value="{{ $plan['price'] }}">
+                                            <input type="hidden" name="renewal" value="1">
+                                            <button type="submit" class="plan-btn">Choisir cette formule</button>
+                                        </form>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
                         @endforeach
                     </div>
                 </div>
@@ -941,9 +1001,7 @@
 
 </div>{{-- /sub-container --}}
 
-{{-- ===================================================== --}}
-{{-- MODAL DE RÉSILIATION                                    --}}
-{{-- ===================================================== --}}
+{{-- MODAL DE RÉSILIATION --}}
 <div class="modal fade" id="cancelModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 24px; border: 1px solid var(--border-light); overflow: hidden;">
