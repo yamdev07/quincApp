@@ -101,4 +101,4 @@ jobs:
           php artisan db:seed --force || echo "⚠️ Seed ignoré"
 
       - name: Run Tests
-        run: php artisan test --verbose
+        run: ./vendor/bin/phpunit
