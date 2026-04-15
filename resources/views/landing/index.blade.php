@@ -8,13 +8,13 @@
         <div class="hero-pattern"></div>
         <div class="container">
             <div class="hero-content">
-                <span class="hero-badge">✨ La solution n°1 pour les quincailleries</span>
+                <span class="hero-badge">✨ Pour quincailleries, librairies, épiceries et bien plus</span>
                 <h1 class="hero-title">
-                    Gérez votre <span class="text-gradient">quincaillerie</span><br>
-                    en toute simplicité
+                    Gérez votre <span class="text-gradient">stock</span><br>
+                    quel que soit votre commerce
                 </h1>
                 <p class="hero-subtitle">
-                    Logiciel tout-en-un pour gérer vos stocks, ventes, clients et fournisseurs.<br>
+                    Inventix s'adapte à <strong>tout type de commerce de détail</strong> — stocks, ventes, clients et fournisseurs en un seul endroit.<br>
                     Essayez gratuitement pendant 14 jours, sans engagement.
                 </p>
                 <div class="hero-actions">
@@ -30,7 +30,7 @@
                 <div class="hero-stats">
                     <div class="stat-item">
                         <span class="stat-value">500+</span>
-                        <span class="stat-label">Quincailleries</span>
+                        <span class="stat-label">Entreprises</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-value">98%</span>
@@ -77,6 +77,52 @@
         </div>
     </section>
 
+    {{-- POUR QUI SECTION --}}
+    <section class="for-who-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">🏪 Pour qui ?</span>
+                <h2 class="section-title">Un logiciel qui s'adapte à <span class="text-gradient">votre activité</span></h2>
+                <p class="section-subtitle">
+                    Quincaillerie, librairie, épicerie, pharmacie, boutique… Inventix fonctionne pour <strong>tout commerce de détail</strong>.
+                </p>
+            </div>
+
+            <div class="business-types-grid">
+                <div class="business-card">
+                    <div class="business-icon">🔧</div>
+                    <h3>Quincaillerie</h3>
+                    <p>Outils, matériaux, fournitures de bricolage</p>
+                </div>
+                <div class="business-card">
+                    <div class="business-icon">📚</div>
+                    <h3>Librairie / Papeterie</h3>
+                    <p>Livres, fournitures scolaires, articles de bureau</p>
+                </div>
+                <div class="business-card">
+                    <div class="business-icon">🛒</div>
+                    <h3>Épicerie / Alimentation</h3>
+                    <p>Produits alimentaires, boissons, produits ménagers</p>
+                </div>
+                <div class="business-card">
+                    <div class="business-icon">👗</div>
+                    <h3>Boutique de vêtements</h3>
+                    <p>Prêt-à-porter, chaussures, accessoires de mode</p>
+                </div>
+                <div class="business-card">
+                    <div class="business-icon">💊</div>
+                    <h3>Pharmacie / Para.</h3>
+                    <p>Médicaments, cosmétiques, produits de santé</p>
+                </div>
+                <div class="business-card business-card-any">
+                    <div class="business-icon">🏪</div>
+                    <h3>Votre commerce</h3>
+                    <p>Inventix s'adapte à <em>n'importe quelle</em> activité</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     {{-- FEATURES SECTION --}}
     <section class="features-section" id="features">
         <div class="container">
@@ -84,7 +130,7 @@
                 <span class="section-badge">Fonctionnalités</span>
                 <h2 class="section-title">Tout ce dont vous avez besoin</h2>
                 <p class="section-subtitle">
-                    Un logiciel complet pour gérer votre quincaillerie efficacement
+                    Un logiciel complet pour gérer votre stock et votre activité efficacement
                 </p>
             </div>
 
@@ -146,7 +192,7 @@
             <div class="stats-grid-large">
                 <div class="stat-large">
                     <span class="stat-number">500+</span>
-                    <span class="stat-label">Quincailleries clients</span>
+                    <span class="stat-label">Clients actifs</span>
                 </div>
                 <div class="stat-large">
                     <span class="stat-number">50k+</span>
@@ -236,8 +282,9 @@
             <div class="testimonials-grid">
                 <div class="testimonial-card">
                     <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-tag">🔧 Quincaillerie</div>
                     <p class="testimonial-text">
-                        "Depuis que j'utilise QuincaApp, j'ai réduit mon temps de gestion de stock de 70%. L'interface est intuitive et le support est réactif."
+                        "Depuis qu'on utilise Inventix, j'ai réduit le temps de gestion de stock de 70%. L'interface est intuitive et les alertes de rupture nous ont évité bien des problèmes."
                     </p>
                     <div class="testimonial-author">
                         <div class="author-avatar">JD</div>
@@ -250,28 +297,30 @@
 
                 <div class="testimonial-card">
                     <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-tag">📚 Librairie</div>
                     <p class="testimonial-text">
-                        "La gestion multi-utilisateurs nous a changé la vie. Mes caissiers et magasiniers travaillent en parfaite synchronicité."
+                        "On gère plus de 3 000 références de livres et papeterie. Inventix nous permet de savoir en temps réel ce qu'il faut réapprovisionner. Un gain de temps énorme."
                     </p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">MM</div>
+                        <div class="author-avatar">AF</div>
                         <div>
-                            <strong>Marie Martin</strong>
-                            <span>Outils Plus</span>
+                            <strong>Awa Fall</strong>
+                            <span>Librairie Lumière</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="testimonial-card">
                     <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-tag">🛒 Épicerie</div>
                     <p class="testimonial-text">
-                        "Le meilleur rapport qualité-prix du marché. Les rapports de vente m'ont permis d'augmenter ma marge de 15%."
+                        "Avec mon épicerie, je gère des centaines de produits alimentaires. Les rapports de vente m'ont permis d'augmenter ma marge de 15% en identifiant les produits les plus rentables."
                     </p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">PL</div>
+                        <div class="author-avatar">MK</div>
                         <div>
-                            <strong>Pierre Lambert</strong>
-                            <span>Matériaux Pro</span>
+                            <strong>Moussa Koné</strong>
+                            <span>Épicerie du Marché</span>
                         </div>
                     </div>
                 </div>
@@ -286,7 +335,7 @@
                 <span class="section-badge">FAQ</span>
                 <h2 class="section-title">Questions fréquentes</h2>
                 <p class="section-subtitle">
-                    Tout ce que vous devez savoir sur QuincaApp
+                    Tout ce que vous devez savoir sur Inventix
                 </p>
             </div>
 
@@ -323,8 +372,8 @@
     <section class="final-cta">
         <div class="container">
             <div class="cta-card">
-                <h2>Prêt à digitaliser votre quincaillerie ?</h2>
-                <p>Rejoignez plus de 500 quincailleries qui nous font confiance</p>
+                <h2>Prêt à digitaliser votre commerce ?</h2>
+                <p>Quincaillerie, librairie, épicerie, boutique… rejoignez plus de 500 commerçants qui nous font confiance</p>
                 <div class="cta-actions">
                     <a href="{{ route('demo') }}" class="btn-outline btn-large btn-white-outline">
                         <i class="bi bi-play-circle"></i>
@@ -920,6 +969,85 @@
     opacity: 0.7;
 }
 
+/* ====================================================
+   POUR QUI SECTION
+==================================================== */
+.for-who-section {
+    padding: 100px 0;
+    background: var(--gray-50);
+}
+
+.business-types-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.business-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 28px 24px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: default;
+}
+
+.business-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--orange-400);
+    box-shadow: var(--shadow-orange);
+}
+
+.business-card-any {
+    border: 2px dashed var(--orange-300);
+    background: var(--orange-50);
+}
+
+.business-card-any:hover {
+    border-style: solid;
+    border-color: var(--orange-500);
+}
+
+.business-icon {
+    font-size: 40px;
+    margin-bottom: 14px;
+    display: block;
+    line-height: 1;
+}
+
+.business-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+}
+
+.business-card p {
+    font-size: 13px;
+    color: var(--gray-500);
+    line-height: 1.5;
+}
+
+.business-card p em {
+    font-style: normal;
+    color: var(--orange-600);
+    font-weight: 600;
+}
+
+/* Testimonial tag */
+.testimonial-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--orange-50);
+    color: var(--orange-600);
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    border: 1px solid var(--orange-200);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .hero-section .container {
@@ -938,12 +1066,16 @@
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .testimonials-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .stats-grid-large {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .business-types-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -977,6 +1109,10 @@
         flex-direction: column;
     }
     
+    .business-types-grid {
+        grid-template-columns: 1fr;
+    }
+
     .pills-container {
         flex-direction: column;
         align-items: center;

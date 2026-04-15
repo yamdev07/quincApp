@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier un employé — QuincaApp')
+@section('title', 'Modifier un employé — Inventix')
 
 @section('styles')
 <style>
@@ -585,7 +585,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p>
-                        <strong>Super Admin</strong> - Ce compte appartient au propriétaire de la quincaillerie.
+                        <strong>Super Admin</strong> - Ce compte appartient au propriétaire de l'entreprise.
                         @if(auth()->user()->isSuperAdminGlobal())
                             Vous pouvez le modifier car vous êtes super admin global.
                         @else

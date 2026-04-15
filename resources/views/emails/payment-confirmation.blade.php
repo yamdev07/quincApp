@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Confirmation de paiement - QuincaPro</title>
+    <title>Confirmation de paiement - Inventix</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,11 +73,11 @@
                 </a>
             </div>
             
-            <p style="margin-top: 20px;">Merci de votre confiance ! L'équipe QuincaPro reste à votre disposition.</p>
+            <p style="margin-top: 20px;">Merci de votre confiance ! L'équipe Inventix reste à votre disposition.</p>
         </div>
         
         <div class="footer">
-            <p>© {{ date('Y') }} QuincaPro. Tous droits réservés.</p>
+            <p>© {{ date('Y') }} Inventix. Tous droits réservés.</p>
             <p>Cet email est un message automatique, merci de ne pas y répondre.</p>
         </div>
     </div>

@@ -1,20 +1,20 @@
 {{-- resources/views/landing/register.blade.php --}}
 @extends('layouts.landing')
 
-@section('title', 'Créer votre quincaillerie — QuincaApp')
+@section('title', 'Créer votre entreprise — Inventix')
 
 @section('content')
 <div class="register-page">
     <div class="container">
         {{-- En-tête de la page --}}
         <div class="register-header-section">
-            <h1>Créez votre <span class="text-accent">quincaillerie</span></h1>
+            <h1>Créez votre <span class="text-accent">entreprise</span></h1>
             <p>Commencez votre essai gratuit de 14 jours · Sans carte bancaire</p>
         </div>
 
         <div class="register-card">
             <div class="register-card-header">
-                <h2>Nouvelle quincaillerie</h2>
+                <h2>Nouvelle entreprise</h2>
                 @php
                     $planNames = [
                         'monthly' => 'Formule Mensuelle',
@@ -45,14 +45,14 @@
 
                     <div class="form-group">
                         <label for="company_name" class="form-label">
-                            Nom de la quincaillerie <span class="required">*</span>
+                            Nom de l'entreprise <span class="required">*</span>
                         </label>
                         <input type="text" 
                                id="company_name"
                                name="company_name" 
                                class="form-control @error('company_name') error @enderror" 
                                value="{{ old('company_name') }}"
-                               placeholder="Ex: Quincaillerie du Centre"
+                               placeholder="Ex: Mon Entreprise"
                                required>
                         @error('company_name')
                             <div class="error-message">
@@ -72,7 +72,7 @@
                                    name="subdomain" 
                                    class="form-control @error('subdomain') error @enderror" 
                                    value="{{ old('subdomain') }}"
-                                   placeholder="ma-quincaillerie"
+                                   placeholder="mon-entreprise"
                                    pattern="[a-z0-9\-]+"
                                    title="Lettres minuscules, chiffres et tirets uniquement"
                                    required>
@@ -98,7 +98,7 @@
                                    name="address" 
                                    class="form-control" 
                                    value="{{ old('address') }}"
-                                   placeholder="Adresse de votre quincaillerie">
+                                   placeholder="Adresse de votre entreprise">
                         </div>
 
                         <div class="form-group half">

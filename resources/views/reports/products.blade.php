@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Rapport des produits - QuincaPro')
+@section('title', 'Rapport des produits - Inventix')
 
 @section('styles')
 <style>

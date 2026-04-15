@@ -21,7 +21,7 @@ new class extends Component
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
-                <!-- Logo QuincaPro - EXTRÊME GAUCHE -->
+                <!-- Logo Inventix - EXTRÊME GAUCHE -->
                 <div class="shrink-0 flex items-center -ml-4 sm:ml-0">
                     <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-3 group">
                         <div class="relative">
@@ -33,8 +33,8 @@ new class extends Component
                             </div>
                         </div>
                         <div>
-                            <h1 class="text-xl font-bold text-[#f5f3ef]">Quinca<em class="text-[#f97316] not-italic">Pro</em></h1>
-                            <p class="text-xs text-[#55535f]">Gestion Quincaillerie</p>
+                            <h1 class="text-xl font-bold text-[#f5f3ef]">Invent<em class="text-[#f97316] not-italic">ix</em></h1>
+                            <p class="text-xs text-[#55535f]">Gestion de stock</p>
                         </div>
                     </a>
                 </div>
@@ -369,7 +369,7 @@ new class extends Component
     </div>
 
     <style>
-    /* Styles spécifiques à la navigation QuincaPro */
+    /* Styles spécifiques à la navigation Inventix */
     .qapp-nav {
         background: #111116;
         border-bottom: 1px solid rgba(249, 115, 22, 0.13);

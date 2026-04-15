@@ -1,7 +1,7 @@
 {{-- resources/views/subscription/show.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Mon abonnement - QuincaPro')
+@section('title', 'Mon abonnement - Inventix')
 
 @section('styles')
 <style>
@@ -1018,7 +1018,7 @@
                     <p style="font-weight: 700; color: #b91c1c; margin: 8px 0 4px; font-size: 16px;">Cette action est irréversible</p>
                     <p style="color: #dc2626; font-size: 13px; margin: 0;">Vous perdrez l'accès à toutes les fonctionnalités à la fin de votre période en cours.</p>
                 </div>
-                <p style="color: var(--text-secondary); font-size: 14px;">Êtes-vous sûr de vouloir résilier votre abonnement QuincaPro ?</p>
+                <p style="color: var(--text-secondary); font-size: 14px;">Êtes-vous sûr de vouloir résilier votre abonnement Inventix ?</p>
             </div>
             <div class="modal-footer" style="border-top: 1px solid var(--border-light); padding: 16px 24px; gap: 10px;">
                 <button type="button" class="btn-secondary" data-bs-dismiss="modal">

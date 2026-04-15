@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Nouvelle quincaillerie — Super Admin')
+@section('title', 'Nouvelle entreprise — Super Admin')
 
 @section('styles')
 <style>
@@ -461,7 +461,7 @@
             </div>
             <div>
                 <div class="st-title">
-                    Nouvelle <span>quincaillerie</span>
+                    Nouvelle <span>entreprise</span>
                 </div>
                 <div class="st-sub">Créez une nouvelle boutique multi-tenant</div>
             </div>
@@ -494,14 +494,14 @@
                 </svg>
                 Informations de la boutique
             </h2>
-            <p>Renseignez les informations de la nouvelle quincaillerie</p>
+            <p>Renseignez les informations de la nouvelle entreprise</p>
         </div>
 
         <div class="st-card-body">
             <form action="{{ route('super-admin.tenants.store') }}" method="POST" id="createTenantForm">
                 @csrf
 
-                {{-- Informations de la quincaillerie --}}
+                {{-- Informations de l'entreprise --}}
                 <div class="st-form-group">
                     <label for="company_name" class="st-label">Nom de l'entreprise <span style="color: var(--danger);">*</span></label>
                     <input type="text" 
@@ -509,7 +509,7 @@
                            name="company_name" 
                            value="{{ old('company_name') }}"
                            class="st-input @error('company_name') st-input-error @enderror"
-                           placeholder="Ex: Quincaillerie du Centre"
+                           placeholder="Ex: Mon Entreprise"
                            required>
                     @error('company_name')
                         <div class="st-error">
@@ -530,7 +530,7 @@
                                name="subdomain" 
                                value="{{ old('subdomain') }}"
                                class="st-prefix-input"
-                               placeholder="ma-quincaillerie"
+                               placeholder="mon-entreprise"
                                pattern="[a-z0-9-]+"
                                title="Lettres minuscules, chiffres et tirets uniquement"
                                required>
@@ -557,7 +557,7 @@
                     <textarea id="address" 
                               name="address" 
                               class="st-textarea @error('address') st-input-error @enderror"
-                              placeholder="Adresse complète de la quincaillerie">{{ old('address') }}</textarea>
+                              placeholder="Adresse complète de l'entreprise">{{ old('address') }}</textarea>
                     @error('address')
                         <div class="st-error">
                             <svg viewBox="0 0 24 24" stroke-width="2">
@@ -646,7 +646,7 @@
                     </svg>
                     <p>
                         <strong>Mot de passe généré automatiquement</strong><br>
-                        Un mot de passe sécurisé sera généré automatiquement. Il devra être communiqué au propriétaire de la quincaillerie.
+                        Un mot de passe sécurisé sera généré automatiquement. Il devra être communiqué au propriétaire de l'entreprise.
                     </p>
                 </div>
 
@@ -662,7 +662,7 @@
                         <svg viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
-                        Créer la quincaillerie
+                        Créer l'entreprise
                     </button>
                 </div>
             </form>

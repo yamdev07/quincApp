@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', isset($category) ? 'Modifier la catégorie : ' . $category->name . ' — QuincaApp' : 'Nouvelle catégorie — QuincaApp')
+@section('title', isset($category) ? 'Modifier la catégorie : ' . $category->name . ' — Inventix' : 'Nouvelle catégorie — Inventix')
 
 @section('styles')
 <style>

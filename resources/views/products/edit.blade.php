@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier le produit : ' . $product->name . ' — QuincaApp')
+@section('title', 'Modifier le produit : ' . $product->name . ' — Inventix')
 
 @section('styles')
 <style>

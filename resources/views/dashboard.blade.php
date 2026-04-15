@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - Pilotage Quincaillerie')
+@section('title', 'Dashboard - Gestion de stock')
 
 @section('styles')
 <style>
@@ -580,7 +580,7 @@
                 <span>👋 {{ auth()->user()->name }}, content de vous revoir</span>
                 @if(auth()->user()->tenant)
                     <span class="user-company-info">
-                        <i class="bi bi-building"></i> {{ auth()->user()->tenant->company_name ?? 'Ma Quincaillerie' }}
+                        <i class="bi bi-building"></i> {{ auth()->user()->tenant->company_name ?? 'Mon Entreprise' }}
                     </span>
                 @endif
                 <span class="greeting-role">
@@ -611,7 +611,7 @@
                 </a>
             @endif
             @if(auth()->user()->isSuperAdminGlobal())
-                <a href="{{ route('super-admin.tenants') }}" class="btn-outline" title="Toutes les quincailleries">
+                <a href="{{ route('super-admin.tenants') }}" class="btn-outline" title="Toutes les entreprises">
                     <i class="bi bi-grid-3x3-gap-fill"></i>
                 </a>
             @endif

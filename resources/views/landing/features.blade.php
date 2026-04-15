@@ -10,10 +10,10 @@
                 <span class="hero-badge">🚀 Fonctionnalités</span>
                 <h1 class="hero-title">
                     Tout ce dont vous avez besoin pour<br>
-                    <span class="text-gradient">gérer votre quincaillerie</span>
+                    <span class="text-gradient">gérer votre stock</span>
                 </h1>
                 <p class="hero-subtitle">
-                    Un logiciel complet, intuitif et puissant pour simplifier votre quotidien
+                    Quincaillerie, librairie, épicerie, boutique de vêtements — un logiciel complet qui s'adapte à votre commerce
                 </p>
             </div>
         </div>
@@ -123,7 +123,7 @@
                 <span class="section-badge">⭐ Fonctionnalités avancées</span>
                 <h2 class="section-title">Des outils puissants pour booster votre activité</h2>
                 <p class="section-subtitle">
-                    Des fonctionnalités pensées pour les professionnels de la quincaillerie
+                    Des fonctionnalités pensées pour <strong>tous les commerçants</strong> — quelle que soit votre activité
                 </p>
             </div>
 
@@ -149,7 +149,7 @@
                         <i class="bi bi-phone"></i>
                     </div>
                     <h3>Application mobile</h3>
-                    <p>Accédez à votre quincaillerie depuis n'importe où avec notre application mobile disponible sur iOS et Android.</p>
+                    <p>Accédez à votre entreprise depuis n'importe où avec notre application mobile disponible sur iOS et Android.</p>
                 </div>
 
                 <div class="advanced-card">
@@ -185,8 +185,8 @@
             <div class="integrations-content">
                 <div class="integrations-text">
                     <span class="section-badge">🔌 Intégrations</span>
-                    <h2>Connectez QuincaApp à vos outils préférés</h2>
-                    <p>QuincaApp s'intègre parfaitement avec les logiciels que vous utilisez déjà.</p>
+                    <h2>Connectez Inventix à vos outils préférés</h2>
+                    <p>Inventix s'intègre parfaitement avec les logiciels que vous utilisez déjà.</p>
                     <div class="integrations-list">
                         <div class="integration-item">
                             <i class="bi bi-check-circle-fill"></i>
@@ -292,7 +292,7 @@
         <div class="container">
             <div class="cta-card">
                 <h2>Prêt à découvrir toutes ces fonctionnalités ?</h2>
-                <p>Essayez QuincaApp gratuitement pendant 14 jours</p>
+                <p>Essayez Inventix gratuitement pendant 14 jours</p>
                 <div class="cta-actions">
                     <a href="{{ route('register.form') }}" class="btn-primary btn-large">
                         <i class="bi bi-rocket-takeoff"></i>

@@ -1,7 +1,7 @@
 <!-- resources/views/products/index.blade.php -->
 @extends('layouts.app')
 
-@section('title', 'Produits — QuincaApp')
+@section('title', 'Produits — Inventix')
 
 @section('styles')
 <style>

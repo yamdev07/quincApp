@@ -196,7 +196,7 @@ new class extends Component
     </section>
 
     <style>
-        /* Variables QuincaApp */
+        /* Variables Inventix */
         :root {
             --orange: #f97316;
             --orange-dark: #ea580c;

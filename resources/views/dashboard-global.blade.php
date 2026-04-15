@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', Auth::user()->isSuperAdminGlobal() ? 'Dashboard Global - Super Admin' : 'Dashboard - QuincaApp')
+@section('title', Auth::user()->isSuperAdminGlobal() ? 'Dashboard Global - Super Admin' : 'Dashboard - Inventix')
 
 @section('styles')
 <style>
@@ -706,7 +706,7 @@
             @if(Auth::user()->isSuperAdminGlobal())
                 <h1>Dashboard <span>Global</span></h1>
             @else
-                <h1>Dashboard <span>QuincaApp</span></h1>
+                <h1>Dashboard <span>Inventix</span></h1>
             @endif
             <div class="greeting">
                 <span>👋 {{ Auth::user()->name }}</span>
@@ -721,7 +721,7 @@
         <div class="dash-header-right">
             @if(Auth::user()->isSuperAdminGlobal())
                 <a href="{{ route('super-admin.tenants') }}" class="btn-primary">
-                    <i class="bi bi-building"></i> Toutes les quincailleries
+                    <i class="bi bi-building"></i> Toutes les entreprises
                 </a>
             @endif
             @if(Auth::user()->isSuperAdminOrAdmin())
@@ -741,7 +741,7 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-header">
-                    <span class="stat-label">Total quincailleries</span>
+                    <span class="stat-label">Total entreprises</span>
                     <span class="stat-icon"><i class="bi bi-building"></i></span>
                 </div>
                 <div class="stat-value">{{ $totalTenants ?? 0 }}</div>
@@ -789,7 +789,7 @@
                 <div class="alert-icon"><i class="bi bi-exclamation-triangle"></i></div>
                 <div class="alert-content">
                     <div class="alert-title">Paiements en retard</div>
-                    <div class="alert-desc">{{ $overdueTenants ?? 0 }} quincaillerie(s)</div>
+                    <div class="alert-desc">{{ $overdueTenants ?? 0 }} entreprise(s)</div>
                 </div>
                 <div class="alert-amount">{{ number_format($overdueAmount ?? 0, 0, ',', ' ') }} FCFA</div>
             </div>
@@ -825,13 +825,13 @@
         {{-- Top 5 --}}
         <div class="table-card">
             <div class="table-header">
-                <h3><i class="bi bi-trophy" style="color: var(--accent);"></i> Top 5 quincailleries</h3>
+                <h3><i class="bi bi-trophy" style="color: var(--accent);"></i> Top 5 entreprises</h3>
             </div>
             <div class="table-responsive">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Quincaillerie</th>
+                            <th>Entreprise</th>
                             <th>Propriétaire</th>
                             <th>Utilisateurs</th>
                             <th>CA</th>
@@ -857,7 +857,7 @@
                         <tr>
                             <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
                                 <i class="bi bi-building" style="font-size: 32px;"></i>
-                                <p>Aucune quincaillerie</p>
+                                <p>Aucune entreprise</p>
                             </td>
                         </tr>
                         @endforelse
@@ -868,7 +868,7 @@
 
     @else
         {{-- =====================================================
-             DASHBOARD UTILISATEUR NORMAL (quincaillerie)
+             DASHBOARD UTILISATEUR NORMAL (entreprise)
         ===================================================== --}}
         
         {{-- Stats du jour --}}
@@ -1007,7 +1007,7 @@
     {{-- Security note --}}
     <div class="security-note">
         <i class="bi bi-shield-check"></i>
-        <span>QuincaApp - Gestion de quincaillerie</span>
+        <span>Inventix - Gestion de entreprise</span>
         <span class="security-badge">v2.0</span>
     </div>
 </div>

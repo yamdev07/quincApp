@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier la catégorie : ' . $category->name . ' — QuincaApp')
+@section('title', 'Modifier la catégorie : ' . $category->name . ' — Inventix')
 
 @section('styles')
 <style>
