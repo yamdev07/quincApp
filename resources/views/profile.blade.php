@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mon Profil — QuincaApp')
+@section('title', 'Mon Profil — Inventix')
 
 @section('styles')
     @livewireStyles

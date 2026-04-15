@@ -178,7 +178,7 @@
         <div class="header">
             <div class="header-content">
                 <div class="logo">
-                    <h1>Quinca<span style="color:#f97316;">Pro</span></h1>
+                    <h1>Inventix</h1>
                     <p>Solution de gestion professionnelle</p>
                 </div>
                 <div class="invoice-number">
@@ -192,8 +192,8 @@
         <div class="info-grid">
             <div class="info-box">
                 <h3>ÉMETTEUR</h3>
-                <div class="company-name">{{ $tenant->company_name ?? 'QuincaPro' }}</div>
-                <div>{{ $tenant->address ?? '123 Avenue de la Quincaillerie' }}</div>
+                <div class="company-name">{{ $tenant->company_name ?? 'Inventix' }}</div>
+                <div>{{ $tenant->address ?? '123 Avenue du Commerce' }}</div>
                 <div>Tél: {{ $tenant->phone ?? '+225 XX XX XX XX' }}</div>
                 <div>Email: {{ $tenant->email ?? 'contact@quincapro.com' }}</div>
             </div>
@@ -239,12 +239,12 @@
         {{-- Thank You --}}
         <div class="thankyou">
             <h3>Merci pour votre confiance !</h3>
-            <p>Cet abonnement vous donne accès à toutes les fonctionnalités premium de QuincaPro.</p>
+            <p>Cet abonnement vous donne accès à toutes les fonctionnalités premium de Inventix.</p>
         </div>
         
         {{-- Footer --}}
         <div class="footer">
-            QuincaPro - Solution de gestion pour quincailleries<br>
+            Inventix - Solution de gestion de stock<br>
             {{ now()->year }} © Tous droits réservés
         </div>
         

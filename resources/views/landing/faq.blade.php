@@ -12,7 +12,7 @@
                     Questions <span class="text-gradient">fréquentes</span>
                 </h1>
                 <p class="hero-subtitle">
-                    Tout ce que vous devez savoir sur QuincaApp
+                    Tout ce que vous devez savoir sur Inventix
                 </p>
             </div>
         </div>
@@ -103,7 +103,7 @@
                             <span class="faq-toggle"><i class="bi bi-plus-lg"></i></span>
                         </div>
                         <div class="faq-answer">
-                            <p>Oui, QuincaApp s'intègre avec les principaux logiciels de comptabilité : <strong>QuickBooks, Sage, Cegid, et Dolibarr</strong>. Nous proposons également une API REST pour des intégrations personnalisées.</p>
+                            <p>Oui, Inventix s'intègre avec les principaux logiciels de comptabilité : <strong>QuickBooks, Sage, Cegid, et Dolibarr</strong>. Nous proposons également une API REST pour des intégrations personnalisées.</p>
                         </div>
                     </div>
                 </div>

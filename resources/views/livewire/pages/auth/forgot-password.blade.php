@@ -101,7 +101,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         {{-- Footer --}}
         <div class="text-center text-xs text-gray-500 mt-8">
-            QuincaPro © {{ date('Y') }} - Tous droits réservés
+            Inventix © {{ date('Y') }} - Tous droits réservés
         </div>
     </div>
 </div>

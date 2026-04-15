@@ -311,8 +311,8 @@ new #[Layout('layouts.guest')] class extends Component
                 </svg>
             </div>
             <div>
-                <div class="reg-logo-name">Quinca<em>App</em></div>
-                <div class="reg-logo-tag">Gestion Quincaillerie</div>
+                <div class="reg-logo-name">Inventix</div>
+                <div class="reg-logo-tag">Gestion de stock</div>
             </div>
         </div>
 
@@ -325,7 +325,7 @@ new #[Layout('layouts.guest')] class extends Component
                 <span class="reg-grad">référence.</span>
             </h1>
             <p class="reg-hero-desc">
-                Créez votre espace en moins de 2 minutes et prenez le contrôle de votre quincaillerie dès aujourd'hui.
+                Créez votre espace en moins de 2 minutes et prenez le contrôle de votre entreprise dès aujourd'hui.
             </p>
 
             {{-- Steps --}}
@@ -387,7 +387,7 @@ new #[Layout('layouts.guest')] class extends Component
                             d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
                     </svg>
                 </div>
-                <div class="reg-logo-name">Quinca<em>App</em></div>
+                <div class="reg-logo-name">Inventix</div>
             </div>
 
             {{-- Header --}}
@@ -397,7 +397,7 @@ new #[Layout('layouts.guest')] class extends Component
                     Inscription gratuite
                 </div>
                 <h2>Créer un compte ✨</h2>
-                <p>Rejoignez QuincaApp en quelques secondes</p>
+                <p>Rejoignez Inventix en quelques secondes</p>
             </div>
 
             <form wire:submit="register">

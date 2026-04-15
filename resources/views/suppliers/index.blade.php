@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Fournisseurs — QuincaApp')
+@section('title', 'Fournisseurs — Inventix')
 
 @section('styles')
 <style>
@@ -678,7 +678,7 @@
                         <th>Coordonnées</th>
                         <th>Date d'ajout</th>
                         @if(auth()->user()->isSuperAdminGlobal())
-                            <th>Quincaillerie</th>
+                            <th>Entreprise</th>
                         @endif
                         <th>Actions</th>
                     </tr>

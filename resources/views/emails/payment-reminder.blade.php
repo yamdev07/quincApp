@@ -59,7 +59,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <h1>QuincaPro</h1>
+            <h1>Inventix</h1>
         </div>
         
         <div class="content">
@@ -69,7 +69,7 @@
             
             <div class="info-box">
                 <p><strong>📋 Informations :</strong></p>
-                <p>Quincaillerie : {{ $tenant->company_name }}</p>
+                <p>Entreprise : {{ $tenant->company_name }}</p>
                 <p>Formule : {{ $tenant->billing_cycle_label }}</p>
                 <p>Montant : {{ $tenant->formatted_price }}</p>
                 @if($tenant->subscription_end_date)
@@ -85,7 +85,7 @@
         </div>
         
         <div class="footer">
-            <p>QuincaPro - Solution de gestion pour quincailleries</p>
+            <p>Inventix - Solution de gestion de stock</p>
             <p>© {{ date('Y') }} Tous droits réservés</p>
         </div>
     </div>

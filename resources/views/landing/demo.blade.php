@@ -19,7 +19,7 @@
                 </div>
                 
                 <h1 class="hero-title">
-                    Découvrez <span class="text-gradient">QuincaApp</span>
+                    Découvrez <span class="text-gradient">Inventix</span>
                 </h1>
                 
                 <p class="hero-description">
@@ -94,50 +94,50 @@
                                 <div class="stock-list">
                                     <div class="stock-item">
                                         <div class="item-info">
-                                            <span class="item-icon">🔨</span>
+                                            <span class="item-icon">📗</span>
                                             <div>
-                                                <div class="item-name">Marteau de charpentier</div>
-                                                <div class="item-ref">MT-001</div>
+                                                <div class="item-name">Cahier grand format</div>
+                                                <div class="item-ref">LIB-042</div>
                                             </div>
                                         </div>
-                                        <div class="item-stock warning">8</div>
-                                        <div class="item-price">4 500 FCFA</div>
+                                        <div class="item-stock success">47</div>
+                                        <div class="item-price">800 FCFA</div>
                                     </div>
-                                    
+
                                     <div class="stock-item">
                                         <div class="item-info">
-                                            <span class="item-icon">🪛</span>
+                                            <span class="item-icon">👕</span>
+                                            <div>
+                                                <div class="item-name">T-shirt coton — Taille M</div>
+                                                <div class="item-ref">VET-117</div>
+                                            </div>
+                                        </div>
+                                        <div class="item-stock warning">6</div>
+                                        <div class="item-price">4 500 FCFA</div>
+                                    </div>
+
+                                    <div class="stock-item">
+                                        <div class="item-info">
+                                            <span class="item-icon">🧴</span>
+                                            <div>
+                                                <div class="item-name">Huile de table 1L</div>
+                                                <div class="item-ref">ALI-055</div>
+                                            </div>
+                                        </div>
+                                        <div class="item-stock critical">3</div>
+                                        <div class="item-price">1 200 FCFA</div>
+                                    </div>
+
+                                    <div class="stock-item">
+                                        <div class="item-info">
+                                            <span class="item-icon">🔧</span>
                                             <div>
                                                 <div class="item-name">Tournevis cruciforme</div>
-                                                <div class="item-ref">TV-023</div>
+                                                <div class="item-ref">QUI-023</div>
                                             </div>
                                         </div>
                                         <div class="item-stock success">24</div>
-                                        <div class="item-price">1 200 FCFA</div>
-                                    </div>
-                                    
-                                    <div class="stock-item">
-                                        <div class="item-info">
-                                            <span class="item-icon">🪚</span>
-                                            <div>
-                                                <div class="item-name">Scie égoïne</div>
-                                                <div class="item-ref">SC-045</div>
-                                            </div>
-                                        </div>
-                                        <div class="item-stock critical">2</div>
-                                        <div class="item-price">8 500 FCFA</div>
-                                    </div>
-                                    
-                                    <div class="stock-item">
-                                        <div class="item-info">
-                                            <span class="item-icon">📦</span>
-                                            <div>
-                                                <div class="item-name">Clous galvanisés (kg)</div>
-                                                <div class="item-ref">CL-100</div>
-                                            </div>
-                                        </div>
-                                        <div class="item-stock warning">15</div>
-                                        <div class="item-price">1 800 FCFA</div>
+                                        <div class="item-price">1 500 FCFA</div>
                                     </div>
                                 </div>
                             </div>
@@ -472,7 +472,7 @@
                 </div>
                 
                 <h2 class="cta-title">
-                    Rejoignez plus de <span class="text-gradient">500 quincailleries</span>
+                    Rejoignez plus de <span class="text-gradient">500 commerçants</span>
                 </h2>
                 
                 <p class="cta-text">

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'QuincaPro - Gestion Quincaillerie')</title>
+    <title>@yield('title', 'Inventix - Gestion de stock')</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -225,13 +225,13 @@
                     @if(auth()->user()->tenant && !auth()->user()->isSuperAdminGlobal())
                         <div class="user-company">
                             <i class="bi bi-building"></i>
-                            {{ auth()->user()->tenant->company_name ?? 'Ma Quincaillerie' }}
+                            {{ auth()->user()->tenant->company_name ?? 'Mon Entreprise' }}
                         </div>
                     @endif
 
                     @if(auth()->user()->isSuperAdminGlobal())
                         <div class="user-company" style="color:#8b5cf6; font-weight:600;">
-                            <i class="bi bi-globe2"></i> Toutes les quincailleries
+                            <i class="bi bi-globe2"></i> Toutes les entreprises
                         </div>
                     @endif
                 </div>

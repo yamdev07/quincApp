@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Ma facture - QuincaPro')
+@section('title', 'Ma facture - Inventix')
 
 @section('styles')
 <style>
@@ -160,7 +160,7 @@
         {{-- En-tête --}}
         <div class="invoice-header">
             <h1>Facture d'abonnement</h1>
-            <p>QuincaPro - Gestion de quincaillerie</p>
+            <p>Inventix - Gestion de entreprise</p>
         </div>
 
         {{-- Corps --}}
@@ -168,7 +168,7 @@
             
             {{-- Informations entreprise --}}
             <div class="company-info">
-                <div class="company-name">{{ $tenant->company_name ?? 'Ma Quincaillerie' }}</div>
+                <div class="company-name">{{ $tenant->company_name ?? 'Mon Entreprise' }}</div>
                 <div class="company-details">
                     {{ $tenant->address ?? '' }}<br>
                     Tél: {{ $tenant->phone ?? '' }} | Email: {{ $tenant->email ?? '' }}

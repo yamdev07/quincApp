@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuincaApp - Logiciel pour quincailleries</title>
+    <title>Inventix - Logiciel de gestion de stock</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -119,10 +119,21 @@
             color: var(--accent);
             letter-spacing: -0.5px;
             transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .navbar-brand:hover {
             color: var(--orange-600);
+        }
+
+        .navbar-brand svg rect {
+            transition: fill 0.2s;
+        }
+
+        .navbar-brand:hover svg rect {
+            fill: var(--orange-600);
         }
 
         .navbar-menu {
@@ -352,8 +363,21 @@
     {{-- NAVBAR --}}
     <nav class="navbar">
         <div class="container">
-            <a href="{{ route('landing') }}" class="navbar-brand">
-                Quinca<span style="color: var(--gray-900);">App</span>
+            <a href="{{ route('landing') }}" class="navbar-brand" style="display:flex;align-items:center;gap:10px;">
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect width="36" height="36" rx="10" fill="#f97316"/>
+                    <!-- boîte -->
+                    <path d="M9 14l9-5 9 5v10l-9 5-9-5V14z" fill="white" fill-opacity="0.15" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+                    <!-- arête centrale -->
+                    <path d="M18 9v18" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- pli gauche -->
+                    <path d="M9 14l9 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- pli droit -->
+                    <path d="M27 14l-9 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- bande diagonale -->
+                    <path d="M13 11.5l10 5.5" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+                </svg>
+                <span>Invent<span style="color: var(--gray-900);">ix</span></span>
             </a>
 
             <button class="menu-toggle" onclick="document.querySelector('.navbar-menu').classList.toggle('active')">
@@ -393,8 +417,8 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <h3>QuincaApp</h3>
-                    <p>Le logiciel complet pour gérer votre quincaillerie. Stock, ventes, clients et rapports en un seul endroit.</p>
+                    <h3>Inventix</h3>
+                    <p>Le logiciel complet pour gérer votre stock et vos ventes. Produits, clients, fournisseurs et rapports en un seul endroit.</p>
                     <div class="social-links">
                         <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
                         <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
@@ -445,7 +469,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; {{ date('Y') }} QuincaApp. Tous droits réservés. | Design par l'équipe QuincaApp</p>
+                <p>&copy; {{ date('Y') }} Inventix. Tous droits réservés. | Design par l'équipe Inventix</p>
             </div>
         </div>
     </footer>

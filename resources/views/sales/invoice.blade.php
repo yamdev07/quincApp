@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Facture #' . $sale->id . ' — QuincaApp')
+@section('title', 'Facture #' . $sale->id . ' — Inventix')
 
 @section('styles')
 <style>
@@ -663,7 +663,7 @@
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                 </div>
-                <h3>QuincaApp</h3>
+                <h3>Inventix</h3>
                 <p>Votre partenaire de confiance</p>
             </div>
         </div>
@@ -857,7 +857,7 @@
 
         {{-- Footer --}}
         <div class="sf-footer">
-            <strong>QuincaApp</strong> • 123 Rue Principale, Ville • +225 XX XX XX XX • contact@quincaapp.com<br>
+            <strong>Inventix</strong> • 123 Rue Principale, Ville • +225 XX XX XX XX • contact@inventix.com<br>
             Facture générée le {{ now()->format('d/m/Y à H:i') }}
         </div>
     </div>

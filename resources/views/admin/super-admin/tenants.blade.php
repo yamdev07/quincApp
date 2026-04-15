@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Quincailleries — Super Admin')
+@section('title', 'Entreprises — Super Admin')
 
 @section('styles')
 <style>
@@ -573,7 +573,7 @@
             </div>
             <div>
                 <div class="st-title">
-                    Gestion des <span>quincailleries</span>
+                    Gestion des <span>entreprises</span>
                 </div>
                 <div class="st-sub">Gérez l'ensemble des boutiques multi-tenants</div>
             </div>
@@ -582,7 +582,7 @@
             <svg viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            Nouvelle quincaillerie
+            Nouvelle entreprise
         </a>
     </div>
 
@@ -670,7 +670,7 @@
             <table class="st-table">
                 <thead>
                     <tr>
-                        <th>Quincaillerie</th>
+                        <th>Entreprise</th>
                         <th>Sous-domaine</th>
                         <th>Propriétaire</th>
                         <th>Statut</th>
@@ -753,7 +753,7 @@
                                     
                                     <form action="{{ route('super-admin.tenants.destroy', $tenant) }}" 
                                           method="POST" class="d-inline"
-                                          onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette quincaillerie ? Toutes les données (utilisateurs, produits, ventes, etc.) seront définitivement perdues.');">
+                                          onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette entreprise ? Toutes les données (utilisateurs, produits, ventes, etc.) seront définitivement perdues.');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="st-btn st-btn-delete" title="Supprimer">
@@ -774,13 +774,13 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                         </svg>
                                     </div>
-                                    <h3>Aucune quincaillerie trouvée</h3>
+                                    <h3>Aucune entreprise trouvée</h3>
                                     <p>Commencez par créer votre première boutique</p>
                                     <a href="{{ route('super-admin.tenants.create') }}" class="btn-primary">
                                         <svg viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                         </svg>
-                                        Créer une quincaillerie
+                                        Créer une entreprise
                                     </a>
                                 </div>
                             </td>

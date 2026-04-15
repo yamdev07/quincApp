@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Facture - QuincaPro')
+@section('title', 'Facture - Inventix')
 
 @section('styles')
 <style>
@@ -380,7 +380,7 @@
         <div class="invoice-header">
             <div class="header-content">
                 <div class="logo-section">
-                    <h1>Quinca<span style="color: var(--primary);">Pro</span></h1>
+                    <h1>Inventix</h1>
                     <p>Solution de gestion professionnelle</p>
                 </div>
                 <div class="invoice-title">
@@ -397,9 +397,9 @@
             <div class="info-grid">
                 <div class="info-section">
                     <h3><i class="bi bi-building"></i> Émetteur</h3>
-                    <div class="company-name">{{ $tenant->company_name ?? 'QuincaPro' }}</div>
+                    <div class="company-name">{{ $tenant->company_name ?? 'Inventix' }}</div>
                     <div class="company-details">
-                        {{ $tenant->address ?? '123 Avenue de la Quincaillerie' }}<br>
+                        {{ $tenant->address ?? '123 Avenue du Commerce' }}<br>
                         Tél: {{ $tenant->phone ?? '+225 XX XX XX XX' }}<br>
                         Email: {{ $tenant->email ?? 'contact@quincapro.com' }}<br>
                         N° RCCM: {{ $tenant->rccm ?? 'CI-ABC-2024-001' }}
@@ -478,7 +478,7 @@
             <div class="thankyou-section">
                 <i class="bi bi-emoji-smile"></i>
                 <h3>Merci pour votre confiance !</h3>
-                <p>Cet abonnement vous donne accès à toutes les fonctionnalités premium de QuincaPro.</p>
+                <p>Cet abonnement vous donne accès à toutes les fonctionnalités premium de Inventix.</p>
             </div>
 
             {{-- Actions --}}
