@@ -14,29 +14,70 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-    <!-- Scripts / Styles principaux -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Styles -->
+    @production
+        {{-- En production, utiliser les fichiers compilés --}}
+        @php
+            $manifest = public_path('build/manifest.json');
+            if (file_exists($manifest)) {
+                $manifestData = json_decode(file_get_contents($manifest), true);
+                $cssFile = $manifestData['resources/css/app.css']['file'] ?? null;
+                $jsFile = $manifestData['resources/js/app.js']['file'] ?? null;
+            }
+        @endphp
+        @if(isset($cssFile) && $cssFile)
+            <link rel="stylesheet" href="{{ asset('build/' . $cssFile) }}">
+        @endif
+        @if(isset($jsFile) && $jsFile)
+            <script src="{{ asset('build/' . $jsFile) }}" defer></script>
+        @endif
+    @else
+        {{-- En développement, utiliser Vite --}}
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endproduction
 
-    <!-- Styles personnalisés -->
+    <!-- Styles personnalisés (toujours chargés) -->
     <style>
         :root {
             --orange: #f97316;
             --orange-dark: #ea580c;
             --orange-pale: #fff7ed;
+            --orange-soft: #fed7aa;
             --bg: #f1f5f9;
             --card: #ffffff;
             --border: #e2e8f0;
+            --border-light: #f1f5f9;
             --text: #0f172a;
-            --text-secondary: #475569;
+            --text-2: #475569;
+            --text-3: #94a3b8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --info: #2563eb;
+            --purple: #7c3aed;
+            --violet: #8b5cf6;
+            --shadow-sm: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+            --shadow-md: 0 4px 16px rgba(15,23,42,.08);
+            --shadow-orange: 0 8px 24px rgba(249,115,22,.25);
+            --radius: 20px;
+            --radius-sm: 12px;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Badges de rôle - MISE À JOUR AVEC SUPER_ADMIN_GLOBAL */
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Badges de rôle */
         .role-badge {
             display: inline-flex;
             align-items: center;
@@ -133,7 +174,7 @@
         }
 
         .user-company {
-            color: var(--text-secondary);
+            color: var(--text-2);
             font-size: 0.75rem;
         }
 
@@ -145,30 +186,81 @@
             background-color: #f1f5f9;
             border-radius: 9999px;
             font-size: 0.7rem;
-            color: var(--text-secondary);
+            color: var(--text-2);
         }
 
         .permission-badge i {
             font-size: 0.7rem;
         }
 
-        /* 👑 Badge spécial pour super_admin_global */
         .global-crown {
             color: #8b5cf6;
             margin-right: 2px;
+        }
+
+        /* Hexagone */
+        .sf-hex {
+            width: 46px;
+            height: 46px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-orange);
+        }
+
+        .sf-hex svg {
+            width: 22px;
+            height: 22px;
+            stroke: #fff;
+            fill: none;
+        }
+
+        /* Boutons */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+            border: none;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: var(--shadow-orange);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(249,115,22,0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .permission-badge {
+                display: none;
+            }
+            .user-company {
+                display: none;
+            }
         }
     </style>
     
     @yield('styles')
 </head>
 <body>
-    <!-- Contenu principal -->
     <div class="min-h-screen bg-[#f1f5f9]">
         <!-- Navigation Livewire -->
         <livewire:layout.navigation />
 
         @auth
-            <!-- Barre d'information utilisateur - MISE À JOUR -->
+            <!-- Barre d'information utilisateur -->
             <div class="user-info-bar">
                 <div class="user-info-container">
                     <div class="user-info-left">
@@ -178,7 +270,6 @@
                         <div class="user-details">
                             <span class="user-name">{{ auth()->user()->name }}</span>
                             
-                            {{-- Badge avec icône spéciale pour super_admin_global --}}
                             @if(auth()->user()->isSuperAdminGlobal())
                                 <span class="role-badge role-super_admin_global">
                                     <i class="bi bi-crown-fill global-crown"></i> Super Admin Global
@@ -213,7 +304,6 @@
                                 </span>
                             @endif
 
-                            {{-- Indicateur global pour super_admin_global --}}
                             @if(auth()->user()->isSuperAdminGlobal())
                                 <span class="permission-badge" style="background-color:#8b5cf6; color:white;">
                                     <i class="bi bi-globe2"></i> Vue globale

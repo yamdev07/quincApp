@@ -1368,4 +1368,78 @@ class ProductController extends Controller
         return redirect()->route('products.show', $product)
             ->with('success', "Stock synchronisé : {$consistency['difference']} unités corrigées. Nouveau stock : {$product->refresh()->stock}");
     }
+
+    /**
+     * Afficher le rapport d'inventaire
+     */
+    public function inventoryReport(Request $request)
+    {
+        if (!Auth::user()->canViewReports()) {
+            abort(403, 'Vous n\'avez pas les droits pour voir les rapports.');
+        }
+        
+        $query = Product::with(['category', 'supplier']);
+        
+        // Appliquer le scope tenant
+        if (method_exists(Product::class, 'sameCompany')) {
+            $query->sameCompany();
+        }
+        
+        // Filtres
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+        
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+        
+        if ($request->filled('stock_status')) {
+            switch ($request->stock_status) {
+                case 'low':
+                    $query->where('stock', '<=', 10)->where('stock', '>', 0);
+                    break;
+                case 'out':
+                    $query->where('stock', 0);
+                    break;
+                case 'in':
+                    $query->where('stock', '>', 0);
+                    break;
+            }
+        }
+        
+        // Recherche
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('id', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        $products = $query->orderBy('name')->paginate(20);
+        
+        // Statistiques
+        $statsQuery = clone $query;
+        $stats = [
+            'total_products' => $statsQuery->count(),
+            'total_stock' => $statsQuery->sum('stock'),
+            'total_value' => $statsQuery->get()->sum(function($p) {
+                return ($p->purchase_price ?? 0) * ($p->stock ?? 0);
+            }),
+            'total_sale_value' => $statsQuery->get()->sum(function($p) {
+                return ($p->sale_price ?? 0) * ($p->stock ?? 0);
+            }),
+            'low_stock_count' => (clone $query)->where('stock', '<=', 10)->where('stock', '>', 0)->count(),
+            'out_of_stock_count' => (clone $query)->where('stock', 0)->count(),
+            'categories_count' => $products->pluck('category_id')->unique()->count(),
+            'suppliers_count' => $products->pluck('supplier_id')->unique()->count(),
+        ];
+        
+        // Données pour les filtres
+        $categories = Category::sameCompany()->get();
+        $suppliers = Supplier::sameCompany()->get();
+        
+        return view('reports.inventory', compact('products', 'stats', 'categories', 'suppliers'));
+    }
 }
