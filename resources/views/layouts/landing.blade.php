@@ -210,6 +210,11 @@
             box-shadow: 0 15px 30px -8px rgba(249, 115, 22, 0.4);
         }
 
+        /* Boutons mobiles — cachés sur desktop */
+        .navbar-actions-mobile {
+            display: none;
+        }
+
         /* Menu mobile */
         .menu-toggle {
             display: none;
@@ -352,6 +357,22 @@
                 display: none;
             }
 
+            .navbar-actions-mobile {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+                padding-top: 8px;
+                border-top: 1px solid var(--border);
+                margin-top: 4px;
+            }
+
+            .navbar-actions-mobile .btn-login,
+            .navbar-actions-mobile .btn-signup {
+                text-align: center;
+                display: block;
+            }
+
             .footer-grid {
                 grid-template-columns: 1fr;
                 gap: 32px;
@@ -392,6 +413,16 @@
                 <a href="{{ route('pricing') }}" class="nav-link">Tarifs</a>
                 <a href="{{ route('features') }}" class="nav-link">Fonctionnalités</a>
                 <a href="{{route ('faq') }}" class="nav-link">FAQ</a>
+                <div class="navbar-actions-mobile">
+                    <a href="{{ route('login') }}" class="btn-login">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Connexion
+                    </a>
+                    <a href="{{ route('pricing') }}" class="btn-signup">
+                        <i class="bi bi-rocket-takeoff"></i>
+                        Essai gratuit
+                    </a>
+                </div>
             </div>
 
             <div class="navbar-actions">
