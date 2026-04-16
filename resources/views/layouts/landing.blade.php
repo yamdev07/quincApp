@@ -463,7 +463,7 @@
                     <ul class="footer-links">
                         <li><a href="{{ route('demo') }}">Démo</a></li>
                         <li><a href="{{ route('pricing') }}">Tarifs</a></li>
-                        <li><a href="#features">Fonctionnalités</a></li>
+                        <li><a href="{{ route('features') }}">Fonctionnalités</a></li>
                         <li><a href="#">Guide d'utilisation</a></li>
                     </ul>
                 </div>
