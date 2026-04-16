@@ -249,4 +249,12 @@ class LandingController extends Controller
     {
         return view('landing.features');
     }
+
+    /**
+     * Affiche le guide d'utilisation
+     */
+    public function guide()
+    {
+        return view('landing.guide');
+    }
 }

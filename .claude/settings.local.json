@@ -6,7 +6,8 @@
       "Bash(cat .dockerignore)",
       "Bash(ls .fly/)",
       "Bash(ls .fly/scripts/)",
-      "Bash(cat fly.toml)"
+      "Bash(cat fly.toml)",
+      "Bash(php artisan *)"
     ]
   }
 }
