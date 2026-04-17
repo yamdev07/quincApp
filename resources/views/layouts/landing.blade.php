@@ -412,7 +412,8 @@
                 <a href="{{ route('demo') }}" class="nav-link">Démo</a>
                 <a href="{{ route('pricing') }}" class="nav-link">Tarifs</a>
                 <a href="{{ route('features') }}" class="nav-link">Fonctionnalités</a>
-                <a href="{{route ('faq') }}" class="nav-link">FAQ</a>
+                <a href="{{ route('guide') }}" class="nav-link">Guide</a>
+                <a href="{{ route('faq') }}" class="nav-link">FAQ</a>
                 <div class="navbar-actions-mobile">
                     <a href="{{ route('login') }}" class="btn-login">
                         <i class="bi bi-box-arrow-in-right"></i>
@@ -464,7 +465,7 @@
                         <li><a href="{{ route('demo') }}">Démo</a></li>
                         <li><a href="{{ route('pricing') }}">Tarifs</a></li>
                         <li><a href="{{ route('features') }}">Fonctionnalités</a></li>
-                        <li><a href="#">Guide d'utilisation</a></li>
+                        <li><a href="{{ route('guide') }}">Guide d'utilisation</a></li>
                     </ul>
                 </div>
 
@@ -474,7 +475,7 @@
                         <li><a href="#">À propos</a></li>
                         <li><a href="#">Blog</a></li>
                         <li><a href="#">Carrières</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="mailto:contact@yyamd.com">Contact</a></li>
                     </ul>
                 </div>
 
@@ -493,7 +494,7 @@
                     <ul class="footer-links">
                         <li><a href="#">Centre d'aide</a></li>
                         <li><a href="#">Documentation</a></li>
-                        <li><a href="#">Support technique</a></li>
+                        <li><a href="mailto:contact@yyamd.com">Support technique</a></li>
                         <li><a href="#">Status</a></li>
                     </ul>
                 </div>
