@@ -475,7 +475,7 @@
                         <li><a href="#">À propos</a></li>
                         <li><a href="#">Blog</a></li>
                         <li><a href="#">Carrières</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="mailto:contact@yyamd.com">Contact</a></li>
                     </ul>
                 </div>
 
@@ -494,7 +494,7 @@
                     <ul class="footer-links">
                         <li><a href="#">Centre d'aide</a></li>
                         <li><a href="#">Documentation</a></li>
-                        <li><a href="#">Support technique</a></li>
+                        <li><a href="mailto:contact@yyamd.com">Support technique</a></li>
                         <li><a href="#">Status</a></li>
                     </ul>
                 </div>
