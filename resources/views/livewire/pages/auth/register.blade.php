@@ -311,7 +311,7 @@ new #[Layout('layouts.guest')] class extends Component
                 </svg>
             </div>
             <div>
-                <div class="reg-logo-name">Inventix</div>
+                <div class="reg-logo-name">Sellvantix</div>
                 <div class="reg-logo-tag">Gestion de stock</div>
             </div>
         </div>
@@ -387,7 +387,7 @@ new #[Layout('layouts.guest')] class extends Component
                             d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
                     </svg>
                 </div>
-                <div class="reg-logo-name">Inventix</div>
+                <div class="reg-logo-name">Sellvantix</div>
             </div>
 
             {{-- Header --}}
@@ -397,7 +397,7 @@ new #[Layout('layouts.guest')] class extends Component
                     Inscription gratuite
                 </div>
                 <h2>Créer un compte ✨</h2>
-                <p>Rejoignez Inventix en quelques secondes</p>
+                <p>Rejoignez Sellvantix en quelques secondes</p>
             </div>
 
             <form wire:submit="register">

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', Auth::user()->isSuperAdminGlobal() ? 'Dashboard Global - Super Admin' : 'Dashboard - Inventix')
+@section('title', Auth::user()->isSuperAdminGlobal() ? 'Dashboard Global - Super Admin' : 'Dashboard - Sellvantix')
 
 @section('styles')
 <style>
@@ -706,7 +706,7 @@
             @if(Auth::user()->isSuperAdminGlobal())
                 <h1>Dashboard <span>Global</span></h1>
             @else
-                <h1>Dashboard <span>Inventix</span></h1>
+                <h1>Dashboard <span>Sellvantix</span></h1>
             @endif
             <div class="greeting">
                 <span>👋 {{ Auth::user()->name }}</span>
@@ -1007,7 +1007,7 @@
     {{-- Security note --}}
     <div class="security-note">
         <i class="bi bi-shield-check"></i>
-        <span>Inventix - Gestion de entreprise</span>
+        <span>Sellvantix - Gestion de entreprise</span>
         <span class="security-badge">v2.0</span>
     </div>
 </div>

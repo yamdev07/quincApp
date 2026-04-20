@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Ma facture - Inventix')
+@section('title', 'Ma facture - Sellvantix')
 
 @section('styles')
 <style>
@@ -160,7 +160,7 @@
         {{-- En-tête --}}
         <div class="invoice-header">
             <h1>Facture d'abonnement</h1>
-            <p>Inventix - Gestion de entreprise</p>
+            <p>Sellvantix - Gestion de entreprise</p>
         </div>
 
         {{-- Corps --}}

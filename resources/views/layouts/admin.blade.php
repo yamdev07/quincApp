@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Inventix - Administration')</title>
+    <title>@yield('title', 'Sellvantix - Administration')</title>
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -456,7 +456,7 @@
         </div>
     </div>
 
-    <!-- Sidebar Inventix -->
+    <!-- Sidebar Sellvantix -->
     <div class="admin-sidebar">
         <div class="sidebar-header">
             <div class="logo-quincapro">
@@ -464,7 +464,7 @@
                     <i class="fas fa-tools"></i>
                 </div>
                 <div>
-                    <div class="logo-text">Inventix</div>
+                    <div class="logo-text">Sellvantix</div>
                     <div class="logo-slogan">Gestion de stock</div>
                 </div>
             </div>

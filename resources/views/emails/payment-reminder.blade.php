@@ -59,7 +59,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <h1>Inventix</h1>
+            <h1>Sellvantix</h1>
         </div>
         
         <div class="content">
@@ -85,7 +85,7 @@
         </div>
         
         <div class="footer">
-            <p>Inventix - Solution de gestion de stock</p>
+            <p>Sellvantix - Solution de gestion de stock</p>
             <p>© {{ date('Y') }} Tous droits réservés</p>
         </div>
     </div>

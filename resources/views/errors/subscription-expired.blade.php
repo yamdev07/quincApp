@@ -10,7 +10,7 @@
         <h1 class="text-3xl font-bold text-gray-900 mb-4">Abonnement expiré</h1>
         <p class="text-lg text-gray-600 mb-8">
             Votre abonnement a expiré.<br>
-            Pour continuer à profiter de Inventix, veuillez le renouveler.
+            Pour continuer à profiter de Sellvantix, veuillez le renouveler.
         </p>
         <a href="{{ route('payment.form') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all">
             <i class="bi bi-credit-card"></i>

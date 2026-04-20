@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Paiement - Inventix')
+@section('title', 'Paiement - Sellvantix')
 
 @section('styles')
 <style>
@@ -739,7 +739,7 @@
                         data-button-text="Payer {{ number_format($amount, 0) }} FCFA"
                         data-button-class="pay-btn"
                         data-transaction-amount="{{ $amount }}"
-                        data-transaction-description="Abonnement Inventix - {{ $currentPlan['name'] }}"
+                        data-transaction-description="Abonnement Sellvantix - {{ $currentPlan['name'] }}"
                         data-currency-iso="XOF"
                         data-customer-email="{{ Auth::user()->email }}"
                         data-customer-firstname="{{ explode(' ', Auth::user()->name)[0] ?? '' }}"
