@@ -657,14 +657,31 @@
                 </p>
             </div>
             <div class="sf-invoice-logo">
-                <div class="sf-logo">
-                    <svg viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                </div>
-                <h3>Sellvantix</h3>
-                <p>Votre partenaire de confiance</p>
+                @if($tenant && $tenant->logo)
+                    <img src="{{ Storage::url($tenant->logo) }}"
+                         alt="Logo {{ $tenant->company_name }}"
+                         style="max-width:120px; max-height:80px; object-fit:contain; margin: 0 0 12px auto; display:block;">
+                @else
+                    <div class="sf-logo">
+                        <svg viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                @endif
+                <h3>{{ $tenant->company_name ?? 'Mon Entreprise' }}</h3>
+                @if($tenant && $tenant->address)
+                    <p>{{ $tenant->address }}</p>
+                @endif
+                @if($tenant && $tenant->phone)
+                    <p>{{ $tenant->phone }}</p>
+                @endif
+                @if($tenant && $tenant->ifu)
+                    <p style="font-size:11px; color: var(--text-3);">IFU : {{ $tenant->ifu }}</p>
+                @endif
+                @if($tenant && $tenant->rccm)
+                    <p style="font-size:11px; color: var(--text-3);">RCCM : {{ $tenant->rccm }}</p>
+                @endif
             </div>
         </div>
 
@@ -797,6 +814,12 @@
         </div>
 
         {{-- Totaux --}}
+        @php
+            $taxRate    = $tenant->tax_rate ?? 0;
+            $subtotal   = $sale->total_price;
+            $taxAmount  = round($subtotal * $taxRate / 100, 0);
+            $grandTotal = $subtotal + $taxAmount;
+        @endphp
         <div class="sf-totals">
             <div class="sf-totals-grid">
                 <div class="sf-recap">
@@ -809,19 +832,31 @@
                         <span>Articles différents:</span>
                         <strong>{{ $sale->items->count() }}</strong>
                     </div>
+                    @if($tenant && $tenant->ifu)
+                    <div class="sf-recap-line" style="margin-top:12px;">
+                        <span>IFU :</span>
+                        <strong>{{ $tenant->ifu }}</strong>
+                    </div>
+                    @endif
+                    @if($tenant && $tenant->rccm)
+                    <div class="sf-recap-line">
+                        <span>RCCM :</span>
+                        <strong>{{ $tenant->rccm }}</strong>
+                    </div>
+                    @endif
                 </div>
                 <div class="sf-total-box">
                     <div class="sf-total-row">
-                        <span>Sous-total:</span>
-                        <span>{{ number_format($sale->total_price, 0, ',', ' ') }} FCFA</span>
+                        <span>Sous-total HT :</span>
+                        <span>{{ number_format($subtotal, 0, ',', ' ') }} FCFA</span>
                     </div>
                     <div class="sf-total-row">
-                        <span>TVA (0%):</span>
-                        <span>0 FCFA</span>
+                        <span>TVA ({{ number_format($taxRate, 2) }}%) :</span>
+                        <span>{{ $taxRate > 0 ? number_format($taxAmount, 0, ',', ' ') . ' FCFA' : 'Exonéré' }}</span>
                     </div>
                     <div class="sf-total-row grand">
-                        <span>TOTAL:</span>
-                        <span>{{ number_format($sale->total_price, 0, ',', ' ') }} FCFA</span>
+                        <span>TOTAL TTC :</span>
+                        <span>{{ number_format($grandTotal, 0, ',', ' ') }} FCFA</span>
                     </div>
                 </div>
             </div>
@@ -857,8 +892,13 @@
 
         {{-- Footer --}}
         <div class="sf-footer">
-            <strong>Sellvantix</strong> • 123 Rue Principale, Ville • +225 XX XX XX XX • contact@sellvantix.com<br>
-            Facture générée le {{ now()->format('d/m/Y à H:i') }}
+            <strong>{{ $tenant->company_name ?? 'Mon Entreprise' }}</strong>
+            @if($tenant && $tenant->address) • {{ $tenant->address }} @endif
+            @if($tenant && $tenant->phone) • {{ $tenant->phone }} @endif
+            @if($tenant && $tenant->email) • {{ $tenant->email }} @endif
+            @if($tenant && $tenant->ifu) • IFU : {{ $tenant->ifu }} @endif
+            @if($tenant && $tenant->rccm) • RCCM : {{ $tenant->rccm }} @endif
+            <br>Facture générée le {{ now()->format('d/m/Y à H:i') }}
         </div>
     </div>
 

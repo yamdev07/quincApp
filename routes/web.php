@@ -154,6 +154,15 @@ Route::middleware(['auth', 'check.trial', 'admin'])->prefix('users')->name('user
 });
 
 // ======================
+// Routes PARAMÈTRES ENTREPRISE (super_admin et admin uniquement)
+// ======================
+Route::middleware(['auth', 'check.trial', 'admin'])->prefix('company')->name('company.')->group(function () {
+    Route::get('/settings', [App\Http\Controllers\CompanySettingsController::class, 'edit'])->name('settings');
+    Route::put('/settings', [App\Http\Controllers\CompanySettingsController::class, 'update'])->name('settings.update');
+    Route::get('/settings/delete-logo', [App\Http\Controllers\CompanySettingsController::class, 'deleteLogo'])->name('settings.delete-logo');
+});
+
+// ======================
 // Routes protégées par authentification (pour tous les utilisateurs) - AVEC TRIAL
 // ======================
 Route::middleware(['auth', 'check.trial'])->group(function () {

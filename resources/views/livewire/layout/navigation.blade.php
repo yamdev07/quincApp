@@ -200,13 +200,23 @@ new class extends Component
 
                     <x-slot name="content">
                         <div class="py-1 bg-[#111116] border border-[rgba(249,115,22,0.13)] rounded-lg">
-                            <x-dropdown-link :href="route('profile')" wire:navigate 
+                            <x-dropdown-link :href="route('profile')" wire:navigate
                                 class="qapp-dropdown-link">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                                 {{ __('Profile') }}
                             </x-dropdown-link>
+
+                            @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
+                            <x-dropdown-link :href="route('company.settings')" wire:navigate
+                                class="qapp-dropdown-link">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                Paramètres Entreprise
+                            </x-dropdown-link>
+                            @endif
 
                             <!-- Authentication -->
                             <button wire:click="logout" class="w-full text-start">
@@ -347,13 +357,23 @@ new class extends Component
             </div>
 
             <div class="mt-3 space-y-1 px-4">
-                <x-responsive-nav-link :href="route('profile')" wire:navigate 
+                <x-responsive-nav-link :href="route('profile')" wire:navigate
                     class="qapp-responsive-nav-link">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
+
+                @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
+                <x-responsive-nav-link :href="route('company.settings')" wire:navigate
+                    class="qapp-responsive-nav-link">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Paramètres Entreprise
+                </x-responsive-nav-link>
+                @endif
 
                 <!-- Authentication -->
                 <button wire:click="logout" class="w-full text-start">
