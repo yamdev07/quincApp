@@ -398,7 +398,7 @@
                     <!-- bande diagonale -->
                     <path d="M13 11.5l10 5.5" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
                 </svg>
-                <span>Sellvantix</span>
+                <span style="color: var(--gray-900);">Sell<span style="color: var(--accent);">vantix</span></span>
             </a>
 
             <button class="menu-toggle" onclick="document.querySelector('.navbar-menu').classList.toggle('active')">

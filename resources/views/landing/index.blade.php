@@ -224,27 +224,27 @@
             <div class="pills-container">
                 <a href="{{ route('pricing') }}?plan=monthly" class="pill-card">
                     <span class="pill-name">Mensuel</span>
-                    <span class="pill-price">10 000 FCFA</span>
+                    <span class="pill-price">15 000 FCFA</span>
                     <span class="pill-period">/mois</span>
                 </a>
                 <a href="{{ route('pricing') }}?plan=quarterly" class="pill-card">
                     <span class="pill-name">Trimestriel</span>
-                    <span class="pill-price">28 500 FCFA</span>
+                    <span class="pill-price">39 900 FCFA</span>
                     <span class="pill-period">/3 mois</span>
-                    <span class="pill-badge">-5%</span>
+                    <span class="pill-badge">-11%</span>
                 </a>
                 <a href="{{ route('pricing') }}?plan=semester" class="pill-card popular">
                     <span class="pill-popular">⭐ Populaire</span>
                     <span class="pill-name">Semestriel</span>
-                    <span class="pill-price">54 000 FCFA</span>
+                    <span class="pill-price">79 900 FCFA</span>
                     <span class="pill-period">/6 mois</span>
-                    <span class="pill-badge">-10%</span>
+                    <span class="pill-badge">-6%</span>
                 </a>
                 <a href="{{ route('pricing') }}?plan=yearly" class="pill-card">
                     <span class="pill-name">Annuel</span>
-                    <span class="pill-price">85 000 FCFA</span>
+                    <span class="pill-price">105 000 FCFA</span>
                     <span class="pill-period">/an</span>
-                    <span class="pill-badge">-29%</span>
+                    <span class="pill-badge">-42%</span>
                 </a>
             </div>
 

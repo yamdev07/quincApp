@@ -25,7 +25,7 @@ class PaymentConfirmationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '✅ Confirmation de paiement - QuincaPro',
+            subject: '✅ Confirmation de paiement - Sellvantix',
         );
     }
 

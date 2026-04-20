@@ -69,10 +69,10 @@ class SubscriptionController extends Controller
         
         // Options de formules disponibles
         $availablePlans = [
-            ['type' => 'monthly', 'name' => 'Mensuel', 'price' => 10000, 'duration' => '1 mois'],
-            ['type' => 'quarterly', 'name' => 'Trimestriel', 'price' => 28500, 'duration' => '3 mois', 'saving' => 'Économisez 1 500 FCFA'],
-            ['type' => 'semester', 'name' => 'Semestriel', 'price' => 54000, 'duration' => '6 mois', 'saving' => 'Économisez 6 000 FCFA', 'popular' => true],
-            ['type' => 'yearly', 'name' => 'Annuel', 'price' => 85000, 'duration' => '12 mois', 'saving' => 'Économisez 35 000 FCFA'],
+            ['type' => 'monthly', 'name' => 'Mensuel', 'price' => 15000, 'duration' => '1 mois'],
+            ['type' => 'quarterly', 'name' => 'Trimestriel', 'price' => 39900, 'duration' => '3 mois', 'saving' => 'Économisez 10 100 FCFA'],
+            ['type' => 'semester', 'name' => 'Semestriel', 'price' => 79900, 'duration' => '6 mois', 'saving' => 'Économisez 10 100 FCFA', 'popular' => true],
+            ['type' => 'yearly', 'name' => 'Annuel', 'price' => 105000, 'duration' => '12 mois', 'saving' => 'Économisez 75 000 FCFA'],
         ];
         
         return view('subscription.show', compact(

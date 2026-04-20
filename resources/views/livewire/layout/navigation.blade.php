@@ -33,7 +33,7 @@ new class extends Component
                             </div>
                         </div>
                         <div>
-                            <h1 class="text-xl font-bold text-[#f5f3ef]">Sellvantix</h1>
+                            <h1 class="text-xl font-bold text-[#f5f3ef]">Sell<em class="text-[#f97316] not-italic">vantix</em></h1>
                             <p class="text-xs text-[#55535f]">Gestion de stock</p>
                         </div>
                     </a>
