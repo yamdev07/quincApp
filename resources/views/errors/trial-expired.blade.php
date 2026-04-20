@@ -69,7 +69,7 @@
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer"
                                 data-transaction-amount="10000"
-                                data-transaction-description="Abonnement Inventix - Formule Mensuelle"
+                                data-transaction-description="Abonnement Sellvantix - Formule Mensuelle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"
                                 data-customer-firstname="{{ explode(' ', Auth::user()->name)[0] ?? '' }}"
@@ -127,7 +127,7 @@
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer"
                                 data-transaction-amount="28500"
-                                data-transaction-description="Abonnement Inventix - Formule Trimestrielle"
+                                data-transaction-description="Abonnement Sellvantix - Formule Trimestrielle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"
                                 data-customer-firstname="{{ explode(' ', Auth::user()->name)[0] ?? '' }}"
@@ -190,7 +190,7 @@
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer shadow-lg"
                                 data-transaction-amount="54000"
-                                data-transaction-description="Abonnement Inventix - Formule Semestrielle"
+                                data-transaction-description="Abonnement Sellvantix - Formule Semestrielle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"
                                 data-customer-firstname="{{ explode(' ', Auth::user()->name)[0] ?? '' }}"
@@ -207,12 +207,12 @@
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-gray-800 mb-2">Annuel</h3>
                         <div class="mb-2">
-                            <span class="text-4xl font-black text-orange-600">102 000</span>
+                            <span class="text-4xl font-black text-orange-600">85 000</span>
                             <span class="text-gray-500">FCFA</span>
                         </div>
                         <p class="text-sm text-gray-500">/ an</p>
                         <div class="inline-block mt-2 px-2 py-1 bg-green-100 rounded-lg">
-                            <p class="text-xs text-green-700 font-semibold">Économisez 18 000 FCFA</p>
+                            <p class="text-xs text-green-700 font-semibold">Économisez 35 000 FCFA</p>
                         </div>
                     </div>
                     
@@ -246,15 +246,15 @@
                     <div class="mt-auto pt-4">
                         <form action="{{ route('payment.callback') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="amount" value="102000">
+                            <input type="hidden" name="amount" value="85000">
                             <input type="hidden" name="plan_type" value="yearly">
                             <script 
                                 src="https://cdn.fedapay.com/checkout.js?v=1.1.7"
                                 data-public-key="{{ config('services.fedapay.public_key') }}"
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer"
-                                data-transaction-amount="102000"
-                                data-transaction-description="Abonnement Inventix - Formule Annuelle"
+                                data-transaction-amount="85000"
+                                data-transaction-description="Abonnement Sellvantix - Formule Annuelle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"
                                 data-customer-firstname="{{ explode(' ', Auth::user()->name)[0] ?? '' }}"

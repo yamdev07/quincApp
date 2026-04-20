@@ -14,7 +14,7 @@
                     quel que soit votre commerce
                 </h1>
                 <p class="hero-subtitle">
-                    Inventix s'adapte à <strong>tout type de commerce de détail</strong> — stocks, ventes, clients et fournisseurs en un seul endroit.<br>
+                    Sellvantix s'adapte à <strong>tout type de commerce de détail</strong> — stocks, ventes, clients et fournisseurs en un seul endroit.<br>
                     Essayez gratuitement pendant 14 jours, sans engagement.
                 </p>
                 <div class="hero-actions">
@@ -84,7 +84,7 @@
                 <span class="section-badge">🏪 Pour qui ?</span>
                 <h2 class="section-title">Un logiciel qui s'adapte à <span class="text-gradient">votre activité</span></h2>
                 <p class="section-subtitle">
-                    Quincaillerie, librairie, épicerie, pharmacie, boutique… Inventix fonctionne pour <strong>tout commerce de détail</strong>.
+                    Quincaillerie, librairie, épicerie, pharmacie, boutique… Sellvantix fonctionne pour <strong>tout commerce de détail</strong>.
                 </p>
             </div>
 
@@ -117,7 +117,7 @@
                 <div class="business-card business-card-any">
                     <div class="business-icon">🏪</div>
                     <h3>Votre commerce</h3>
-                    <p>Inventix s'adapte à <em>n'importe quelle</em> activité</p>
+                    <p>Sellvantix s'adapte à <em>n'importe quelle</em> activité</p>
                 </div>
             </div>
         </div>
@@ -242,9 +242,9 @@
                 </a>
                 <a href="{{ route('pricing') }}?plan=yearly" class="pill-card">
                     <span class="pill-name">Annuel</span>
-                    <span class="pill-price">102 000 FCFA</span>
+                    <span class="pill-price">85 000 FCFA</span>
                     <span class="pill-period">/an</span>
-                    <span class="pill-badge">-15%</span>
+                    <span class="pill-badge">-29%</span>
                 </a>
             </div>
 
@@ -284,7 +284,7 @@
                     <div class="testimonial-stars">★★★★★</div>
                     <div class="testimonial-tag">🔧 Quincaillerie</div>
                     <p class="testimonial-text">
-                        "Depuis qu'on utilise Inventix, j'ai réduit le temps de gestion de stock de 70%. L'interface est intuitive et les alertes de rupture nous ont évité bien des problèmes."
+                        "Depuis qu'on utilise Sellvantix, j'ai réduit le temps de gestion de stock de 70%. L'interface est intuitive et les alertes de rupture nous ont évité bien des problèmes."
                     </p>
                     <div class="testimonial-author">
                         <div class="author-avatar">JD</div>
@@ -299,7 +299,7 @@
                     <div class="testimonial-stars">★★★★★</div>
                     <div class="testimonial-tag">📚 Librairie</div>
                     <p class="testimonial-text">
-                        "On gère plus de 3 000 références de livres et papeterie. Inventix nous permet de savoir en temps réel ce qu'il faut réapprovisionner. Un gain de temps énorme."
+                        "On gère plus de 3 000 références de livres et papeterie. Sellvantix nous permet de savoir en temps réel ce qu'il faut réapprovisionner. Un gain de temps énorme."
                     </p>
                     <div class="testimonial-author">
                         <div class="author-avatar">AF</div>
@@ -335,7 +335,7 @@
                 <span class="section-badge">FAQ</span>
                 <h2 class="section-title">Questions fréquentes</h2>
                 <p class="section-subtitle">
-                    Tout ce que vous devez savoir sur Inventix
+                    Tout ce que vous devez savoir sur Sellvantix
                 </p>
             </div>
 

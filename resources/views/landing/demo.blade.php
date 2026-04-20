@@ -19,7 +19,7 @@
                 </div>
                 
                 <h1 class="hero-title">
-                    Découvrez <span class="text-gradient">Inventix</span>
+                    Découvrez <span class="text-gradient">Sellvantix</span>
                 </h1>
                 
                 <p class="hero-description">
@@ -309,7 +309,7 @@
                                         <div class="row-avatar" style="background: linear-gradient(135deg, #f97316, #ea580c)">JD</div>
                                         <div class="row-info">
                                             <strong>Jean Dupont</strong>
-                                            <span>12 achats · 145 000 FCFA</span>
+                                            <span>12 achats · 135 000 FCFA</span>
                                         </div>
                                     </div>
                                     

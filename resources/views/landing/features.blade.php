@@ -185,8 +185,8 @@
             <div class="integrations-content">
                 <div class="integrations-text">
                     <span class="section-badge">🔌 Intégrations</span>
-                    <h2>Connectez Inventix à vos outils préférés</h2>
-                    <p>Inventix s'intègre parfaitement avec les logiciels que vous utilisez déjà.</p>
+                    <h2>Connectez Sellvantix à vos outils préférés</h2>
+                    <p>Sellvantix s'intègre parfaitement avec les logiciels que vous utilisez déjà.</p>
                     <div class="integrations-list">
                         <div class="integration-item">
                             <i class="bi bi-check-circle-fill"></i>
@@ -292,7 +292,7 @@
         <div class="container">
             <div class="cta-card">
                 <h2>Prêt à découvrir toutes ces fonctionnalités ?</h2>
-                <p>Essayez Inventix gratuitement pendant 14 jours</p>
+                <p>Essayez Sellvantix gratuitement pendant 14 jours</p>
                 <div class="cta-actions">
                     <a href="{{ route('register.form') }}" class="btn-primary btn-large">
                         <i class="bi bi-rocket-takeoff"></i>

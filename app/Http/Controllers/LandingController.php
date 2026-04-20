@@ -62,10 +62,10 @@ class LandingController extends Controller
             ],
             'yearly' => [
                 'name' => 'Annuel',
-                'price' => 102000,
-                'formatted' => '102 000 FCFA',
+                'price' => 85000,
+                'formatted' => '85 000 FCFA',
                 'period' => '/an',
-                'savings' => '15%',
+                'savings' => '29%',
                 'popular' => false
             ],
         ];
@@ -115,12 +115,12 @@ class LandingController extends Controller
             ],
             'yearly' => [
                 'name' => 'Annuel',
-                'price' => 102000,
-                'formatted' => '102 000 FCFA',
+                'price' => 85000,
+                'formatted' => '85 000 FCFA',
                 'period' => '/an'
             ],
         ];
-        
+
         $planName = $plans[$plan]['name'];
         $planPrice = $plans[$plan]['formatted'];
         
@@ -149,7 +149,7 @@ class LandingController extends Controller
                 'monthly' => 10000,
                 'quarterly' => 28500,
                 'semester' => 54000,
-                'yearly' => 102000,
+                'yearly' => 85000,
             ];
             
             // GÉNÉRER LE MOT DE PASSE (on le garde en clair pour l'email)

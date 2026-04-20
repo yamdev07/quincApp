@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenue sur Inventix</title>
+    <title>Bienvenue sur Sellvantix</title>
     <style>
         body {
             font-family: 'Inter', Arial, sans-serif;
@@ -101,15 +101,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎉 Bienvenue sur Inventix !</h1>
+            <h1>🎉 Bienvenue sur Sellvantix !</h1>
         </div>
         
         <div class="content">
             <h2 style="margin-top:0;">Bonjour {{ $user->name }},</h2>
             
-            <p>Votre entreprise <strong>{{ $user->tenant->company_name ?? 'Inventix' }}</strong> a été créée avec succès !</p>
+            <p>Votre entreprise <strong>{{ $user->tenant->company_name ?? 'Sellvantix' }}</strong> a été créée avec succès !</p>
             
-            <p>Vous bénéficiez maintenant d'un essai gratuit de <strong>14 jours</strong> pour découvrir toutes les fonctionnalités de Inventix.</p>
+            <p>Vous bénéficiez maintenant d'un essai gratuit de <strong>14 jours</strong> pour découvrir toutes les fonctionnalités de Sellvantix.</p>
             
             <div class="credentials">
                 <h3 style="margin-top:0; color:#ea580c;">🔑 Vos identifiants de connexion</h3>
@@ -142,7 +142,7 @@
         </div>
         
         <div class="footer">
-            <p>&copy; {{ date('Y') }} Inventix. Tous droits réservés.</p>
+            <p>&copy; {{ date('Y') }} Sellvantix. Tous droits réservés.</p>
             <p style="margin-top:10px;">Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
         </div>
     </div>

@@ -10,11 +10,11 @@
             <div class="guide-hero-content">
                 <span class="hero-badge">📖 Guide d'utilisation</span>
                 <h1 class="hero-title">
-                    Maîtrisez <span class="text-gradient">Inventix</span><br>
+                    Maîtrisez <span class="text-gradient">Sellvantix</span><br>
                     en quelques minutes
                 </h1>
                 <p class="hero-subtitle">
-                    Ce guide vous accompagne pas à pas dans la prise en main d'Inventix — de l'inscription
+                    Ce guide vous accompagne pas à pas dans la prise en main d'Sellvantix — de l'inscription
                     à la gestion quotidienne de votre stock, vos ventes et vos rapports.
                 </p>
                 <div class="guide-search">
@@ -91,7 +91,7 @@
                         <div class="section-badge-guide">
                             <i class="bi bi-rocket-takeoff"></i> Démarrage rapide
                         </div>
-                        <h2>Commencer avec Inventix</h2>
+                        <h2>Commencer avec Sellvantix</h2>
                         <p class="section-intro">
                             En moins de 5 minutes, votre espace est prêt. Voici les 4 étapes pour démarrer.
                         </p>
@@ -258,7 +258,7 @@
                         </div>
                         <h2>Gérer vos produits et votre stock</h2>
                         <p class="section-intro">
-                            La gestion des produits est le cœur d'Inventix. Voici comment ajouter, modifier et suivre votre inventaire.
+                            La gestion des produits est le cœur d'Sellvantix. Voici comment ajouter, modifier et suivre votre inventaire.
                         </p>
 
                         <div class="guide-feature-block">
@@ -709,7 +709,7 @@
                                     </div>
                                     <div class="plan-row">
                                         <span class="plan-name">Annuel</span>
-                                        <span class="plan-price">102 000 FCFA <span class="plan-saving">-15%</span></span>
+                                        <span class="plan-price">85 000 FCFA <span class="plan-saving">-29%</span></span>
                                     </div>
                                 </div>
                             </div>
@@ -738,11 +738,11 @@
                         <div class="faq-accordion">
                             <div class="faq-item-guide">
                                 <button class="faq-question" onclick="toggleFaq(this)">
-                                    <span>Puis-je utiliser Inventix sur mobile ?</span>
+                                    <span>Puis-je utiliser Sellvantix sur mobile ?</span>
                                     <i class="bi bi-chevron-down"></i>
                                 </button>
                                 <div class="faq-answer">
-                                    <p>Oui, Inventix est entièrement responsive. Il fonctionne sur smartphones et tablettes via votre navigateur web. Aucune application à télécharger.</p>
+                                    <p>Oui, Sellvantix est entièrement responsive. Il fonctionne sur smartphones et tablettes via votre navigateur web. Aucune application à télécharger.</p>
                                 </div>
                             </div>
 
@@ -772,7 +772,7 @@
                                     <i class="bi bi-chevron-down"></i>
                                 </button>
                                 <div class="faq-answer">
-                                    <p>L'abonnement Inventix inclut un nombre d'utilisateurs généreux adapté aux petites et moyennes structures. Vous pouvez créer autant d'utilisateurs que nécessaire pour votre équipe.</p>
+                                    <p>L'abonnement Sellvantix inclut un nombre d'utilisateurs généreux adapté aux petites et moyennes structures. Vous pouvez créer autant d'utilisateurs que nécessaire pour votre équipe.</p>
                                 </div>
                             </div>
 
@@ -802,7 +802,7 @@
                     <div class="guide-cta-block">
                         <div class="guide-cta-inner">
                             <h3>Prêt à démarrer ?</h3>
-                            <p>Essayez Inventix gratuitement pendant 14 jours — sans carte bancaire, sans engagement.</p>
+                            <p>Essayez Sellvantix gratuitement pendant 14 jours — sans carte bancaire, sans engagement.</p>
                             <div class="guide-cta-actions">
                                 <a href="{{ route('demo') }}" class="btn-guide-outline">
                                     <i class="bi bi-play-circle"></i> Voir la démo

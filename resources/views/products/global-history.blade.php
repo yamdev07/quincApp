@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Historique global des mouvements — Inventix')
+@section('title', 'Historique global des mouvements — Sellvantix')
 
 @section('styles')
 <style>

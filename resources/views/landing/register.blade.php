@@ -1,7 +1,7 @@
 {{-- resources/views/landing/register.blade.php --}}
 @extends('layouts.landing')
 
-@section('title', 'Créer votre entreprise — Inventix')
+@section('title', 'Créer votre entreprise — Sellvantix')
 
 @section('content')
 <div class="register-page">
@@ -26,7 +26,7 @@
                         'monthly' => '10 000 FCFA/mois',
                         'quarterly' => '28 500 FCFA/3 mois',
                         'semester' => '54 000 FCFA/6 mois',
-                        'yearly' => '102 000 FCFA/an'
+                        'yearly' => '85 000 FCFA/an'
                     ];
                 @endphp
                 <span class="plan-badge">{{ $planNames[$plan] ?? 'Formule Mensuelle' }}</span>

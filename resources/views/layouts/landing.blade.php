@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventix - Logiciel de gestion de stock</title>
+    <title>Sellvantix - Logiciel de gestion de stock</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -398,7 +398,7 @@
                     <!-- bande diagonale -->
                     <path d="M13 11.5l10 5.5" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
                 </svg>
-                <span>Invent<span style="color: var(--gray-900);">ix</span></span>
+                <span>Sellvantix</span>
             </a>
 
             <button class="menu-toggle" onclick="document.querySelector('.navbar-menu').classList.toggle('active')">
@@ -449,7 +449,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <h3>Inventix</h3>
+                    <h3>Sellvantix</h3>
                     <p>Le logiciel complet pour gérer votre stock et vos ventes. Produits, clients, fournisseurs et rapports en un seul endroit.</p>
                     <div class="social-links">
                         <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
@@ -501,7 +501,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; {{ date('Y') }} Inventix. Tous droits réservés. | Design par l'équipe Inventix</p>
+                <p>&copy; {{ date('Y') }} Sellvantix. Tous droits réservés. | Design par l'équipe Sellvantix</p>
             </div>
         </div>
     </footer>

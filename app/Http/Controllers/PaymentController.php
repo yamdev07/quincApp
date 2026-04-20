@@ -54,7 +54,7 @@ class PaymentController extends Controller
             'monthly' => ['name' => 'Mensuel', 'price' => 10000, 'duration' => '1 mois'],
             'quarterly' => ['name' => 'Trimestriel', 'price' => 28500, 'duration' => '3 mois', 'saving' => 'Économisez 1 500 FCFA'],
             'semester' => ['name' => 'Semestriel', 'price' => 54000, 'duration' => '6 mois', 'saving' => 'Économisez 6 000 FCFA', 'popular' => true],
-            'yearly' => ['name' => 'Annuel', 'price' => 102000, 'duration' => '12 mois', 'saving' => 'Économisez 18 000 FCFA'],
+            'yearly' => ['name' => 'Annuel', 'price' => 85000, 'duration' => '12 mois', 'saving' => 'Économisez 35 000 FCFA'],
         ];
         
         $currentPlan = $plans[$selectedPlan] ?? $plans['monthly'];

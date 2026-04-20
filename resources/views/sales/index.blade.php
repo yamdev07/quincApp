@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Historique des ventes — Inventix')
+@section('title', 'Historique des ventes — Sellvantix')
 
 @section('styles')
 <style>

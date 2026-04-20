@@ -168,11 +168,11 @@
                     <div class="card-header">
                         <h3 class="card-title">Annuel</h3>
                         <div class="card-price">
-                            <span class="price-number">102 000</span>
+                            <span class="price-number">85 000</span>
                             <span class="price-period">FCFA/an</span>
                         </div>
                         <div class="card-saving">
-                            Économisez 18 000 FCFA
+                            Économisez 35 000 FCFA
                         </div>
                     </div>
                     
@@ -237,7 +237,7 @@
                     <div class="table-cell">10 000 FCFA</div>
                     <div class="table-cell">28 500 FCFA</div>
                     <div class="table-cell">54 000 FCFA</div>
-                    <div class="table-cell">102 000 FCFA</div>
+                    <div class="table-cell">85 000 FCFA</div>
                 </div>
                 
                 <div class="table-row">
@@ -245,7 +245,7 @@
                     <div class="table-cell">10 000 FCFA</div>
                     <div class="table-cell">9 500 FCFA</div>
                     <div class="table-cell">9 000 FCFA</div>
-                    <div class="table-cell">8 500 FCFA</div>
+                    <div class="table-cell">7 083 FCFA</div>
                 </div>
                 
                 <div class="table-row">
