@@ -53,9 +53,9 @@ class SubscriptionController extends Controller
         // Calcul des jours restants
         $daysRemaining = 0;
         if ($subscriptionStatus === 'paid' && $endDate) {
-            $daysRemaining = Carbon::now()->diffInDays($endDate, false);
+            $daysRemaining = (int) Carbon::now()->diffInDays($endDate, false);
         } elseif ($subscriptionStatus === 'trial' && $trialEndDate) {
-            $daysRemaining = Carbon::now()->diffInDays($trialEndDate, false);
+            $daysRemaining = (int) Carbon::now()->diffInDays($trialEndDate, false);
         }
         
         // Historique des paiements

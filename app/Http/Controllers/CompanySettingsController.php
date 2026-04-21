@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,12 @@ class CompanySettingsController extends Controller
 
         if (!$tenant) {
             abort(404, 'Aucune entreprise associée à votre compte.');
+        }
+
+        $plan = PlanService::for($tenant);
+        if (!$plan->canUseNormalizedInvoice()) {
+            return redirect()->route('dashboard')
+                ->with('upgrade', "Les paramètres entreprise (logo, IFU, factures normalisées) sont disponibles à partir du plan Business (15 000 FCFA/mois).");
         }
 
         return view('company.settings', compact('tenant'));

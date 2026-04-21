@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Category;
 use App\Services\GroqAIService;
+use App\Services\PlanService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,14 @@ class AIAnalysisController extends Controller
 
     public function index()
     {
+        $user = Auth::user();
+        if (!$user->isSuperAdminGlobal() && $user->tenant) {
+            $plan = PlanService::for($user->tenant);
+            if (!$plan->canUseAI()) {
+                return redirect()->route('reports.index')
+                    ->with('upgrade', "L'Analyse IA est disponible à partir du plan Business (15 000 FCFA/mois).");
+            }
+        }
         return view('ai.analysis');
     }
 
