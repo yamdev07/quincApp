@@ -32,7 +32,7 @@ class NewTenantWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bienvenue sur QuincaPro - Vos identifiants de connexion',
+            subject: 'Bienvenue sur Sellvantix - Vos identifiants de connexion',
         );
     }
 

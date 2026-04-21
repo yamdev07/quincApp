@@ -26,6 +26,7 @@ class Product extends Model
         'owner_id',
         'tenant_id',
         'user_id',
+        'stock_alert',
     ];
 
     // Conversion des types de données
@@ -35,6 +36,7 @@ class Product extends Model
         'discount' => 'decimal:2',
         'quantity' => 'integer',
         'stock' => 'integer',
+        'stock_alert' => 'integer',
     ];
 
     // ============ RELATIONS ============
@@ -90,7 +92,7 @@ class Product extends Model
     {
         if ($this->stock <= 0) {
             return 'out_of_stock';
-        } elseif ($this->stock <= 5) {
+        } elseif ($this->stock <= ($this->stock_alert ?? 10)) {
             return 'low_stock';
         } else {
             return 'in_stock';
@@ -130,9 +132,12 @@ class Product extends Model
         return $query->where('stock', '=', 0);
     }
     
-    public function scopeLowStock($query, $threshold = 5)
+    public function scopeLowStock($query, $threshold = null)
     {
-        return $query->where('stock', '<=', $threshold)->where('stock', '>', 0);
+        if ($threshold !== null) {
+            return $query->where('stock', '<=', $threshold)->where('stock', '>', 0);
+        }
+        return $query->whereColumn('stock', '<=', 'stock_alert')->where('stock', '>', 0);
     }
     
     public function scopeBySupplier($query, $supplier_id)

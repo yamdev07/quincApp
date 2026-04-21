@@ -41,10 +41,14 @@ class Tenant extends Model
         'paypal_subscription_id',
         'subscription_metadata',
         'owner_id',
+        'ifu',
+        'rccm',
+        'tax_rate',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'tax_rate' => 'decimal:2',
         'subscription_ends_at' => 'datetime',
         'settings' => 'array',
         

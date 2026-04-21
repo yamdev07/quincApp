@@ -39,7 +39,7 @@
                     <div class="card-header">
                         <h3 class="card-title">Mensuel</h3>
                         <div class="card-price">
-                            <span class="price-number">10 000</span>
+                            <span class="price-number">15 000</span>
                             <span class="price-period">FCFA/mois</span>
                         </div>
                     </div>
@@ -77,11 +77,11 @@
                     <div class="card-header">
                         <h3 class="card-title">Trimestriel</h3>
                         <div class="card-price">
-                            <span class="price-number">28 500</span>
+                            <span class="price-number">39 900</span>
                             <span class="price-period">FCFA/3 mois</span>
                         </div>
                         <div class="card-saving">
-                            Économisez 1 500 FCFA
+                            Économisez 10 100 FCFA
                         </div>
                     </div>
                     
@@ -123,11 +123,11 @@
                     <div class="card-header">
                         <h3 class="card-title">Semestriel</h3>
                         <div class="card-price">
-                            <span class="price-number">54 000</span>
+                            <span class="price-number">79 900</span>
                             <span class="price-period">FCFA/6 mois</span>
                         </div>
                         <div class="card-saving">
-                            Économisez 6 000 FCFA
+                            Économisez 10 100 FCFA
                         </div>
                     </div>
                     
@@ -168,11 +168,11 @@
                     <div class="card-header">
                         <h3 class="card-title">Annuel</h3>
                         <div class="card-price">
-                            <span class="price-number">85 000</span>
+                            <span class="price-number">105 000</span>
                             <span class="price-period">FCFA/an</span>
                         </div>
                         <div class="card-saving">
-                            Économisez 35 000 FCFA
+                            Économisez 75 000 FCFA
                         </div>
                     </div>
                     
@@ -234,18 +234,18 @@
                 
                 <div class="table-row">
                     <div class="table-cell">Prix total</div>
-                    <div class="table-cell">10 000 FCFA</div>
-                    <div class="table-cell">28 500 FCFA</div>
-                    <div class="table-cell">54 000 FCFA</div>
-                    <div class="table-cell">85 000 FCFA</div>
+                    <div class="table-cell">15 000 FCFA</div>
+                    <div class="table-cell">39 900 FCFA</div>
+                    <div class="table-cell">79 900 FCFA</div>
+                    <div class="table-cell">105 000 FCFA</div>
                 </div>
                 
                 <div class="table-row">
                     <div class="table-cell">Prix mensuel équivalent</div>
-                    <div class="table-cell">10 000 FCFA</div>
-                    <div class="table-cell">9 500 FCFA</div>
-                    <div class="table-cell">9 000 FCFA</div>
-                    <div class="table-cell">7 083 FCFA</div>
+                    <div class="table-cell">15 000 FCFA</div>
+                    <div class="table-cell">13 300 FCFA</div>
+                    <div class="table-cell">14 150 FCFA</div>
+                    <div class="table-cell">8 750 FCFA</div>
                 </div>
                 
                 <div class="table-row">

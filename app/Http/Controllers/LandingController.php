@@ -38,34 +38,34 @@ class LandingController extends Controller
         $plans = [
             'monthly' => [
                 'name' => 'Mensuel',
-                'price' => 10000,
-                'formatted' => '10 000 FCFA',
+                'price' => 15000,
+                'formatted' => '15 000 FCFA',
                 'period' => '/mois',
                 'savings' => 0,
                 'popular' => false
             ],
             'quarterly' => [
                 'name' => 'Trimestriel',
-                'price' => 28500,
-                'formatted' => '28 500 FCFA',
+                'price' => 39900,
+                'formatted' => '39 900 FCFA',
                 'period' => '/3 mois',
-                'savings' => '5%',
+                'savings' => '11%',
                 'popular' => false
             ],
             'semester' => [
                 'name' => 'Semestriel',
-                'price' => 54000,
-                'formatted' => '54 000 FCFA',
+                'price' => 79900,
+                'formatted' => '79 900 FCFA',
                 'period' => '/6 mois',
-                'savings' => '10%',
+                'savings' => '6%',
                 'popular' => true
             ],
             'yearly' => [
                 'name' => 'Annuel',
-                'price' => 85000,
-                'formatted' => '85 000 FCFA',
+                'price' => 105000,
+                'formatted' => '105 000 FCFA',
                 'period' => '/an',
-                'savings' => '29%',
+                'savings' => '42%',
                 'popular' => false
             ],
         ];
@@ -97,26 +97,26 @@ class LandingController extends Controller
         $plans = [
             'monthly' => [
                 'name' => 'Mensuel',
-                'price' => 10000,
-                'formatted' => '10 000 FCFA',
+                'price' => 15000,
+                'formatted' => '15 000 FCFA',
                 'period' => '/mois'
             ],
             'quarterly' => [
                 'name' => 'Trimestriel',
-                'price' => 28500,
-                'formatted' => '28 500 FCFA',
+                'price' => 39900,
+                'formatted' => '39 900 FCFA',
                 'period' => '/3 mois'
             ],
             'semester' => [
                 'name' => 'Semestriel',
-                'price' => 54000,
-                'formatted' => '54 000 FCFA',
+                'price' => 79900,
+                'formatted' => '79 900 FCFA',
                 'period' => '/6 mois'
             ],
             'yearly' => [
                 'name' => 'Annuel',
-                'price' => 85000,
-                'formatted' => '85 000 FCFA',
+                'price' => 105000,
+                'formatted' => '105 000 FCFA',
                 'period' => '/an'
             ],
         ];
@@ -146,10 +146,10 @@ class LandingController extends Controller
             DB::beginTransaction();
             
             $prices = [
-                'monthly' => 10000,
-                'quarterly' => 28500,
-                'semester' => 54000,
-                'yearly' => 85000,
+                'monthly' => 15000,
+                'quarterly' => 39900,
+                'semester' => 79900,
+                'yearly' => 105000,
             ];
             
             // GÉNÉRER LE MOT DE PASSE (on le garde en clair pour l'email)

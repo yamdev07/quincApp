@@ -4,6 +4,14 @@
 @section('title', 'Essai expiré - Choisissez votre formule')
 
 @section('content')
+@php
+$plans = [
+    'monthly'   => ['type' => 'monthly',   'label' => 'Mensuelle',    'price' => 15000,  'period' => '/ mois',   'saving' => null],
+    'quarterly' => ['type' => 'quarterly', 'label' => 'Trimestrielle','price' => 39900,  'period' => '/ 3 mois', 'saving' => 5100],
+    'semester'  => ['type' => 'semester',  'label' => 'Semestrielle', 'price' => 79900,  'period' => '/ 6 mois', 'saving' => 10100],
+    'yearly'    => ['type' => 'yearly',    'label' => 'Annuelle',     'price' => 105000, 'period' => '/ an',     'saving' => 75000],
+];
+@endphp
 <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
         
@@ -30,10 +38,10 @@
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-gray-800 mb-2">Mensuel</h3>
                         <div class="mb-2">
-                            <span class="text-4xl font-black text-orange-600">10 000</span>
+                            <span class="text-4xl font-black text-orange-600">{{ number_format($plans['monthly']['price'], 0, ',', ' ') }}</span>
                             <span class="text-gray-500">FCFA</span>
                         </div>
-                        <p class="text-sm text-gray-500">/ mois</p>
+                        <p class="text-sm text-gray-500">{{ $plans['monthly']['period'] }}</p>
                         <p class="text-xs text-gray-400 mt-2">Paiement mensuel</p>
                     </div>
                     
@@ -61,14 +69,14 @@
                     <div class="mt-auto pt-4">
                         <form action="{{ route('payment.callback') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="amount" value="10000">
+                            <input type="hidden" name="amount" value="{{ $plans['monthly']['price'] }}">
                             <input type="hidden" name="plan_type" value="monthly">
-                            <script 
+                            <script
                                 src="https://cdn.fedapay.com/checkout.js?v=1.1.7"
                                 data-public-key="{{ config('services.fedapay.public_key') }}"
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer"
-                                data-transaction-amount="10000"
+                                data-transaction-amount="{{ $plans['monthly']['price'] }}"
                                 data-transaction-description="Abonnement Sellvantix - Formule Mensuelle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"
@@ -86,12 +94,12 @@
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-gray-800 mb-2">Trimestriel</h3>
                         <div class="mb-2">
-                            <span class="text-4xl font-black text-orange-600">28 500</span>
+                            <span class="text-4xl font-black text-orange-600">{{ number_format($plans['quarterly']['price'], 0, ',', ' ') }}</span>
                             <span class="text-gray-500">FCFA</span>
                         </div>
-                        <p class="text-sm text-gray-500">/ 3 mois</p>
+                        <p class="text-sm text-gray-500">{{ $plans['quarterly']['period'] }}</p>
                         <div class="inline-block mt-2 px-2 py-1 bg-green-100 rounded-lg">
-                            <p class="text-xs text-green-700 font-semibold">Économisez 1 500 FCFA</p>
+                            <p class="text-xs text-green-700 font-semibold">Économisez {{ number_format($plans['quarterly']['saving'], 0, ',', ' ') }} FCFA</p>
                         </div>
                     </div>
                     
@@ -119,14 +127,14 @@
                     <div class="mt-auto pt-4">
                         <form action="{{ route('payment.callback') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="amount" value="28500">
+                            <input type="hidden" name="amount" value="{{ $plans['quarterly']['price'] }}">
                             <input type="hidden" name="plan_type" value="quarterly">
-                            <script 
+                            <script
                                 src="https://cdn.fedapay.com/checkout.js?v=1.1.7"
                                 data-public-key="{{ config('services.fedapay.public_key') }}"
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer"
-                                data-transaction-amount="28500"
+                                data-transaction-amount="{{ $plans['quarterly']['price'] }}"
                                 data-transaction-description="Abonnement Sellvantix - Formule Trimestrielle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"
@@ -149,12 +157,12 @@
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-gray-800 mb-2">Semestriel</h3>
                         <div class="mb-2">
-                            <span class="text-4xl font-black text-orange-600">54 000</span>
+                            <span class="text-4xl font-black text-orange-600">{{ number_format($plans['semester']['price'], 0, ',', ' ') }}</span>
                             <span class="text-gray-500">FCFA</span>
                         </div>
-                        <p class="text-sm text-gray-500">/ 6 mois</p>
+                        <p class="text-sm text-gray-500">{{ $plans['semester']['period'] }}</p>
                         <div class="inline-block mt-2 px-2 py-1 bg-green-100 rounded-lg">
-                            <p class="text-xs text-green-700 font-semibold">Économisez 6 000 FCFA</p>
+                            <p class="text-xs text-green-700 font-semibold">Économisez {{ number_format($plans['semester']['saving'], 0, ',', ' ') }} FCFA</p>
                         </div>
                     </div>
                     
@@ -182,14 +190,14 @@
                     <div class="mt-auto pt-4">
                         <form action="{{ route('payment.callback') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="amount" value="54000">
+                            <input type="hidden" name="amount" value="{{ $plans['semester']['price'] }}">
                             <input type="hidden" name="plan_type" value="semester">
-                            <script 
+                            <script
                                 src="https://cdn.fedapay.com/checkout.js?v=1.1.7"
                                 data-public-key="{{ config('services.fedapay.public_key') }}"
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer shadow-lg"
-                                data-transaction-amount="54000"
+                                data-transaction-amount="{{ $plans['semester']['price'] }}"
                                 data-transaction-description="Abonnement Sellvantix - Formule Semestrielle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"
@@ -207,12 +215,12 @@
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-gray-800 mb-2">Annuel</h3>
                         <div class="mb-2">
-                            <span class="text-4xl font-black text-orange-600">85 000</span>
+                            <span class="text-4xl font-black text-orange-600">{{ number_format($plans['yearly']['price'], 0, ',', ' ') }}</span>
                             <span class="text-gray-500">FCFA</span>
                         </div>
-                        <p class="text-sm text-gray-500">/ an</p>
+                        <p class="text-sm text-gray-500">{{ $plans['yearly']['period'] }}</p>
                         <div class="inline-block mt-2 px-2 py-1 bg-green-100 rounded-lg">
-                            <p class="text-xs text-green-700 font-semibold">Économisez 35 000 FCFA</p>
+                            <p class="text-xs text-green-700 font-semibold">Économisez {{ number_format($plans['yearly']['saving'], 0, ',', ' ') }} FCFA</p>
                         </div>
                     </div>
                     
@@ -246,14 +254,14 @@
                     <div class="mt-auto pt-4">
                         <form action="{{ route('payment.callback') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="amount" value="85000">
+                            <input type="hidden" name="amount" value="{{ $plans['yearly']['price'] }}">
                             <input type="hidden" name="plan_type" value="yearly">
-                            <script 
+                            <script
                                 src="https://cdn.fedapay.com/checkout.js?v=1.1.7"
                                 data-public-key="{{ config('services.fedapay.public_key') }}"
                                 data-button-text="Choisir cette formule"
                                 data-button-class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 cursor-pointer"
-                                data-transaction-amount="85000"
+                                data-transaction-amount="{{ $plans['yearly']['price'] }}"
                                 data-transaction-description="Abonnement Sellvantix - Formule Annuelle"
                                 data-currency-iso="XOF"
                                 data-customer-email="{{ Auth::user()->email }}"

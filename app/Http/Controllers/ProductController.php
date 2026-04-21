@@ -62,7 +62,7 @@ class ProductController extends Controller
         if ($filter = $request->input('filter')) {
             switch ($filter) {
                 case 'low_stock':
-                    $query->where('stock', '<=', 10);
+                    $query->whereColumn('stock', '<=', 'stock_alert')->where('stock', '>', 0);
                     break;
                 case 'out_of_stock':
                     $query->where('stock', '=', 0);
@@ -167,6 +167,7 @@ class ProductController extends Controller
         $request->validate([
             'name'           => 'required|string|max:255',
             'stock'          => 'required|integer|min:0',
+            'stock_alert'    => 'nullable|integer|min:0',
             'purchase_price' => 'required|numeric|min:0',
             'sale_price'     => 'required|numeric|min:0',
             'description'    => 'nullable|string|max:1000',
@@ -477,6 +478,7 @@ class ProductController extends Controller
             'purchase_price' => 'required|numeric|min:0',
             'sale_price'     => 'required|numeric|min:0',
             'stock'          => 'required|integer|min:0',
+            'stock_alert'    => 'nullable|integer|min:0',
             'description'    => 'nullable|string|max:1000',
             'category_id'    => 'required|exists:categories,id',
             'supplier_id'    => 'required|exists:suppliers,id',
@@ -620,7 +622,7 @@ class ProductController extends Controller
             'total_products' => $products->count(),
             'total_stock_value' => $products->sum(fn($p) => $p->stock * $p->purchase_price),
             'total_sale_value' => $products->sum(fn($p) => $p->stock * $p->sale_price),
-            'low_stock' => $products->where('stock', '<', 10)->count(),
+            'low_stock' => $products->filter(fn($p) => $p->stock > 0 && $p->stock <= ($p->stock_alert ?? 10))->count(),
             'out_of_stock' => $products->where('stock', '=', 0)->count(),
             'total_purchased' => $products->sum('stock'),
             'products_multiple_batches' => $products->filter(fn($p) => $p->hasMultipleBatches())->count(),
@@ -656,7 +658,7 @@ class ProductController extends Controller
             'total_products' => $products->count(),
             'total_stock_value' => $products->sum(DB::raw('purchase_price * stock')),
             'total_sale_value' => $products->sum(DB::raw('sale_price * stock')),
-            'low_stock_count' => $products->where('stock', '<', 10)->count(),
+            'low_stock_count' => $products->filter(fn($p) => $p->stock > 0 && $p->stock <= ($p->stock_alert ?? 10))->count(),
             'out_of_stock_count' => $products->where('stock', '=', 0)->count(),
             'total_stock' => $products->sum('stock'),
             'products_multiple_batches' => $productsWithMultipleBatches,
@@ -1397,7 +1399,7 @@ class ProductController extends Controller
         if ($request->filled('stock_status')) {
             switch ($request->stock_status) {
                 case 'low':
-                    $query->where('stock', '<=', 10)->where('stock', '>', 0);
+                    $query->whereColumn('stock', '<=', 'stock_alert')->where('stock', '>', 0);
                     break;
                 case 'out':
                     $query->where('stock', 0);
@@ -1430,7 +1432,7 @@ class ProductController extends Controller
             'total_sale_value' => $statsQuery->get()->sum(function($p) {
                 return ($p->sale_price ?? 0) * ($p->stock ?? 0);
             }),
-            'low_stock_count' => (clone $query)->where('stock', '<=', 10)->where('stock', '>', 0)->count(),
+            'low_stock_count' => (clone $query)->whereColumn('stock', '<=', 'stock_alert')->where('stock', '>', 0)->count(),
             'out_of_stock_count' => (clone $query)->where('stock', 0)->count(),
             'categories_count' => $products->pluck('category_id')->unique()->count(),
             'suppliers_count' => $products->pluck('supplier_id')->unique()->count(),

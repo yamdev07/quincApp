@@ -697,19 +697,19 @@
                                 <div class="plans-summary">
                                     <div class="plan-row">
                                         <span class="plan-name">Mensuel</span>
-                                        <span class="plan-price">10 000 FCFA / mois</span>
+                                        <span class="plan-price">15 000 FCFA / mois</span>
                                     </div>
                                     <div class="plan-row">
                                         <span class="plan-name">Trimestriel</span>
-                                        <span class="plan-price">28 500 FCFA <span class="plan-saving">-5%</span></span>
+                                        <span class="plan-price">39 900 FCFA <span class="plan-saving">-11%</span></span>
                                     </div>
                                     <div class="plan-row popular-plan">
                                         <span class="plan-name">Semestriel ⭐</span>
-                                        <span class="plan-price">54 000 FCFA <span class="plan-saving">-10%</span></span>
+                                        <span class="plan-price">79 900 FCFA <span class="plan-saving">-6%</span></span>
                                     </div>
                                     <div class="plan-row">
                                         <span class="plan-name">Annuel</span>
-                                        <span class="plan-price">85 000 FCFA <span class="plan-saving">-29%</span></span>
+                                        <span class="plan-price">105 000 FCFA <span class="plan-saving">-42%</span></span>
                                     </div>
                                 </div>
                             </div>

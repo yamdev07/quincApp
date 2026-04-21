@@ -322,16 +322,17 @@ class SaleController extends Controller
     public function invoice($id)
     {
         $this->authorizeViewSales();
-        
+
         $tenantId = $this->getTenantId();
-        
+
         $sale = Sale::with(['items.product', 'client', 'user'])
                     ->where('tenant_id', $tenantId)
                     ->findOrFail($id);
-        
+
         $totalQuantity = $sale->items->sum('quantity');
-        
-        return view('sales.invoice', compact('sale', 'totalQuantity'));
+        $tenant = Auth::user()->tenant;
+
+        return view('sales.invoice', compact('sale', 'totalQuantity', 'tenant'));
     }
 
     // ----------------------

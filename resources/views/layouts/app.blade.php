@@ -15,26 +15,21 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <!-- Styles -->
-    @production
-        {{-- En production, utiliser les fichiers compilés --}}
-        @php
-            $manifest = public_path('build/manifest.json');
-            if (file_exists($manifest)) {
-                $manifestData = json_decode(file_get_contents($manifest), true);
-                $cssFile = $manifestData['resources/css/app.css']['file'] ?? null;
-                $jsFile = $manifestData['resources/js/app.js']['file'] ?? null;
-            }
-        @endphp
-        @if(isset($cssFile) && $cssFile)
-            <link rel="stylesheet" href="{{ asset('build/' . $cssFile) }}">
-        @endif
-        @if(isset($jsFile) && $jsFile)
-            <script src="{{ asset('build/' . $jsFile) }}" defer></script>
-        @endif
-    @else
-        {{-- En développement, utiliser Vite --}}
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @endproduction
+    @php
+        $manifest = public_path('build/manifest.json');
+        $cssFile = null; $jsFile = null;
+        if (file_exists($manifest)) {
+            $manifestData = json_decode(file_get_contents($manifest), true);
+            $cssFile = $manifestData['resources/css/app.css']['file'] ?? null;
+            $jsFile  = $manifestData['resources/js/app.js']['file'] ?? null;
+        }
+    @endphp
+    @if($cssFile)
+        <link rel="stylesheet" href="{{ asset('build/' . $cssFile) }}">
+    @endif
+    @if($jsFile)
+        <script src="{{ asset('build/' . $jsFile) }}" defer></script>
+    @endif
 
     <!-- Styles personnalisés (toujours chargés) -->
     <style>

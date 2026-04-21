@@ -63,11 +63,10 @@ class DashboardController extends Controller
         // 3️⃣ Chiffre d'affaires total (toutes les ventes)
         $totalRevenueAll = Sale::sum('total_price');
 
-        // 4️⃣ Alertes Stock (basé sur le stock)
-        $lowStockThreshold = 5;
+        // 4️⃣ Alertes Stock (basé sur le seuil personnalisé de chaque produit)
         $criticalStockThreshold = 2;
 
-        $lowStockProducts = Product::where('stock', '<=', $lowStockThreshold)
+        $lowStockProducts = Product::whereColumn('stock', '<=', 'stock_alert')
                                    ->where('stock', '>', $criticalStockThreshold)
                                    ->orderBy('stock')
                                    ->limit(10)
@@ -283,7 +282,7 @@ class DashboardController extends Controller
             return response()->json([
                 'salesToday' => Sale::whereDate('created_at', $today)->count(),
                 'totalRevenue' => Sale::whereDate('created_at', $today)->sum('total_price'),
-                'lowStockCount' => Product::where('stock', '<=', 5)->count(),
+                'lowStockCount' => Product::whereColumn('stock', '<=', 'stock_alert')->count(),
                 'activeTenants' => Tenant::where('is_active', true)->count(),
                 'totalTenants' => Tenant::count(),
                 'averageSale' => Sale::whereDate('created_at', $today)->avg('total_price') ?? 0,
@@ -339,7 +338,7 @@ class DashboardController extends Controller
     {
         $this->authorizeDashboardAccess();
         
-        $products = Product::where('stock', '<=', 5)
+        $products = Product::whereColumn('stock', '<=', 'stock_alert')
                         ->orderBy('stock')
                         ->get()
                         ->map(function($product) {
@@ -404,7 +403,7 @@ class DashboardController extends Controller
 
         $stockDistribution = [
             'out_of_stock' => Product::where('stock', 0)->count(),
-            'low_stock' => Product::where('stock', '>', 0)->where('stock', '<=', 5)->count(),
+            'low_stock' => Product::where('stock', '>', 0)->whereColumn('stock', '<=', 'stock_alert')->count(),
             'medium_stock' => Product::where('stock', '>', 5)->where('stock', '<=', 20)->count(),
             'high_stock' => Product::where('stock', '>', 20)->count(),
         ];
@@ -555,7 +554,7 @@ class DashboardController extends Controller
                 $q->where('tenant_id', $tenantId);
             })->sum('quantity'),
             'low_stock_count' => Product::where('tenant_id', $tenantId)
-                ->where('stock', '<=', 5)
+                ->whereColumn('stock', '<=', 'stock_alert')
                 ->count(),
         ]);
     }
