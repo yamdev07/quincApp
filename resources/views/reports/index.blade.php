@@ -118,94 +118,6 @@
     }
 
     /* =====================================================
-       STATISTIQUES RAPIDES
-    ===================================================== */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(1, 1fr);
-        gap: 22px;
-        margin-bottom: 32px;
-    }
-    @media (min-width: 580px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (min-width: 1024px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
-
-    .stat-card {
-        background: var(--bg-card);
-        border-radius: 24px;
-        padding: 24px 22px;
-        box-shadow: var(--shadow-card);
-        border: 1px solid var(--border-light);
-        transition: all 0.25s;
-        position: relative;
-        overflow: hidden;
-    }
-    .stat-card:hover {
-        box-shadow: var(--shadow-hover);
-        border-color: var(--accent);
-        transform: translateY(-2px);
-    }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: var(--accent-gradient);
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-    .stat-card:hover::before {
-        opacity: 1;
-    }
-
-    .stat-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 16px;
-    }
-
-    .stat-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 18px;
-        background: var(--accent-light);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--accent);
-        font-size: 26px;
-        transition: all 0.2s;
-    }
-    .stat-card:hover .stat-icon {
-        background: var(--accent);
-        color: white;
-    }
-
-    .stat-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-tertiary);
-        letter-spacing: 0.3px;
-        text-transform: uppercase;
-    }
-
-    .stat-value {
-        font-size: 36px;
-        font-weight: 800;
-        color: var(--text-primary);
-        line-height: 1.1;
-        margin-bottom: 6px;
-    }
-
-    .stat-desc {
-        font-size: 13px;
-        color: var(--text-tertiary);
-    }
-
-    /* =====================================================
        GRILLE DES RAPPORTS
     ===================================================== */
     .reports-grid {
@@ -391,45 +303,6 @@
         </div>
     </div>
 
-    {{-- STATISTIQUES RAPIDES --}}
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-row">
-                <span class="stat-title">Ventes totales</span>
-                <span class="stat-icon"><i class="bi bi-cart3"></i></span>
-            </div>
-            <div class="stat-value" id="stat-total-sales">-</div>
-            <div class="stat-desc">depuis le début</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-row">
-                <span class="stat-title">Chiffre d'affaires</span>
-                <span class="stat-icon"><i class="bi bi-currency-dollar"></i></span>
-            </div>
-            <div class="stat-value" id="stat-total-revenue">-</div>
-            <div class="stat-desc">cumulé</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-row">
-                <span class="stat-title">Produits vendus</span>
-                <span class="stat-icon"><i class="bi bi-box-seam"></i></span>
-            </div>
-            <div class="stat-value" id="stat-total-products">-</div>
-            <div class="stat-desc">unités écoulées</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-row">
-                <span class="stat-title">Stock faible</span>
-                <span class="stat-icon"><i class="bi bi-exclamation-triangle"></i></span>
-            </div>
-            <div class="stat-value" id="stat-low-stock">-</div>
-            <div class="stat-desc">à réapprovisionner</div>
-        </div>
-    </div>
-
     {{-- GRILLE DES RAPPORTS --}}
     <div class="reports-grid">
         <!-- Rapport des ventes -->
@@ -502,19 +375,19 @@
             </div>
         </a>
 
-        <!-- Performances -->
-        <div class="report-card" style="cursor: default;">
+        <!-- Analyse IA -->
+        <a href="{{ route('ai.index') }}" class="report-card" style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-color: #c4b5fd;">
             <div class="report-card-header">
-                <div class="report-icon">
-                    <i class="bi bi-trophy"></i>
+                <div class="report-icon" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">
+                    <i class="bi bi-stars"></i>
                 </div>
-                <h3>Performances</h3>
-                <p>Indicateurs clés de performance, marges bénéficiaires et analyse comparative.</p>
+                <h3 style="color:#6d28d9;">Analyse IA</h3>
+                <p>Recommandations intelligentes sur vos produits, vos ventes et votre stratégie d'achat.</p>
             </div>
             <div class="report-card-footer">
-                <span class="text-muted" style="font-size: 13px;">Bientôt disponible</span>
+                <span class="report-link" style="color:#7c3aed;">Analyser <i class="bi bi-arrow-right"></i></span>
             </div>
-        </div>
+        </a>
     </div>
 
     {{-- SECTION EXPORT --}}
@@ -542,50 +415,3 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-(function() {
-    // Charger les statistiques rapides via AJAX
-    async function loadQuickStats() {
-        try {
-            const response = await fetch('/api/dashboard-stats', {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-            
-            if (!response.ok) return;
-            
-            const data = await response.json();
-            
-            const formatMoney = (value) => {
-                if (!value) return '0 FCFA';
-                return Number(value).toLocaleString('fr-FR') + ' FCFA';
-            };
-            
-            document.getElementById('stat-total-sales') && (document.getElementById('stat-total-sales').innerText = data.total_sales || 0);
-            document.getElementById('stat-total-revenue') && (document.getElementById('stat-total-revenue').innerText = formatMoney(data.total_revenue));
-            document.getElementById('stat-total-products') && (document.getElementById('stat-total-products').innerText = data.total_quantity_sold || 0);
-            document.getElementById('stat-low-stock') && (document.getElementById('stat-low-stock').innerText = data.low_stock_count || 0);
-            
-        } catch (error) {
-            console.error('Erreur lors du chargement des statistiques:', error);
-        }
-    }
-    
-    // Charger au chargement de la page
-    document.addEventListener('DOMContentLoaded', function() {
-        loadQuickStats();
-        
-        // Rafraîchir toutes les 30 secondes
-        setInterval(function() {
-            if (document.visibilityState === 'visible') {
-                loadQuickStats();
-            }
-        }, 30000);
-    });
-})();
-</script>
-@endsection

@@ -154,6 +154,15 @@ Route::middleware(['auth', 'check.trial', 'admin'])->prefix('users')->name('user
 });
 
 // ======================
+// Routes ANALYSE IA
+// ======================
+Route::middleware(['auth', 'check.trial', 'admin'])->prefix('ai')->name('ai.')->group(function () {
+    Route::get('/',         [App\Http\Controllers\AIAnalysisController::class, 'index'])->name('index');
+    Route::post('/products', [App\Http\Controllers\AIAnalysisController::class, 'analyzeProducts'])->name('products');
+    Route::post('/reports',  [App\Http\Controllers\AIAnalysisController::class, 'analyzeReports'])->name('reports');
+});
+
+// ======================
 // Routes PARAMÈTRES ENTREPRISE (super_admin et admin uniquement)
 // ======================
 Route::middleware(['auth', 'check.trial', 'admin'])->prefix('company')->name('company.')->group(function () {

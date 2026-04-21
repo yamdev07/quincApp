@@ -142,7 +142,7 @@ new class extends Component
                     <!-- super_admin_global, super_admin et admin uniquement -->
                     <!-- ===================================================== -->
                     @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
-                    <x-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate 
+                    <x-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate
                         class="qapp-nav-link">
                         <div class="flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,6 +152,7 @@ new class extends Component
                         </div>
                     </x-nav-link>
                     @endif
+
                 </div>
             </div>
 
@@ -332,7 +333,7 @@ new class extends Component
             <!-- UNIQUEMENT POUR ADMINISTRATEURS -->
             <!-- ===================================================== -->
             @if(auth()->user()->isSuperAdminGlobal() || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
-            <x-responsive-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate 
+            <x-responsive-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')" wire:navigate
                 class="qapp-responsive-nav-link">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -340,6 +341,7 @@ new class extends Component
                 Mon abonnement
             </x-responsive-nav-link>
             @endif
+
         </div>
 
         <!-- Responsive Settings Options -->
