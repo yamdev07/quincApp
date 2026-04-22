@@ -665,7 +665,7 @@
             <div class="payment-body">
                 <form action="{{ route('payment.callback') }}" method="POST" id="paymentForm">
                     @csrf
-                    <input type="hidden" name="amount" value="{{ $amount }}">
+                    <input type="hidden" name="amount" value="{{ (int) $amount }}">
                     <input type="hidden" name="plan_type" value="{{ $selectedPlan }}">
                     <input type="hidden" name="is_renewal" value="{{ $isRenewal ?? false ? '1' : '0' }}">
                     
@@ -738,7 +738,7 @@
                         data-public-key="{{ config('services.fedapay.public_key') }}"
                         data-button-text="Payer {{ number_format($amount, 0) }} FCFA"
                         data-button-class="pay-btn"
-                        data-transaction-amount="{{ $amount }}"
+                        data-transaction-amount="{{ (int) $amount }}"
                         data-transaction-description="Abonnement Sellvantix - {{ $currentPlan['name'] }}"
                         data-currency-iso="XOF"
                         data-customer-email="{{ Auth::user()->email }}"

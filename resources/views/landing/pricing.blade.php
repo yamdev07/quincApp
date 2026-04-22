@@ -33,133 +33,102 @@
     {{-- PRICING CARDS --}}
     <section class="pricing-cards">
         <div class="container">
-            <div class="cards-grid">
-                {{-- Mensuel --}}
+            <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+
+                {{-- Starter --}}
                 <div class="pricing-card">
                     <div class="card-header">
-                        <h3 class="card-title">Mensuel</h3>
+                        <div style="display:inline-block;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.5px;">PETITES ENTREPRISES</div>
+                        <h3 class="card-title">Starter</h3>
+                        <div class="card-price">
+                            <span class="price-number">10 000</span>
+                            <span class="price-period">FCFA/mois</span>
+                        </div>
+                    </div>
+                    <div class="card-features">
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Ventes & stock illimités</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>3 utilisateurs</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Clients & fournisseurs</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Rapports de base</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>200 produits max</span></div>
+                        <div class="feature-item" style="opacity:.45;"><span class="feature-icon">✗</span><span>Analyse IA</span></div>
+                        <div class="feature-item" style="opacity:.45;"><span class="feature-icon">✗</span><span>Export PDF</span></div>
+                        <div class="feature-item" style="opacity:.45;"><span class="feature-icon">✗</span><span>Factures normalisées</span></div>
+                    </div>
+                    <a href="{{ route('register.form', ['plan' => 'starter']) }}" class="card-button" style="background:#f1f5f9;color:#0f172a;border:1.5px solid #e2e8f0;">
+                        <span>Commencer</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </a>
+                </div>
+
+                {{-- Business Mensuel --}}
+                <div class="pricing-card">
+                    <div class="card-header">
+                        <div style="display:inline-block;background:#fff7ed;color:#ea580c;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.5px;">MOYENNES ENTREPRISES</div>
+                        <h3 class="card-title">Business</h3>
                         <div class="card-price">
                             <span class="price-number">15 000</span>
                             <span class="price-period">FCFA/mois</span>
                         </div>
                     </div>
-                    
                     <div class="card-features">
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Toutes les fonctionnalités</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Support standard</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Mises à jour incluses</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Sauvegardes quotidiennes</span>
-                        </div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Tout le plan Starter</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>10 utilisateurs</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Produits illimités</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Analyse IA</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Export PDF</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Factures normalisées</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Support standard</span></div>
                     </div>
-                    
                     <a href="{{ route('register.form', ['plan' => 'monthly']) }}" class="card-button">
                         <span>Commencer</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                            <polyline points="12 5 19 12 12 19"/>
-                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </a>
                 </div>
 
-                {{-- Trimestriel --}}
+                {{-- Pro Trimestriel --}}
                 <div class="pricing-card">
                     <div class="card-header">
-                        <h3 class="card-title">Trimestriel</h3>
+                        <h3 class="card-title">Pro Trimestriel</h3>
                         <div class="card-price">
                             <span class="price-number">39 900</span>
                             <span class="price-period">FCFA/3 mois</span>
                         </div>
-                        <div class="card-saving">
-                            Économisez 10 100 FCFA
-                        </div>
+                        <div class="card-saving">Économisez 5 100 FCFA</div>
                     </div>
-                    
                     <div class="card-features">
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Toutes les fonctionnalités</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Support prioritaire</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Mises à jour incluses</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Sauvegardes quotidiennes</span>
-                        </div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Tout le Business</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Utilisateurs illimités</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Analyse IA illimitée</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Support prioritaire</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Formation complète offerte</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Mises à jour incluses</span></div>
                     </div>
-                    
                     <a href="{{ route('register.form', ['plan' => 'quarterly']) }}" class="card-button">
                         <span>Commencer</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                            <polyline points="12 5 19 12 12 19"/>
-                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </a>
                 </div>
 
-                {{-- Semestriel (Populaire) --}}
+                {{-- Pro Semestriel (Populaire) --}}
                 <div class="pricing-card popular">
-                    <div class="card-popular">
-                        <span class="popular-icon">⭐</span>
-                        Le plus choisi
-                    </div>
-                    
+                    <div class="card-popular"><span class="popular-icon">⭐</span> Le plus choisi</div>
                     <div class="card-header">
-                        <h3 class="card-title">Semestriel</h3>
+                        <h3 class="card-title">Pro Semestriel</h3>
                         <div class="card-price">
                             <span class="price-number">79 900</span>
                             <span class="price-period">FCFA/6 mois</span>
                         </div>
-                        <div class="card-saving">
-                            Économisez 10 100 FCFA
-                        </div>
+                        <div class="card-saving">Économisez 10 100 FCFA</div>
                     </div>
-                    
                     <div class="card-features">
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Toutes les fonctionnalités</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Support prioritaire</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Mises à jour incluses</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Sauvegardes quotidiennes</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Formation offerte</span>
-                        </div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Tout le Pro Trimestriel</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Audit personnalisé</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Sauvegardes quotidiennes</span></div>
                     </div>
-                    
                     <a href="{{ route('register.form', ['plan' => 'semester']) }}" class="card-button">
                         <span>Commencer</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                            <polyline points="12 5 19 12 12 19"/>
-                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </a>
                 </div>
 
@@ -171,46 +140,19 @@
                             <span class="price-number">105 000</span>
                             <span class="price-period">FCFA/an</span>
                         </div>
-                        <div class="card-saving">
-                            Économisez 75 000 FCFA
-                        </div>
+                        <div class="card-saving">Économisez 75 000 FCFA</div>
                     </div>
-                    
                     <div class="card-features">
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Toutes les fonctionnalités</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Support prioritaire</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Mises à jour incluses</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Sauvegardes quotidiennes</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Formation offerte</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon">✓</span>
-                            <span>Audit personnalisé</span>
-                        </div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Tout le Pro Semestriel</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Support prioritaire dédié</span></div>
+                        <div class="feature-item"><span class="feature-icon">✓</span><span>Formation + audit inclus</span></div>
                     </div>
-                    
                     <a href="{{ route('register.form', ['plan' => 'yearly']) }}" class="card-button">
                         <span>Commencer</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                            <polyline points="12 5 19 12 12 19"/>
-                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </a>
                 </div>
+
             </div>
         </div>
     </section>
@@ -226,82 +168,56 @@
             <div class="comparison-table">
                 <div class="table-row table-header">
                     <div class="table-cell">Fonctionnalité</div>
-                    <div class="table-cell">Mensuel</div>
-                    <div class="table-cell">Trimestriel</div>
-                    <div class="table-cell">Semestriel</div>
-                    <div class="table-cell">Annuel</div>
+                    <div class="table-cell">Starter<br><small style="font-weight:400;opacity:.7;">10 000/mois</small></div>
+                    <div class="table-cell">Business<br><small style="font-weight:400;opacity:.7;">15 000/mois</small></div>
+                    <div class="table-cell">Pro Trim.<br><small style="font-weight:400;opacity:.7;">39 900/3 mois</small></div>
+                    <div class="table-cell">Pro Sem.<br><small style="font-weight:400;opacity:.7;">79 900/6 mois</small></div>
+                    <div class="table-cell">Annuel<br><small style="font-weight:400;opacity:.7;">105 000/an</small></div>
                 </div>
-                
+
                 <div class="table-row">
-                    <div class="table-cell">Prix total</div>
-                    <div class="table-cell">15 000 FCFA</div>
-                    <div class="table-cell">39 900 FCFA</div>
-                    <div class="table-cell">79 900 FCFA</div>
-                    <div class="table-cell">105 000 FCFA</div>
+                    <div class="table-cell">Ventes & stock</div>
+                    <div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
                 </div>
-                
                 <div class="table-row">
-                    <div class="table-cell">Prix mensuel équivalent</div>
-                    <div class="table-cell">15 000 FCFA</div>
-                    <div class="table-cell">13 300 FCFA</div>
-                    <div class="table-cell">14 150 FCFA</div>
-                    <div class="table-cell">8 750 FCFA</div>
+                    <div class="table-cell">Nombre de produits</div>
+                    <div class="table-cell">200 max</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div>
                 </div>
-                
                 <div class="table-row">
-                    <div class="table-cell">Économie réalisée</div>
-                    <div class="table-cell">-</div>
-                    <div class="table-cell">1 500 FCFA</div>
-                    <div class="table-cell">6 000 FCFA</div>
-                    <div class="table-cell">18 000 FCFA</div>
+                    <div class="table-cell">Utilisateurs</div>
+                    <div class="table-cell">3</div><div class="table-cell">10</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div>
                 </div>
-                
                 <div class="table-row">
-                    <div class="table-cell">Gestion de stock</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
+                    <div class="table-cell">Clients & fournisseurs</div>
+                    <div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
                 </div>
-                
                 <div class="table-row">
-                    <div class="table-cell">Ventes & factures</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
+                    <div class="table-cell">Rapports</div>
+                    <div class="table-cell">Basiques</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div>
                 </div>
-                
                 <div class="table-row">
-                    <div class="table-cell">Multi-utilisateurs</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
+                    <div class="table-cell">Analyse IA</div>
+                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">Illimitée</div><div class="table-cell">Illimitée</div><div class="table-cell">Illimitée</div>
                 </div>
-                
+                <div class="table-row">
+                    <div class="table-cell">Export PDF</div>
+                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-cell">Factures normalisées</div>
+                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                </div>
                 <div class="table-row">
                     <div class="table-cell">Support prioritaire</div>
-                    <div class="table-cell">-</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
                 </div>
-                
                 <div class="table-row">
                     <div class="table-cell">Formation offerte</div>
-                    <div class="table-cell">-</div>
-                    <div class="table-cell">-</div>
-                    <div class="table-cell">✓</div>
-                    <div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
                 </div>
-                
                 <div class="table-row">
                     <div class="table-cell">Audit personnalisé</div>
-                    <div class="table-cell">-</div>
-                    <div class="table-cell">-</div>
-                    <div class="table-cell">-</div>
-                    <div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
                 </div>
             </div>
             

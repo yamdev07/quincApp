@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Services\PlanService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
@@ -116,7 +117,18 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $this->authorizeUserManagement();
-        
+
+        $user   = Auth::user();
+        $tenant = $user->tenant;
+        if (!$user->isSuperAdminGlobal() && $tenant) {
+            $plan = PlanService::for($tenant);
+            $currentCount = User::where('tenant_id', $tenant->id)->count();
+            if (!$plan->canAddUser($currentCount)) {
+                $max = $plan->maxUsers();
+                return back()->with('upgrade', "Limite atteinte : votre plan {$plan->planLabel()} est limité à {$max} utilisateurs. Passez à un plan supérieur pour en ajouter davantage.");
+            }
+        }
+
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',

@@ -88,27 +88,33 @@ class LandingController extends Controller
     {
         $plan = $request->get('plan', 'monthly');
         
-        $validPlans = ['monthly', 'quarterly', 'semester', 'yearly'];
+        $validPlans = ['starter', 'monthly', 'quarterly', 'semester', 'yearly'];
         if (!in_array($plan, $validPlans)) {
             $plan = 'monthly';
         }
-        
+
         // Récupérer les infos du plan pour les afficher
         $plans = [
+            'starter' => [
+                'name' => 'Starter',
+                'price' => 10000,
+                'formatted' => '10 000 FCFA',
+                'period' => '/mois'
+            ],
             'monthly' => [
-                'name' => 'Mensuel',
+                'name' => 'Business Mensuel',
                 'price' => 15000,
                 'formatted' => '15 000 FCFA',
                 'period' => '/mois'
             ],
             'quarterly' => [
-                'name' => 'Trimestriel',
+                'name' => 'Pro Trimestriel',
                 'price' => 39900,
                 'formatted' => '39 900 FCFA',
                 'period' => '/3 mois'
             ],
             'semester' => [
-                'name' => 'Semestriel',
+                'name' => 'Pro Semestriel',
                 'price' => 79900,
                 'formatted' => '79 900 FCFA',
                 'period' => '/6 mois'
@@ -139,17 +145,26 @@ class LandingController extends Controller
             'phone' => 'nullable|string|max:20',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'plan' => 'required|in:monthly,quarterly,semester,yearly',
+            'plan' => 'required|in:starter,monthly,quarterly,semester,yearly',
         ]);
-        
+
         try {
             DB::beginTransaction();
-            
+
             $prices = [
-                'monthly' => 15000,
+                'starter'   => 10000,
+                'monthly'   => 15000,
                 'quarterly' => 39900,
-                'semester' => 79900,
-                'yearly' => 105000,
+                'semester'  => 79900,
+                'yearly'    => 105000,
+            ];
+
+            $planSlug = [
+                'starter'   => 'starter',
+                'monthly'   => 'business',
+                'quarterly' => 'pro',
+                'semester'  => 'pro',
+                'yearly'    => 'pro',
             ];
             
             // GÉNÉRER LE MOT DE PASSE (on le garde en clair pour l'email)
@@ -171,6 +186,7 @@ class LandingController extends Controller
                 'db_password' => Str::random(16),
                 'subscription_price' => $prices[$request->plan],
                 'billing_cycle' => $request->plan,
+                'plan' => $planSlug[$request->plan],
                 'subscription_start_date' => now(),
                 'subscription_end_date' => now()->addDays(14),
                 'has_trial' => true,

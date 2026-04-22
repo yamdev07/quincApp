@@ -345,7 +345,7 @@
                             @if($msg === 'info') bg-blue-50 border border-blue-200 text-blue-700 @endif"
                             role="alert">
                             <div class="flex items-center gap-2">
-                                <i class="bi 
+                                <i class="bi
                                     @if($msg === 'success') bi-check-circle-fill @endif
                                     @if($msg === 'error') bi-exclamation-circle-fill @endif
                                     @if($msg === 'warning') bi-exclamation-triangle-fill @endif
@@ -360,6 +360,27 @@
                     </div>
                 @endif
             @endforeach
+
+            {{-- Message upgrade plan --}}
+            @if(session('upgrade'))
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                    <div style="background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span style="font-size:20px;">🔒</span>
+                            <div>
+                                <div style="font-weight:700;color:#6d28d9;font-size:14px;margin-bottom:2px;">Fonctionnalité réservée</div>
+                                <div style="color:#7c3aed;font-size:13px;">{{ session('upgrade') }}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                            <a href="{{ route('pricing') }}" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-size:13px;font-weight:700;padding:8px 18px;border-radius:30px;text-decoration:none;">
+                                Voir les offres →
+                            </a>
+                            <button onclick="this.closest('div.max-w-7xl').remove()" style="opacity:.5;background:none;border:none;cursor:pointer;font-size:18px;color:#6d28d9;">✕</button>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             @yield('content')
         </main>

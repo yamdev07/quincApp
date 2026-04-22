@@ -9,6 +9,23 @@ use Carbon\Carbon;
 
 class Tenant extends Model
 {
+    protected static function booted(): void
+    {
+        // Synchroniser automatiquement le plan à chaque sauvegarde
+        static::saving(function (self $tenant) {
+            $price = (float) ($tenant->subscription_price ?? 0);
+            $cycle = $tenant->billing_cycle ?? '';
+
+            if ($cycle === 'starter' || $price <= 10000) {
+                $tenant->plan = 'starter';
+            } elseif ($price <= 15000) {
+                $tenant->plan = 'business';
+            } else {
+                $tenant->plan = 'pro';
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'company_name',
@@ -44,6 +61,7 @@ class Tenant extends Model
         'ifu',
         'rccm',
         'tax_rate',
+        'plan',
     ];
 
     protected $casts = [
@@ -228,8 +246,13 @@ class Tenant extends Model
      */
     public function isActive(): bool
     {
-        return $this->is_active && 
+        return $this->is_active &&
                (!$this->subscription_ends_at || $this->subscription_ends_at->isFuture());
+    }
+
+    public function planService(): \App\Services\PlanService
+    {
+        return \App\Services\PlanService::for($this);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\StockMovement;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -163,7 +164,17 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $this->authorizeStockManagement();
-        
+
+        $user   = Auth::user();
+        $tenant = $user->tenant;
+        if (!$user->isSuperAdminGlobal() && $tenant) {
+            $plan = PlanService::for($tenant);
+            $currentCount = Product::where('tenant_id', $tenant->id)->count();
+            if (!$plan->canAddProduct($currentCount)) {
+                return back()->with('upgrade', "Limite atteinte : votre plan {$plan->planLabel()} est limité à {$plan->maxProducts()} produits. Passez au plan Business pour continuer.");
+            }
+        }
+
         $request->validate([
             'name'           => 'required|string|max:255',
             'stock'          => 'required|integer|min:0',

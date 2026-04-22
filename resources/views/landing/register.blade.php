@@ -17,19 +17,21 @@
                 <h2>Nouvelle entreprise</h2>
                 @php
                     $planNames = [
-                        'monthly' => 'Formule Mensuelle',
-                        'quarterly' => 'Formule Trimestrielle',
-                        'semester' => 'Formule Semestrielle',
-                        'yearly' => 'Formule Annuelle'
+                        'starter'   => 'Formule Starter',
+                        'monthly'   => 'Formule Business',
+                        'quarterly' => 'Formule Pro Trimestrielle',
+                        'semester'  => 'Formule Pro Semestrielle',
+                        'yearly'    => 'Formule Annuelle',
                     ];
                     $planPrices = [
-                        'monthly' => '15 000 FCFA/mois',
+                        'starter'   => '10 000 FCFA/mois',
+                        'monthly'   => '15 000 FCFA/mois',
                         'quarterly' => '39 900 FCFA/3 mois',
-                        'semester' => '79 900 FCFA/6 mois',
-                        'yearly' => '105 000 FCFA/an'
+                        'semester'  => '79 900 FCFA/6 mois',
+                        'yearly'    => '105 000 FCFA/an',
                     ];
                 @endphp
-                <span class="plan-badge">{{ $planNames[$plan] ?? 'Formule Mensuelle' }}</span>
+                <span class="plan-badge">{{ $planNames[$plan] ?? 'Formule Business' }}</span>
             </div>
 
             <div class="register-card-body">
@@ -162,12 +164,12 @@
                         
                         <div class="summary-item">
                             <span>Formule choisie</span>
-                            <span class="price-value">{{ $planNames[$plan] ?? 'Mensuelle' }}</span>
+                            <span class="price-value">{{ $planNames[$plan] ?? 'Business' }}</span>
                         </div>
                         
                         <div class="summary-item">
                             <span>Prix</span>
-                            <span class="price-value">{{ $planPrices[$plan] ?? '15 000 FCFA' }}</span>
+                            <span class="price-value">{{ $planPrices[$plan] ?? '15 000 FCFA/mois' }}</span>
                         </div>
                         
                         <div class="summary-item">

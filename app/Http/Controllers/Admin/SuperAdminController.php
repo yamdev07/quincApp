@@ -68,7 +68,7 @@ class SuperAdminController extends Controller
             'address' => 'nullable|string|max:500',
             
             // 👇 NOUVEAUX CHAMPS D'ABONNEMENT
-            'billing_cycle' => 'required|in:monthly,quarterly,semester,yearly',
+            'billing_cycle' => 'required|in:starter,monthly,quarterly,semester,yearly',
             'has_trial' => 'boolean',
             'trial_days' => 'required_if:has_trial,true|integer|min:1|max:90',
             'subscription_price' => 'required|integer|min:0',
@@ -91,18 +91,12 @@ class SuperAdminController extends Controller
             
             // Calculer la date de fin selon le cycle
             switch ($request->billing_cycle) {
-                case 'monthly':
-                    $subscriptionEndDate = $subscriptionStartDate->copy()->addMonth();
-                    break;
-                case 'quarterly':
-                    $subscriptionEndDate = $subscriptionStartDate->copy()->addMonths(3);
-                    break;
-                case 'semester':
-                    $subscriptionEndDate = $subscriptionStartDate->copy()->addMonths(6);
-                    break;
-                case 'yearly':
-                    $subscriptionEndDate = $subscriptionStartDate->copy()->addYear();
-                    break;
+                case 'starter':
+                case 'monthly':   $subscriptionEndDate = $subscriptionStartDate->copy()->addMonth(); break;
+                case 'quarterly': $subscriptionEndDate = $subscriptionStartDate->copy()->addMonths(3); break;
+                case 'semester':  $subscriptionEndDate = $subscriptionStartDate->copy()->addMonths(6); break;
+                case 'yearly':    $subscriptionEndDate = $subscriptionStartDate->copy()->addYear(); break;
+                default:          $subscriptionEndDate = $subscriptionStartDate->copy()->addMonth(); break;
             }
             
             // 1. Créer le tenant avec toutes les infos d'abonnement
@@ -283,21 +277,21 @@ class SuperAdminController extends Controller
             
             // Recalculer la date de fin selon le cycle
             if ($tenant->subscription_end_date && $tenant->subscription_end_date->isPast()) {
-                // Si expiré, nouvelle période
                 $tenant->subscription_start_date = Carbon::now();
                 switch ($tenant->billing_cycle) {
-                    case 'monthly': $tenant->subscription_end_date = Carbon::now()->addMonth(); break;
+                    case 'starter':
+                    case 'monthly':   $tenant->subscription_end_date = Carbon::now()->addMonth(); break;
                     case 'quarterly': $tenant->subscription_end_date = Carbon::now()->addMonths(3); break;
-                    case 'semester': $tenant->subscription_end_date = Carbon::now()->addMonths(6); break;
-                    case 'yearly': $tenant->subscription_end_date = Carbon::now()->addYear(); break;
+                    case 'semester':  $tenant->subscription_end_date = Carbon::now()->addMonths(6); break;
+                    case 'yearly':    $tenant->subscription_end_date = Carbon::now()->addYear(); break;
                 }
             } else if ($tenant->subscription_end_date) {
-                // Si encore actif, prolonger
                 switch ($tenant->billing_cycle) {
-                    case 'monthly': $tenant->subscription_end_date->addMonth(); break;
+                    case 'starter':
+                    case 'monthly':   $tenant->subscription_end_date->addMonth(); break;
                     case 'quarterly': $tenant->subscription_end_date->addMonths(3); break;
-                    case 'semester': $tenant->subscription_end_date->addMonths(6); break;
-                    case 'yearly': $tenant->subscription_end_date->addYear(); break;
+                    case 'semester':  $tenant->subscription_end_date->addMonths(6); break;
+                    case 'yearly':    $tenant->subscription_end_date->addYear(); break;
                 }
             }
             
@@ -550,18 +544,12 @@ class SuperAdminController extends Controller
             if ($tenant->isExpired()) {
                 $tenant->subscription_start_date = Carbon::now();
                 switch ($tenant->billing_cycle) {
-                    case 'monthly':
-                        $tenant->subscription_end_date = Carbon::now()->addMonth();
-                        break;
-                    case 'quarterly':
-                        $tenant->subscription_end_date = Carbon::now()->addMonths(3);
-                        break;
-                    case 'semester':
-                        $tenant->subscription_end_date = Carbon::now()->addMonths(6);
-                        break;
-                    case 'yearly':
-                        $tenant->subscription_end_date = Carbon::now()->addYear();
-                        break;
+                    case 'starter':
+                    case 'monthly':   $tenant->subscription_end_date = Carbon::now()->addMonth(); break;
+                    case 'quarterly': $tenant->subscription_end_date = Carbon::now()->addMonths(3); break;
+                    case 'semester':  $tenant->subscription_end_date = Carbon::now()->addMonths(6); break;
+                    case 'yearly':    $tenant->subscription_end_date = Carbon::now()->addYear(); break;
+                    default:          $tenant->subscription_end_date = Carbon::now()->addMonth(); break;
                 }
             }
             

@@ -51,10 +51,11 @@ class PaymentController extends Controller
         $currency = 'XOF';
         
         $plans = [
-            'monthly' => ['name' => 'Mensuel', 'price' => 15000, 'duration' => '1 mois'],
-            'quarterly' => ['name' => 'Trimestriel', 'price' => 39900, 'duration' => '3 mois', 'saving' => 'Économisez 10 100 FCFA'],
-            'semester' => ['name' => 'Semestriel', 'price' => 79900, 'duration' => '6 mois', 'saving' => 'Économisez 10 100 FCFA', 'popular' => true],
-            'yearly' => ['name' => 'Annuel', 'price' => 105000, 'duration' => '12 mois', 'saving' => 'Économisez 75 000 FCFA'],
+            'starter'   => ['name' => 'Starter',           'price' => 10000,  'duration' => '1 mois'],
+            'monthly'   => ['name' => 'Business Mensuel',  'price' => 15000,  'duration' => '1 mois'],
+            'quarterly' => ['name' => 'Pro Trimestriel',   'price' => 39900,  'duration' => '3 mois', 'saving' => 'Économisez 5 100 FCFA'],
+            'semester'  => ['name' => 'Pro Semestriel',    'price' => 79900,  'duration' => '6 mois', 'saving' => 'Économisez 10 100 FCFA', 'popular' => true],
+            'yearly'    => ['name' => 'Annuel',            'price' => 105000, 'duration' => '12 mois', 'saving' => 'Économisez 75 000 FCFA'],
         ];
         
         $currentPlan = $plans[$selectedPlan] ?? $plans['monthly'];
@@ -108,21 +109,23 @@ class PaymentController extends Controller
         file_put_contents($logFile, "Amount: $amount, Plan: $planType, Renewal: " . ($isRenewal ? 'Yes' : 'No') . "\n", FILE_APPEND);
         
         $duration = match($planType) {
-            'monthly' => 1,
+            'starter'   => 1,
+            'monthly'   => 1,
             'quarterly' => 3,
-            'semester' => 6,
-            'yearly' => 12,
-            default => 1
+            'semester'  => 6,
+            'yearly'    => 12,
+            default     => 1
         };
-        
+
         $endDate = now()->addMonths($duration);
-        
+
         $planName = match($planType) {
-            'monthly' => 'Mensuel',
-            'quarterly' => 'Trimestriel',
-            'semester' => 'Semestriel',
-            'yearly' => 'Annuel',
-            default => 'Mensuel'
+            'starter'   => 'Starter',
+            'monthly'   => 'Business Mensuel',
+            'quarterly' => 'Pro Trimestriel',
+            'semester'  => 'Pro Semestriel',
+            'yearly'    => 'Annuel',
+            default     => 'Business Mensuel'
         };
         
         try {

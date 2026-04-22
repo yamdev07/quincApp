@@ -983,7 +983,7 @@
                             <i class="bi bi-envelope"></i>
                         </div>
                         <p>Une question sur votre abonnement ?<br>Notre équipe vous répond sous 24h.</p>
-                        <a href="mailto:support@quincapro.com" class="btn-secondary" style="justify-content:center; display:inline-flex;">
+                        <a href="mailto:contact@yyamd.com" class="btn-secondary" style="justify-content:center; display:inline-flex;">
                             <i class="bi bi-send"></i> Contacter le support
                         </a>
                     </div>

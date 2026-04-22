@@ -540,7 +540,7 @@ class DashboardController extends Controller
         if ($user->isSuperAdminGlobal()) {
             return response()->json([
                 'total_sales' => Sale::count(),
-                'total_revenue' => Sale::sum('final_price'),
+                'total_revenue' => Sale::sum('total_price'),
                 'total_quantity_sold' => SaleItem::sum('quantity'),
                 'low_stock_count' => Product::where('stock', '<=', 5)->count(),
             ]);

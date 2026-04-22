@@ -275,6 +275,11 @@ class ReportController extends Controller
     {
         $user = Auth::user();
         $tenantId = $user->tenant_id;
+
+        $plan = \App\Services\PlanService::for($user->tenant);
+        if ($format === 'pdf' && !$plan->canExportPDF()) {
+            return back()->with('upgrade', "L'export PDF est disponible à partir du plan Business (15 000 FCFA/mois).");
+        }
         
         $products = Product::where('tenant_id', $tenantId)
             ->with('category')
