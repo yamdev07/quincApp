@@ -253,9 +253,12 @@
                 <button class="btn-back" onclick="window.print()">
                     <i class="bi bi-printer"></i> Imprimer
                 </button>
-                <button class="btn-back" onclick="exportToExcel()">
+                <a href="{{ route('reports.sales.export', ['format' => 'excel', 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn-back">
                     <i class="bi bi-file-excel"></i> Excel
-                </button>
+                </a>
+                <a href="{{ route('reports.sales.export', ['format' => 'csv', 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn-back">
+                    <i class="bi bi-filetype-csv"></i> CSV
+                </a>
             </div>
         </div>
     </div>

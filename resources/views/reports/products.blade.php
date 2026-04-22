@@ -152,9 +152,19 @@
 @section('content')
 <div class="report-page">
     <div class="report-header">
-        <a href="{{ route('reports.index') }}" class="btn-back mb-3 d-inline-flex">
-            <i class="bi bi-arrow-left"></i> Retour
-        </a>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <a href="{{ route('reports.index') }}" class="btn-back d-inline-flex">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('reports.products.export', ['format' => 'excel']) }}" class="btn-back">
+                    <i class="bi bi-file-excel"></i> Excel
+                </a>
+                <a href="{{ route('reports.products.export', ['format' => 'csv']) }}" class="btn-back">
+                    <i class="bi bi-filetype-csv"></i> CSV
+                </a>
+            </div>
+        </div>
         <h1>Rapport des produits</h1>
         <div class="subtitle">Analyse détaillée des stocks et performances des produits</div>
     </div>
