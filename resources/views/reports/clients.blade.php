@@ -306,9 +306,12 @@
                 <button class="btn-back" onclick="window.print()">
                     <i class="bi bi-printer"></i> Imprimer
                 </button>
-                <button class="btn-back" onclick="exportToExcel()">
+                <a href="{{ route('reports.clients.export', ['format' => 'excel']) }}" class="btn-back">
                     <i class="bi bi-file-excel"></i> Excel
-                </button>
+                </a>
+                <a href="{{ route('reports.clients.export', ['format' => 'csv']) }}" class="btn-back">
+                    <i class="bi bi-filetype-csv"></i> CSV
+                </a>
             </div>
         </div>
     </div>

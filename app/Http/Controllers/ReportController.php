@@ -285,15 +285,125 @@ class ReportController extends Controller
             ->with('category')
             ->orderBy('name')
             ->get();
-        
-        if ($format === 'excel' || $format === 'csv') {
-            // Logique d'export Excel/CSV
-            return response()->json(['message' => 'Export ' . strtoupper($format) . ' en cours de développement']);
-        } elseif ($format === 'pdf') {
-            // Logique d'export PDF
-            return response()->json(['message' => 'Export PDF en cours de développement']);
+
+        $headers = ['Produit', 'Catégorie', 'Stock', 'Prix achat (FCFA)', 'Prix vente (FCFA)', 'Valeur stock (FCFA)'];
+        $rows = $products->map(fn($p) => collect([
+            $p->name,
+            $p->category->name ?? '-',
+            $p->stock,
+            $p->purchase_price,
+            $p->sale_price,
+            $p->stock * $p->purchase_price,
+        ]));
+
+        return $this->streamExport('stocks_groupes', $format, $headers, $rows, 'Rapport des stocks groupés');
+    }
+
+    public function exportSales(Request $request, $format = 'csv')
+    {
+        $tenantId = Auth::user()->tenant_id;
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate   = $request->get('end_date',   Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $sales = Sale::where('tenant_id', $tenantId)
+            ->with('client')
+            ->whereBetween('created_at', [$startDate, Carbon::parse($endDate)->endOfDay()])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $headers = ['Date', 'Référence', 'Client', 'Montant (FCFA)', 'Statut'];
+        $rows = $sales->map(fn($s) => collect([
+            $s->created_at->format('d/m/Y H:i'),
+            $s->reference ?? $s->id,
+            $s->client->name ?? 'Client comptoir',
+            $s->total_price,
+            $s->payment_status ?? 'payé',
+        ]));
+
+        return $this->streamExport('rapport_ventes_' . $startDate . '_' . $endDate, $format, $headers, $rows, 'Rapport des ventes');
+    }
+
+    public function exportClients(Request $request, $format = 'csv')
+    {
+        $tenantId = Auth::user()->tenant_id;
+
+        $clients = Client::where('tenant_id', $tenantId)
+            ->withCount('sales')
+            ->withSum('sales', 'total_price')
+            ->orderBy('sales_sum_total_price', 'desc')
+            ->get();
+
+        $headers = ['Nom', 'Email', 'Téléphone', 'Adresse', 'Nb achats', 'Total dépensé (FCFA)'];
+        $rows = $clients->map(fn($c) => collect([
+            $c->name,
+            $c->email ?? '-',
+            $c->phone ?? '-',
+            $c->address ?? '-',
+            $c->sales_count,
+            $c->sales_sum_total_price ?? 0,
+        ]));
+
+        return $this->streamExport('rapport_clients', $format, $headers, $rows, 'Rapport des clients');
+    }
+
+    public function exportProducts(Request $request, $format = 'csv')
+    {
+        $tenantId = Auth::user()->tenant_id;
+
+        $products = Product::where('tenant_id', $tenantId)
+            ->with('category')
+            ->orderBy('name')
+            ->get();
+
+        $headers = ['Produit', 'Catégorie', 'Stock', 'Alerte stock', 'Prix achat (FCFA)', 'Prix vente (FCFA)', 'Marge (%)', 'Valeur stock (FCFA)'];
+        $rows = $products->map(function ($p) {
+            $marge = $p->sale_price > 0
+                ? round(($p->sale_price - $p->purchase_price) / $p->sale_price * 100, 1)
+                : 0;
+            return collect([
+                $p->name,
+                $p->category->name ?? '-',
+                $p->stock,
+                $p->stock_alert ?? 10,
+                $p->purchase_price,
+                $p->sale_price,
+                $marge . '%',
+                $p->stock * $p->purchase_price,
+            ]);
+        });
+
+        return $this->streamExport('rapport_produits', $format, $headers, $rows, 'Rapport des produits');
+    }
+
+    private function streamExport(string $filename, string $format, array $headers, $rows, string $title = '')
+    {
+        if ($format === 'pdf') {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.exports.pdf', [
+                'title'   => $title ?: $filename,
+                'headers' => $headers,
+                'rows'    => $rows->map(fn($r) => $r->toArray()),
+            ]);
+            return $pdf->download($filename . '_' . now()->format('Y-m-d') . '.pdf');
         }
-        
-        return back()->with('error', 'Format non supporté');
+
+        $isExcel = $format === 'excel';
+        $ext     = $isExcel ? 'xls' : 'csv';
+        $mime    = $isExcel ? 'application/vnd.ms-excel' : 'text/csv';
+
+        $callback = function () use ($headers, $rows, $isExcel) {
+            $out = fopen('php://output', 'w');
+            if ($isExcel) fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($out, $headers, ';');
+            foreach ($rows as $row) {
+                fputcsv($out, $row->toArray(), ';');
+            }
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type'        => $mime . '; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '_' . now()->format('Y-m-d') . '.' . $ext . '"',
+            'Pragma'              => 'no-cache',
+        ]);
     }
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReportController;
 use App\Models\Sale;
 use App\Models\Product;
 use App\Models\Client;
@@ -261,8 +262,11 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
         Route::get('/products', [ProductController::class, 'productsReport'])->name('products');
         Route::get('/inventory', [ProductController::class, 'inventoryReport'])->name('inventory');
         Route::get('/grouped-stocks', [ProductController::class, 'groupedStocksReport'])->name('grouped-stocks');
-        Route::get('/grouped-stocks/export/{format?}', [ProductController::class, 'exportGroupedStocks'])
+        Route::get('/grouped-stocks/export/{format?}', [ReportController::class, 'exportGroupedStocks'])
             ->name('grouped-stocks.export');
+        Route::get('/sales/export/{format?}', [ReportController::class, 'exportSales'])->name('sales.export');
+        Route::get('/clients/export/{format?}', [ReportController::class, 'exportClients'])->name('clients.export');
+        Route::get('/products/export/{format?}', [ReportController::class, 'exportProducts'])->name('products.export');
 
         Route::get('/invoice/{id}', [App\Http\Controllers\InvoiceController::class, 'downloadInvoice'])->name('invoice');
     });
