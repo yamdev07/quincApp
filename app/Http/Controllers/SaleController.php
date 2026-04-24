@@ -167,10 +167,24 @@ class SaleController extends Controller
                     ->where('tenant_id', $tenantId)
                     ->findOrFail($id);
 
+        $tenant = Auth::user()->tenant;
+
+        // Embed logo as base64 so it renders correctly in any environment
+        // (no symlink dependency, works for print and PDF export too)
+        $logoBase64 = null;
+        if ($tenant?->logo) {
+            $path = storage_path('app/public/' . $tenant->logo);
+            if (file_exists($path)) {
+                $mime = mime_content_type($path);
+                $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+            }
+        }
+
         return view('sales.invoice', [
             'sale'          => $sale,
             'totalQuantity' => $sale->items->sum('quantity'),
-            'tenant'        => Auth::user()->tenant,
+            'tenant'        => $tenant,
+            'logoBase64'    => $logoBase64,
         ]);
     }
 
