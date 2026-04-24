@@ -7,6 +7,7 @@ use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -52,17 +53,12 @@ class ClientController extends Controller
     {
         $this->authorizeSalesAccess();
         
-        // Le scope TenantScope s'applique automatiquement !
         $clients = Client::withCount('sales')
+                        ->withSum('sales', 'total_price')
+                        ->withMax('sales', 'created_at')
                         ->latest()
                         ->paginate(10);
-        
-        // Calculer des statistiques supplémentaires
-        foreach ($clients as $client) {
-            $client->total_spent = $client->sales()->sum('total_price');
-            $client->last_purchase = $client->sales()->latest()->first()?->created_at;
-        }
-        
+
         return view('clients.index', compact('clients'));
     }
 
@@ -83,13 +79,19 @@ class ClientController extends Controller
     {
         $this->authorizeAdmin();
         
+        $tenantId = Auth::user()->tenant_id;
+
         $request->validate([
             'name'  => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => [
+                'nullable', 'email', 'max:255',
+                Rule::unique('clients', 'email')->where('tenant_id', $tenantId),
+            ],
             'phone' => 'nullable|string|max:20',
+        ], [
+            'email.unique' => 'Un client avec cet email existe déjà dans votre boutique.',
         ]);
 
-        // owner_id sera auto-assigné par le Trait TenantScope
         Client::create($request->only(['name', 'email', 'phone']));
 
         return redirect()->route('clients.index')
@@ -152,10 +154,17 @@ class ClientController extends Controller
         $this->authorizeAdmin();
         $this->authorizeClientAccess($client);
         
+        $tenantId = Auth::user()->tenant_id;
+
         $request->validate([
             'name'  => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => [
+                'nullable', 'email', 'max:255',
+                Rule::unique('clients', 'email')->where('tenant_id', $tenantId)->ignore($client->id),
+            ],
             'phone' => 'nullable|string|max:20',
+        ], [
+            'email.unique' => 'Un client avec cet email existe déjà dans votre boutique.',
         ]);
 
         $client->update($request->only(['name', 'email', 'phone']));
@@ -165,24 +174,23 @@ class ClientController extends Controller
     }
 
     /**
-     * Supprimer un client
+     * Archive (soft delete) un client
      */
     public function destroy(Client $client)
     {
         $this->authorizeAdmin();
         $this->authorizeClientAccess($client);
-        
-        // Vérifier si le client a des ventes
-        if ($client->sales()->count() > 0) {
-            return redirect()->route('clients.index')
-                ->with('warning', 
-                    "Impossible de supprimer ce client car il a {$client->sales()->count()} vente(s) associée(s).");
-        }
-        
+
+        $hasSales = $client->sales()->exists();
+
+        // Soft delete : les ventes associées restent intactes
         $client->delete();
 
-        return redirect()->route('clients.index')
-                         ->with('success', 'Client supprimé avec succès ✅');
+        $message = $hasSales
+            ? "Client archivé (ses ventes sont préservées)."
+            : "Client supprimé avec succès.";
+
+        return redirect()->route('clients.index')->with('success', $message);
     }
 
     /**
@@ -192,13 +200,15 @@ class ClientController extends Controller
     {
         $this->authorizeSalesAccess();
         
-        $term = $request->get('q');
-        
-        $clients = Client::where('name', 'LIKE', "%{$term}%")
-                        ->orWhere('email', 'LIKE', "%{$term}%")
-                        ->orWhere('phone', 'LIKE', "%{$term}%")
-                        ->limit(10)
-                        ->get();
+        $term = $request->get('q', '');
+
+        $clients = Client::where(function ($q) use ($term) {
+                        $q->where('name', 'LIKE', '%' . $term . '%')
+                          ->orWhere('email', 'LIKE', '%' . $term . '%')
+                          ->orWhere('phone', 'LIKE', '%' . $term . '%');
+                    })
+                    ->limit(10)
+                    ->get(['id', 'name', 'email', 'phone']);
         
         return response()->json($clients);
     }

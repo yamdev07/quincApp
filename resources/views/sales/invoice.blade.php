@@ -657,8 +657,8 @@
                 </p>
             </div>
             <div class="sf-invoice-logo">
-                @if($tenant && $tenant->logo)
-                    <img src="{{ Storage::url($tenant->logo) }}"
+                @if($logoBase64 ?? null)
+                    <img src="{{ $logoBase64 }}"
                          alt="Logo {{ $tenant->company_name }}"
                          style="max-width:120px; max-height:80px; object-fit:contain; margin: 0 0 12px auto; display:block;">
                 @else

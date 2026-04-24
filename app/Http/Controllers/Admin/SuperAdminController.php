@@ -68,7 +68,7 @@ class SuperAdminController extends Controller
             'address' => 'nullable|string|max:500',
             
             // 👇 NOUVEAUX CHAMPS D'ABONNEMENT
-            'billing_cycle' => 'required|in:starter,monthly,quarterly,semester,yearly',
+            'billing_cycle' => 'required|in:starter,monthly,quarterly,semester,yearly,lifetime',
             'has_trial' => 'boolean',
             'trial_days' => 'required_if:has_trial,true|integer|min:1|max:90',
             'subscription_price' => 'required|integer|min:0',
@@ -96,6 +96,7 @@ class SuperAdminController extends Controller
                 case 'quarterly': $subscriptionEndDate = $subscriptionStartDate->copy()->addMonths(3); break;
                 case 'semester':  $subscriptionEndDate = $subscriptionStartDate->copy()->addMonths(6); break;
                 case 'yearly':    $subscriptionEndDate = $subscriptionStartDate->copy()->addYear(); break;
+                case 'lifetime':  $subscriptionEndDate = $subscriptionStartDate->copy()->addYears(99); break;
                 default:          $subscriptionEndDate = $subscriptionStartDate->copy()->addMonth(); break;
             }
             
@@ -284,6 +285,7 @@ class SuperAdminController extends Controller
                     case 'quarterly': $tenant->subscription_end_date = Carbon::now()->addMonths(3); break;
                     case 'semester':  $tenant->subscription_end_date = Carbon::now()->addMonths(6); break;
                     case 'yearly':    $tenant->subscription_end_date = Carbon::now()->addYear(); break;
+                    case 'lifetime':  $tenant->subscription_end_date = Carbon::now()->addYears(99); break;
                 }
             } else if ($tenant->subscription_end_date) {
                 switch ($tenant->billing_cycle) {
@@ -292,6 +294,7 @@ class SuperAdminController extends Controller
                     case 'quarterly': $tenant->subscription_end_date->addMonths(3); break;
                     case 'semester':  $tenant->subscription_end_date->addMonths(6); break;
                     case 'yearly':    $tenant->subscription_end_date->addYear(); break;
+                    case 'lifetime':  $tenant->subscription_end_date = Carbon::now()->addYears(99); break;
                 }
             }
             
@@ -549,10 +552,11 @@ class SuperAdminController extends Controller
                     case 'quarterly': $tenant->subscription_end_date = Carbon::now()->addMonths(3); break;
                     case 'semester':  $tenant->subscription_end_date = Carbon::now()->addMonths(6); break;
                     case 'yearly':    $tenant->subscription_end_date = Carbon::now()->addYear(); break;
+                    case 'lifetime':  $tenant->subscription_end_date = Carbon::now()->addYears(99); break;
                     default:          $tenant->subscription_end_date = Carbon::now()->addMonth(); break;
                 }
             }
-            
+
             $tenant->save();
             
             // Ajouter à l'historique

@@ -28,217 +28,74 @@ class DashboardController extends Controller
         return true;
     }
 
-    public function index()
+    public function index(\App\Services\DashboardService $dashboard)
     {
-        $this->authorizeDashboardAccess();
-        
         $user = Auth::user();
-        
-        // 👇 Si c'est le super_admin_global (toi), afficher le dashboard global
+
         if ($user->isSuperAdminGlobal()) {
-            return $this->globalDashboard();
+            return $this->globalDashboard($dashboard);
         }
-        
-        // 👇 Sinon, dashboard normal pour les quincailleries
-        return $this->tenantDashboard();
+
+        return $this->tenantDashboard($dashboard, $user);
     }
 
-    /**
-     * Dashboard pour les utilisateurs d'une quincaillerie
-     */
-    private function tenantDashboard()
+    private function tenantDashboard(\App\Services\DashboardService $dashboard, $user)
     {
-        $user = Auth::user();
-        
-        // 📅 Dates
-        $today = Carbon::today();
-        $weekAgo = Carbon::today()->subDays(7);
+        $s = $dashboard->tenantStats($user->tenant_id);
 
-        // 1️⃣ Ventes aujourd'hui (filtrées par quincaillerie)
-        $salesToday = Sale::whereDate('created_at', $today)->count();
-
-        // 2️⃣ Chiffre d'affaires total (aujourd'hui)
-        $totalRevenue = Sale::whereDate('created_at', $today)->sum('total_price');
-
-        // 3️⃣ Chiffre d'affaires total (toutes les ventes)
-        $totalRevenueAll = Sale::sum('total_price');
-
-        // 4️⃣ Alertes Stock (basé sur le seuil personnalisé de chaque produit)
-        $criticalStockThreshold = 2;
-
-        $lowStockProducts = Product::whereColumn('stock', '<=', 'stock_alert')
-                                   ->where('stock', '>', $criticalStockThreshold)
-                                   ->orderBy('stock')
-                                   ->limit(10)
-                                   ->get();
-
-        $criticalStockProducts = Product::where('stock', '<=', $criticalStockThreshold)
-                                        ->orderBy('stock')
-                                        ->limit(10)
-                                        ->get();
-
-        $lowStockCount = $lowStockProducts->count() + $criticalStockProducts->count();
-
-        // 5️⃣ Clients actifs (mois en cours)
-        $activeClients = Sale::whereMonth('created_at', $today->month)
-                             ->distinct('client_id')
-                             ->count('client_id');
-
-        // 6️⃣ Nouveaux clients (7 jours)
-        $newClients = Client::whereBetween('created_at', [$weekAgo, $today])->count();
-
-        // 7️⃣ Ventes récentes
-        $recentSales = Sale::with(['client', 'items.product'])
-                           ->orderBy('created_at', 'desc')
-                           ->take(10)
-                           ->get();
-
-        // 8️⃣ Données graphique (7 derniers jours)
-        $dates = [];
-        $totals = [];
-
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
-            $dates[] = $date->format('d/m');
-            $totals[] = Sale::whereDate('created_at', $date)->sum('total_price') ?? 0;
-        }
-
-        // 9️⃣ Statistiques produits
-        $totalProducts = Product::count();
-        $totalStockValue = Product::sum(DB::raw('sale_price * stock'));
-
-        // 1️⃣0️⃣ Statistiques fournisseurs
-        $totalSuppliers = Supplier::count();
-        $suppliersWithProducts = Supplier::has('products')->count();
-
-        // 1️⃣1️⃣ Alerte ventes
-        $dailyTarget = 5;
-        $lowSalesAlert = $salesToday < $dailyTarget;
-
-        // 1️⃣2️⃣ Informations utilisateur
-        $userRole = $user->role;
-        $isAdmin = $user->isSuperAdminOrAdmin();
-        $employeesCount = $user->employees()->count();
-
-        return view('dashboard', compact(
-            'salesToday',
-            'totalRevenue',
-            'totalRevenueAll',
-            'lowStockProducts',
-            'criticalStockProducts',
-            'lowStockCount',
-            'activeClients',
-            'newClients',
-            'recentSales',
-            'dates',
-            'totals',
-            'lowSalesAlert',
-            'totalProducts',
-            'totalStockValue',
-            'totalSuppliers',
-            'suppliersWithProducts',
-            'userRole',
-            'isAdmin',
-            'employeesCount'
-        ));
+        return view('dashboard', [
+            'salesToday'             => $s['sales_today'],
+            'totalRevenue'           => $s['revenue_today'],
+            'totalRevenueAll'        => $s['revenue_all'],
+            'lowStockProducts'       => $s['low_stock_products'],
+            'criticalStockProducts'  => $s['critical_stock_products'],
+            'lowStockCount'          => $s['low_stock_count'],
+            'activeClients'          => $s['active_clients'],
+            'newClients'             => $s['new_clients'],
+            'recentSales'            => $s['recent_sales'],
+            'dates'                  => $s['chart_dates'],
+            'totals'                 => $s['chart_totals'],
+            'lowSalesAlert'          => $s['low_sales_alert'],
+            'totalProducts'          => $s['total_products'],
+            'totalStockValue'        => $s['total_stock_value'],
+            'totalSuppliers'         => $s['total_suppliers'],
+            'suppliersWithProducts'  => Supplier::where('tenant_id', $user->tenant_id)->has('products')->count(),
+            'userRole'               => $user->role,
+            'isAdmin'                => $user->isSuperAdminOrAdmin(),
+            'employeesCount'         => $s['employees_count'],
+        ]);
     }
 
-    /**
-     * Dashboard GLOBAL pour toi (super_admin_global)
-     */
-    private function globalDashboard()
+    private function globalDashboard(\App\Services\DashboardService $dashboard)
     {
-        // 📊 Statistiques globales
-        $totalTenants = Tenant::count();
-        $activeTenants = Tenant::where('is_active', true)->count();
-        $inactiveTenants = Tenant::where('is_active', false)->count();
-        $expiringSoon = Tenant::where('is_active', true)
-                             ->where('subscription_ends_at', '<=', now()->addDays(30))
-                             ->where('subscription_ends_at', '>', now())
-                             ->count();
-        
-        // 👥 Statistiques utilisateurs
-        $totalUsers = User::count();
-        $totalSuperAdmins = User::where('role', 'super_admin')->count();
-        $totalAdmins = User::where('role', 'admin')->count();
-        $totalManagers = User::where('role', 'manager')->count();
-        $totalCashiers = User::where('role', 'cashier')->count();
-        $totalStorekeepers = User::where('role', 'storekeeper')->count();
-        
-        // 📈 Nouveaux tenants
-        $newTenantsToday = Tenant::whereDate('created_at', Carbon::today())->count();
-        $newTenantsThisWeek = Tenant::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count();
-        $newTenantsThisMonth = Tenant::whereMonth('created_at', now()->month)
-                                    ->whereYear('created_at', now()->year)
-                                    ->count();
-        
-        // 💰 Chiffre d'affaires global
-        $totalRevenueAllTime = Sale::sum('total_price');
-        $totalRevenueToday = Sale::whereDate('created_at', Carbon::today())->sum('total_price');
-        $totalRevenueThisMonth = Sale::whereMonth('created_at', now()->month)
-                                     ->whereYear('created_at', now()->year)
-                                     ->sum('total_price');
-        
-        // 📊 Graphique des inscriptions (12 derniers mois)
-        $months = [];
-        $registrations = [];
-        
-        for ($i = 11; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i);
-            $months[] = $date->format('M Y');
-            $registrations[] = Tenant::whereYear('created_at', $date->year)
-                                     ->whereMonth('created_at', $date->month)
-                                     ->count();
-        }
-        
-        // 📊 Graphique du CA global (30 derniers jours)
-        $chartDates = [];
-        $chartRevenues = [];
-        
-        for ($i = 29; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
-            $chartDates[] = $date->format('d/m');
-            $chartRevenues[] = Sale::whereDate('created_at', $date)->sum('total_price') ?? 0;
-        }
-        
-        // 🏆 Top 5 tenants par CA
-        $topTenants = Tenant::withCount('users')
-                           ->withSum('sales', 'total_price')
-                           ->orderBy('sales_sum_total_price', 'desc')
-                           ->limit(5)
-                           ->get();
-        
-        // 📦 Statistiques globales produits
-        $totalProducts = Product::count();
-        $totalStockValue = Product::sum(DB::raw('purchase_price * stock'));
-        $outOfStock = Product::where('stock', 0)->count();
-        
-        return view('dashboard-global', compact(
-            'totalTenants',
-            'activeTenants',
-            'inactiveTenants',
-            'expiringSoon',
-            'totalUsers',
-            'totalSuperAdmins',
-            'totalAdmins',
-            'totalManagers',
-            'totalCashiers',
-            'totalStorekeepers',
-            'newTenantsToday',
-            'newTenantsThisWeek',
-            'newTenantsThisMonth',
-            'totalRevenueAllTime',
-            'totalRevenueToday',
-            'totalRevenueThisMonth',
-            'months',
-            'registrations',
-            'chartDates',
-            'chartRevenues',
-            'topTenants',
-            'totalProducts',
-            'totalStockValue',
-            'outOfStock'
-        ));
+        $s = $dashboard->globalStats();
+
+        return view('dashboard-global', [
+            'totalTenants'          => $s['total_tenants'],
+            'activeTenants'         => $s['active_tenants'],
+            'inactiveTenants'       => $s['inactive_tenants'],
+            'expiringSoon'          => $s['expiring_soon'],
+            'totalUsers'            => $s['total_users'],
+            'totalSuperAdmins'      => $s['users_by_role']['super_admin'] ?? 0,
+            'totalAdmins'           => $s['users_by_role']['admin'] ?? 0,
+            'totalManagers'         => $s['users_by_role']['manager'] ?? 0,
+            'totalCashiers'         => $s['users_by_role']['cashier'] ?? 0,
+            'totalStorekeepers'     => $s['users_by_role']['storekeeper'] ?? 0,
+            'newTenantsToday'       => $s['new_tenants_today'],
+            'newTenantsThisWeek'    => $s['new_tenants_week'],
+            'newTenantsThisMonth'   => $s['new_tenants_month'],
+            'totalRevenueAllTime'   => $s['revenue_all_time'],
+            'totalRevenueToday'     => $s['revenue_today'],
+            'totalRevenueThisMonth' => $s['revenue_this_month'],
+            'months'                => $s['months'],
+            'registrations'         => $s['registrations'],
+            'chartDates'            => $s['chart_dates'],
+            'chartRevenues'         => $s['chart_revenues'],
+            'topTenants'            => $s['top_tenants'],
+            'totalProducts'         => $s['total_products'],
+            'totalStockValue'       => $s['total_stock_value'],
+            'outOfStock'            => $s['out_of_stock'],
+        ]);
     }
 
     // 📊 Données du graphique en AJAX

@@ -227,18 +227,29 @@ class AIAnalysisController extends Controller
         return $ctx;
     }
 
-    private function buildReportContext($currentRevenue, $currentSales, $prevRevenue, $prevSales, $evolutionPct, $topCategories, $salesByDay, $period): string
-    {
+    private function buildReportContext(
+        $currentRevenue, $currentSales, $averageSale,
+        $prevRevenue, $prevSales, $evolutionPct,
+        $topProducts, $topCategories, $salesByDay,
+        $totalStockValue, $totalProducts, $outOfStock, $lowStock,
+        $totalClients, $activeClients, $period
+    ): string {
         // DAYOFWEEK() MariaDB : 1=Dimanche, 2=Lundi, ..., 7=Samedi
         $days = [1 => 'Dimanche', 2 => 'Lundi', 3 => 'Mardi', 4 => 'Mercredi', 5 => 'Jeudi', 6 => 'Vendredi', 7 => 'Samedi'];
 
         $ctx = "=== RAPPORT FINANCIER ===\n";
         $ctx .= "Période : {$period} derniers jours\n";
         $ctx .= "CA actuel : " . number_format($currentRevenue, 0, ',', ' ') . " FCFA ({$currentSales} ventes)\n";
+        $ctx .= "Panier moyen : " . number_format($averageSale, 0, ',', ' ') . " FCFA\n";
         $ctx .= "CA période précédente : " . number_format($prevRevenue, 0, ',', ' ') . " FCFA ({$prevSales} ventes)\n";
         $ctx .= "Évolution : {$evolutionPct}%\n\n";
 
-        $ctx .= "=== VENTES PAR CATÉGORIE ===\n";
+        $ctx .= "=== TOP PRODUITS ===\n";
+        foreach ($topProducts as $p) {
+            $ctx .= "- {$p->name} : " . number_format($p->total_revenue, 0, ',', ' ') . " FCFA, {$p->total_quantity} unités\n";
+        }
+
+        $ctx .= "\n=== VENTES PAR CATÉGORIE ===\n";
         foreach ($topCategories as $cat) {
             $ctx .= "- {$cat->name} : " . number_format($cat->revenue, 0, ',', ' ') . " FCFA, {$cat->qty} unités vendues\n";
         }
@@ -248,6 +259,13 @@ class AIAnalysisController extends Controller
             $dayName = $days[(int)$day->day_of_week] ?? 'Inconnu';
             $ctx .= "- {$dayName} : {$day->total} ventes, " . number_format($day->revenue, 0, ',', ' ') . " FCFA\n";
         }
+
+        $ctx .= "\n=== STOCK ===\n";
+        $ctx .= "Valeur totale du stock : " . number_format($totalStockValue, 0, ',', ' ') . " FCFA\n";
+        $ctx .= "Total produits : {$totalProducts} | En rupture : {$outOfStock} | En alerte : {$lowStock}\n";
+
+        $ctx .= "\n=== CLIENTS ===\n";
+        $ctx .= "Total clients : {$totalClients} | Actifs sur la période : {$activeClients}\n";
 
         return $ctx;
     }

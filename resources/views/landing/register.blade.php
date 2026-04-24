@@ -22,6 +22,7 @@
                         'quarterly' => 'Formule Pro Trimestrielle',
                         'semester'  => 'Formule Pro Semestrielle',
                         'yearly'    => 'Formule Annuelle',
+                        'lifetime'  => 'Licence à vie',
                     ];
                     $planPrices = [
                         'starter'   => '10 000 FCFA/mois',
@@ -29,6 +30,7 @@
                         'quarterly' => '39 900 FCFA/3 mois',
                         'semester'  => '79 900 FCFA/6 mois',
                         'yearly'    => '105 000 FCFA/an',
+                        'lifetime'  => '300 000 FCFA (paiement unique)',
                     ];
                 @endphp
                 <span class="plan-badge">{{ $planNames[$plan] ?? 'Formule Business' }}</span>

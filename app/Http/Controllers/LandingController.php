@@ -88,7 +88,7 @@ class LandingController extends Controller
     {
         $plan = $request->get('plan', 'monthly');
         
-        $validPlans = ['starter', 'monthly', 'quarterly', 'semester', 'yearly'];
+        $validPlans = ['starter', 'monthly', 'quarterly', 'semester', 'yearly', 'lifetime'];
         if (!in_array($plan, $validPlans)) {
             $plan = 'monthly';
         }
@@ -125,6 +125,12 @@ class LandingController extends Controller
                 'formatted' => '105 000 FCFA',
                 'period' => '/an'
             ],
+            'lifetime' => [
+                'name' => 'Licence à vie',
+                'price' => 300000,
+                'formatted' => '300 000 FCFA',
+                'period' => ' (paiement unique)'
+            ],
         ];
 
         $planName = $plans[$plan]['name'];
@@ -145,7 +151,7 @@ class LandingController extends Controller
             'phone' => 'nullable|string|max:20',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'plan' => 'required|in:starter,monthly,quarterly,semester,yearly',
+            'plan' => 'required|in:starter,monthly,quarterly,semester,yearly,lifetime',
         ]);
 
         try {
@@ -157,6 +163,7 @@ class LandingController extends Controller
                 'quarterly' => 39900,
                 'semester'  => 79900,
                 'yearly'    => 105000,
+                'lifetime'  => 300000,
             ];
 
             $planSlug = [
@@ -165,6 +172,7 @@ class LandingController extends Controller
                 'quarterly' => 'pro',
                 'semester'  => 'pro',
                 'yearly'    => 'pro',
+                'lifetime'  => 'pro',
             ];
             
             // GÉNÉRER LE MOT DE PASSE (on le garde en clair pour l'email)
