@@ -12,8 +12,8 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class ProductController extends Controller
 {
@@ -293,43 +293,22 @@ class ProductController extends Controller
         }
     }
 
-    // 🗑️ Suppression d'un produit
+    // 🗑️ Archive (soft delete) un produit
     public function destroy(Product $product)
     {
         $this->authorizeProductAccess($product);
         $this->authorizeStockManagement();
-        
-        if (Schema::hasColumn('products', 'has_been_cumulated') && 
-            $product->has_been_cumulated) {
-            return redirect()->route('products.index')
-                ->with('warning', 'Ce produit a été cumulé et ne peut pas être supprimé.');
-        }
-        
-        if (Schema::hasColumn('products', 'is_cumulated') && $product->is_cumulated) {
-            $originalCount = 0;
-            if (Schema::hasColumn('products', 'cumulated_to')) {
-                $originalCount += Product::where('cumulated_to', $product->id)->count();
-            }
-            if (Schema::hasColumn('products', 'parent_id')) {
-                $originalCount += Product::where('parent_id', $product->id)->count();
-            }
-            
-            if ($originalCount > 0) {
-                return redirect()->route('products.index')
-                    ->with('warning', 'Ce produit cumulé contient d\'autres produits et ne peut pas être supprimé.');
-            }
-        }
-        
-        if ($product->saleItems()->exists()) {
-            $count = $product->saleItems()->count();
-            return redirect()->route('products.index')
-                ->with('warning', "Impossible de supprimer « {$product->name} » : il apparaît dans {$count} ligne(s) de vente. Archivez-le ou mettez son stock à 0.");
-        }
 
-        $product->stockMovements()->delete();
+        $hasSales = $product->saleItems()->exists();
+
+        // Soft delete : aucune violation FK possible
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Produit supprimé avec succès.');
+        $message = $hasSales
+            ? "« {$product->name} » archivé (présent dans des ventes, données préservées)."
+            : "Produit « {$product->name} » supprimé.";
+
+        return redirect()->route('products.index')->with('success', $message);
     }
 
     // 📊 Rapport des produits

@@ -146,6 +146,41 @@
     .badge-critical { background: #fee2e2; color: #991b1b; }
     .badge-warning { background: #fff3cd; color: #f97316; }
     .badge-good { background: #dcfce7; color: #166534; }
+    .btn-lots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .btn-lots:hover { background: #e2e8f0; }
+    .btn-lots.active { background: #ffedd5; border-color: #f97316; color: #ea580c; }
+    .lots-row { display: none; }
+    .lots-row.open { display: table-row; }
+    .lots-inner {
+        background: #fafafa;
+        padding: 12px 20px;
+    }
+    .lots-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .lots-table th {
+        padding: 8px 12px;
+        background: #f1f5f9;
+        font-size: 12px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .lots-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+    }
+    .lots-table tr:last-child td { border-bottom: none; }
 </style>
 @endsection
 
@@ -229,32 +264,92 @@
                 <tr>
                     <th>Produit</th>
                     <th>Catégorie</th>
+                    <th>Prix achat moy.</th>
                     <th>Prix vente</th>
                     <th>Stock</th>
-                    <th>Valeur stock</th>
+                    <th>Valeur stock (achat)</th>
                     <th>Statut</th>
+                    <th>Lots</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($products ?? [] as $product)
+                @php
+                    $totals  = $product->stock_totals;
+                    $batches = $totals['grouped_stocks'] ?? collect();
+                    $nbLots  = $totals['number_of_batches'] ?? 0;
+                @endphp
                 <tr>
                     <td><strong>{{ $product->name }}</strong></td>
                     <td>{{ $product->category?->name ?? '-' }}</td>
+                    <td>{{ number_format($product->purchase_price, 0, ',', ' ') }} FCFA</td>
                     <td>{{ number_format($product->sale_price, 0, ',', ' ') }} FCFA</td>
                     <td>{{ $product->stock }}</td>
-                    <td>{{ number_format($product->stock * $product->sale_price, 0, ',', ' ') }} FCFA</td>
+                    <td>{{ number_format($product->stock * $product->purchase_price, 0, ',', ' ') }} FCFA</td>
                     <td>
                         @if($product->stock <= 0)
                             <span class="badge-stock badge-critical">Rupture</span>
-                        @elseif($product->stock <= 5)
+                        @elseif($product->stock <= ($product->stock_alert ?? 5))
                             <span class="badge-stock badge-warning">Stock faible</span>
                         @else
                             <span class="badge-stock badge-good">Disponible</span>
                         @endif
                     </td>
+                    <td>
+                        @if($nbLots > 0)
+                            <button class="btn-lots" onclick="toggleLots({{ $product->id }}, this)">
+                                <i class="bi bi-layers"></i> {{ $nbLots }} lot{{ $nbLots > 1 ? 's' : '' }}
+                            </button>
+                        @else
+                            <span class="text-muted" style="font-size:12px">—</span>
+                        @endif
+                    </td>
                 </tr>
+                @if($nbLots > 0)
+                <tr class="lots-row" id="lots-{{ $product->id }}">
+                    <td colspan="8" style="padding:0">
+                        <div class="lots-inner">
+                            <table class="lots-table">
+                                <thead>
+                                    <tr>
+                                        <th>Référence lot</th>
+                                        <th>Prix achat</th>
+                                        <th>Prix vente</th>
+                                        <th>Quantité</th>
+                                        <th>Valeur (achat)</th>
+                                        <th>Marge unitaire</th>
+                                        <th>Dernière entrée</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($batches as $batch)
+                                    @php
+                                        $marge = $batch->purchase_price > 0
+                                            ? round((($batch->sale_price - $batch->purchase_price) / $batch->purchase_price) * 100, 1)
+                                            : 0;
+                                    @endphp
+                                    <tr>
+                                        <td><code style="font-size:12px">{{ $batch->batch ?? '—' }}</code></td>
+                                        <td>{{ number_format($batch->purchase_price, 0, ',', ' ') }} FCFA</td>
+                                        <td>{{ number_format($batch->sale_price, 0, ',', ' ') }} FCFA</td>
+                                        <td><strong>{{ $batch->total_quantity }}</strong></td>
+                                        <td>{{ number_format($batch->total_quantity * $batch->purchase_price, 0, ',', ' ') }} FCFA</td>
+                                        <td>
+                                            <span style="color:{{ $marge >= 0 ? '#166534' : '#991b1b' }}; font-weight:600">
+                                                {{ $marge }}%
+                                            </span>
+                                        </td>
+                                        <td style="color:#64748b">{{ \Carbon\Carbon::parse($batch->last_updated)->format('d/m/Y') }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                @endif
                 @empty
-                <tr><td colspan="6" class="text-center py-5">Aucun produit trouvé</td></tr>
+                <tr><td colspan="8" class="text-center py-5">Aucun produit trouvé</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -262,6 +357,13 @@
 </div>
 
 <script>
+function toggleLots(id, btn) {
+    const row = document.getElementById('lots-' + id);
+    const open = row.classList.toggle('open');
+    btn.classList.toggle('active', open);
+    const icon = btn.querySelector('i');
+    icon.className = open ? 'bi bi-layers-fill' : 'bi bi-layers';
+}
 function applyFilters() {
     const params = new URLSearchParams();
     const catId = document.getElementById('category_id').value;

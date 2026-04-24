@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Client;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Services\SaleService;
 use App\Http\Requests\StoreSaleRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class SaleController extends Controller
@@ -107,14 +109,39 @@ class SaleController extends Controller
     }
 
     // ----------------------
-    // ANNULER une vente
+    // ANNULER une vente (DELETE /sales/{sale})
+    // ----------------------
+    public function destroy(Sale $sale)
+    {
+        $user = Auth::user();
+
+        $allowedRoles = ['super_admin_global', 'super_admin', 'admin', 'manager', 'storekeeper'];
+        if (!in_array($user->role, $allowedRoles)) {
+            abort(403, 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');
+        }
+
+        if ($sale->tenant_id !== $user->tenant_id && !$user->isSuperAdminGlobal()) {
+            abort(403);
+        }
+
+        $sale->loadMissing('items');
+
+        try {
+            $this->saleService->cancel($sale, $user->id);
+            return redirect()->route('sales.index')->with('success', 'Vente annulée et stock restauré.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    // ----------------------
+    // ANNULER une vente (POST /sales/{id}/cancel — route legacy)
     // ----------------------
     public function cancel($id)
     {
-        $user    = Auth::user();
+        $user     = Auth::user();
         $tenantId = $user->tenant_id;
 
-        // Vérification de permission via Policy
         $allowedRoles = ['super_admin_global', 'super_admin', 'admin', 'manager', 'storekeeper'];
         if (!in_array($user->role, $allowedRoles)) {
             abort(403, 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');

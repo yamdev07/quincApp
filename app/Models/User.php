@@ -232,22 +232,31 @@ class User extends Authenticatable
     }
 
     /**
-     * Vérifie si l'utilisateur a accès à une ressource spécifique
+     * Vérifie si l'utilisateur a accès à une ressource spécifique.
+     * Règle : même tenant = accès. Le super_admin_global voit tout.
      */
     public function hasAccessTo($resource): bool
     {
-        // Le super_admin_global a accès à tout
         if ($this->isSuperAdminGlobal()) {
             return true;
         }
-        
-        if (!$resource || !$resource->owner_id) {
+
+        if (!$resource) {
             return false;
         }
-        
-        return $this->id === $resource->owner_id || 
-               $this->owner_id === $resource->owner_id ||
-               $this->isSuperAdmin();
+
+        if ($resource->tenant_id && $resource->tenant_id === $this->tenant_id) {
+            return true;
+        }
+
+        // Fallback pour les ressources sans tenant_id (legacy)
+        if (!$resource->tenant_id && $resource->owner_id) {
+            return $this->id === $resource->owner_id
+                || $this->owner_id === $resource->owner_id
+                || $this->isSuperAdmin();
+        }
+
+        return false;
     }
 
     /**

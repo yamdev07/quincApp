@@ -65,6 +65,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'payment' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/payment.log'),
+            'level'  => 'debug',
+            'days'   => 30,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

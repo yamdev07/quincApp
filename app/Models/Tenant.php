@@ -9,25 +9,6 @@ use Carbon\Carbon;
 
 class Tenant extends Model
 {
-    protected static function booted(): void
-    {
-        // Synchroniser automatiquement le plan à chaque sauvegarde
-        static::saving(function (self $tenant) {
-            $price = (float) ($tenant->subscription_price ?? 0);
-            $cycle = $tenant->billing_cycle ?? '';
-
-            if ($cycle === 'starter' || $price <= 10000) {
-                $tenant->plan = 'starter';
-            } elseif ($cycle === 'lifetime' || $price >= 300000) {
-                $tenant->plan = 'pro';
-            } elseif ($price <= 15000) {
-                $tenant->plan = 'business';
-            } else {
-                $tenant->plan = 'pro';
-            }
-        });
-    }
-
     protected $fillable = [
         'name',
         'company_name',

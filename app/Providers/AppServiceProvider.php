@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Tenant;
 use App\Models\User;
+use App\Observers\TenantObserver;
 use App\Policies\ProductPolicy;
 use App\Policies\SalePolicy;
 use App\Policies\UserPolicy;
@@ -20,10 +22,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\SaleService::class);
         $this->app->singleton(\App\Services\DashboardService::class);
         $this->app->singleton(\App\Services\PlanService::class);
+        $this->app->singleton(\App\Services\SubscriptionService::class);
     }
 
     public function boot(): void
     {
+        // Observers
+        Tenant::observe(TenantObserver::class);
+
         // Policies
         Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(Sale::class, SalePolicy::class);

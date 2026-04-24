@@ -9,6 +9,7 @@ use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -17,6 +18,19 @@ class DashboardService
      * Toutes les stats du dashboard tenant en UN SEUL passage.
      */
     public function tenantStats(int $tenantId): array
+    {
+        // Cache 5 min — invalidé automatiquement à minuit (today change)
+        return Cache::remember("dashboard.tenant.{$tenantId}." . Carbon::today()->toDateString(), 300, function () use ($tenantId) {
+            return $this->buildTenantStats($tenantId);
+        });
+    }
+
+    public function invalidateTenantCache(int $tenantId): void
+    {
+        Cache::forget("dashboard.tenant.{$tenantId}." . Carbon::today()->toDateString());
+    }
+
+    private function buildTenantStats(int $tenantId): array
     {
         $today   = Carbon::today();
         $weekAgo = Carbon::today()->subDays(7);
@@ -94,7 +108,7 @@ class DashboardService
             ->count();
 
         return [
-            'sales_today'              => $salesAgg->today_count ?? 0,
+            'sales_today'             => $salesAgg->today_count ?? 0,
             'revenue_today'            => $salesAgg->today_revenue ?? 0,
             'revenue_all'              => $salesAgg->total_revenue ?? 0,
             'active_clients'           => $salesAgg->active_clients ?? 0,

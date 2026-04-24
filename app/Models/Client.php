@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Traits\TenantScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class Client extends Model
 {
-    use HasFactory, TenantScope;
+    use HasFactory, TenantScope, SoftDeletes;
 
     protected $fillable = [
         'name',

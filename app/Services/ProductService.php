@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTOs\CreateProductData;
 use App\Models\Product;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
@@ -53,11 +54,15 @@ class ProductService
     /**
      * Créer un nouveau produit ou cumuler sur un existant.
      */
-    public function createOrCumulate(array $data, int $tenantId, int $userId): array
+    public function createOrCumulate(CreateProductData|array $data, int $tenantId, int $userId): array
     {
-        $existing = Product::where('name', $data['name'])
-            ->where('category_id', $data['category_id'])
-            ->where('supplier_id', $data['supplier_id'])
+        if (is_array($data)) {
+            $data = CreateProductData::fromArray($data);
+        }
+
+        $existing = Product::where('name', $data->name)
+            ->where('category_id', $data->categoryId)
+            ->where('supplier_id', $data->supplierId)
             ->first();
 
         return DB::transaction(function () use ($data, $tenantId, $userId, $existing) {
@@ -68,21 +73,18 @@ class ProductService
         });
     }
 
-    /**
-     * Création simple d'un nouveau produit.
-     */
-    private function createProduct(array $data, int $userId): array
+    private function createProduct(CreateProductData $data, int $userId): array
     {
         $productData = [
-            'name'           => $data['name'],
-            'stock'          => $data['stock'],
-            'quantity'       => $data['stock'],
-            'purchase_price' => $data['purchase_price'],
-            'sale_price'     => $data['sale_price'],
-            'description'    => $data['description'] ?? null,
-            'category_id'    => $data['category_id'],
-            'supplier_id'    => $data['supplier_id'],
-            'stock_alert'    => $data['stock_alert'] ?? 5,
+            'name'           => $data->name,
+            'stock'          => $data->stock,
+            'quantity'       => $data->stock,
+            'purchase_price' => $data->purchasePrice,
+            'sale_price'     => $data->salePrice,
+            'description'    => $data->description,
+            'category_id'    => $data->categoryId,
+            'supplier_id'    => $data->supplierId,
+            'stock_alert'    => $data->stockAlert ?? 5,
         ];
 
         if (Schema::hasColumn('products', 'is_cumulated')) {
@@ -91,35 +93,29 @@ class ProductService
 
         $product = Product::create($productData);
 
-        if ($data['stock'] > 0) {
-            $this->recordMovement($product, 'entree', $data['stock'], $data['purchase_price'], $data['sale_price'], 'Stock initial', 'INITIAL-' . $product->id, $userId, doUpdateStock: false);
+        if ($data->stock > 0) {
+            $this->recordMovement($product, 'entree', $data->stock, $data->purchasePrice, $data->salePrice, 'Stock initial', 'INITIAL-' . $product->id, $userId, doUpdateStock: false);
         }
 
         return ['type' => 'created', 'product' => $product];
     }
 
-    /**
-     * Réapprovisionnement d'un produit existant :
-     * on ajoute le nouveau stock et on met à jour les prix.
-     * Aucune nouvelle ligne produit n'est créée.
-     */
-    private function cumulateProduct(Product $existing, array $data, int $userId): array
+    private function cumulateProduct(Product $existing, CreateProductData $data, int $userId): array
     {
-        $oldStock    = $existing->stock;
-        $addedStock  = $data['stock'];
-        $newStock    = $oldStock + $addedStock;
+        $oldStock   = $existing->stock;
+        $addedStock = $data->stock;
+        $newStock   = $oldStock + $addedStock;
 
-        // Prix d'achat moyen pondéré
         $avgPurchase = $newStock > 0
-            ? (($oldStock * $existing->purchase_price) + ($addedStock * $data['purchase_price'])) / $newStock
-            : $data['purchase_price'];
+            ? (($oldStock * $existing->purchase_price) + ($addedStock * $data->purchasePrice)) / $newStock
+            : $data->purchasePrice;
 
         $updateData = [
             'stock'          => $newStock,
             'quantity'       => $newStock,
             'purchase_price' => round($avgPurchase, 2),
-            'sale_price'     => $data['sale_price'],
-            'description'    => $data['description'] ?? $existing->description,
+            'sale_price'     => $data->salePrice,
+            'description'    => $data->description ?? $existing->description,
         ];
 
         if (Schema::hasColumn('products', 'is_cumulated')) {
@@ -128,11 +124,10 @@ class ProductService
 
         $existing->update($updateData);
 
-        // Mouvement de stock pour le réappro
         if ($addedStock > 0) {
             $this->recordMovement(
                 $existing, 'entree', $addedStock,
-                $data['purchase_price'], $data['sale_price'],
+                $data->purchasePrice, $data->salePrice,
                 'Réapprovisionnement', 'REAPPRO-' . time(),
                 $userId, doUpdateStock: false
             );

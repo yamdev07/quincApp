@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ApiModalController;
 use App\Models\Sale;
 use App\Models\Product;
 use App\Models\Client;
@@ -41,10 +42,9 @@ Route::get('/inscription/succes', [LandingController::class, 'registerSuccess'])
 Route::view('/welcome', 'welcome');
 
 // ROUTES DE PAIEMENT FEDAPAY
-Route::middleware(['auth'])->prefix('payment')->name('payment.')->group(function () {
+Route::middleware(['auth', 'throttle:10,1'])->prefix('payment')->name('payment.')->group(function () {
     Route::get('/form', [PaymentController::class, 'showPaymentForm'])->name('form');
     Route::post('/initialize', [PaymentController::class, 'initializePayment'])->name('initialize');
-    // Accepte GET et POST pour le callback
     Route::match(['get', 'post'], '/callback', [PaymentController::class, 'paymentCallback'])->name('callback');
 });
 
@@ -201,6 +201,7 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
     // ----------------------
     Route::prefix('clients')->name('clients.')->group(function () {
         Route::get('/', [ClientController::class, 'index'])->name('index');
+        Route::get('/search', [ClientController::class, 'search'])->name('search');
         Route::get('/create', [ClientController::class, 'create'])->name('create');
         Route::post('/', [ClientController::class, 'store'])->name('store');
         Route::get('/{client}', [ClientController::class, 'show'])->name('show');
@@ -209,9 +210,7 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
         Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
         Route::get('/{client}/sales', [ClientController::class, 'sales'])->name('sales');
         Route::get('/{client}/statistics', [ClientController::class, 'statistics'])->name('statistics');
-
         Route::get('/{client}/export', [ClientController::class, 'export'])->name('export');
-
     });
 
     // ----------------------
@@ -252,10 +251,7 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
     // RAPPORTS ET STATISTIQUES
     // ----------------------
     Route::middleware(['stock.manager'])->prefix('reports')->name('reports.')->group(function () {
-        // Page d'accueil des rapports
-        Route::get('/', function() {
-            return view('reports.index');
-        })->name('index');
+        Route::get('/', [ReportController::class, 'index'])->name('index');
         
         Route::get('/sales', [SaleController::class, 'salesReport'])->name('sales');
         Route::get('/clients', [ClientController::class, 'clientsReport'])->name('clients');
@@ -281,37 +277,8 @@ Route::middleware(['auth', 'check.trial'])->group(function () {
         Route::get('/grouped-stocks-stats', [ProductController::class, 'getQuickStats'])->name('grouped-stocks.stats');
         
         // Routes pour le modal de fusion
-        Route::get('/modal/categories', function () {
-            try {
-                $categories = \App\Models\Category::orderBy('name', 'asc')->get(['id', 'name']);
-                return response()->json([
-                    'success' => true,
-                    'data' => $categories
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                    'data' => []
-                ], 500);
-            }
-        })->name('modal.categories');
-        
-        Route::get('/modal/suppliers', function () {
-            try {
-                $suppliers = \App\Models\Supplier::orderBy('name', 'asc')->get(['id', 'name']);
-                return response()->json([
-                    'success' => true,
-                    'data' => $suppliers
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                    'data' => []
-                ], 500);
-            }
-        })->name('modal.suppliers');
+        Route::get('/modal/categories', [ApiModalController::class, 'categories'])->name('modal.categories');
+        Route::get('/modal/suppliers', [ApiModalController::class, 'suppliers'])->name('modal.suppliers');
     });
     
     // ----------------------
@@ -333,266 +300,12 @@ Route::get('/subscription-expired', function () {
     return view('errors.subscription-expired');
 })->name('subscription.expired');
 
-// ======================
-// ROUTE DE TEST EMAIL (avec authentification)
-// ======================
-Route::middleware(['auth'])->get('/test-email', function () {
-    try {
-        Illuminate\Support\Facades\Mail::raw('Test de configuration email', function($message) {
-            $message->to(config('mail.from.address'))
-                    ->subject('Test Laravel - ' . now()->format('H:i:s'));
-        });
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Email envoyé avec succès !',
-            'config' => [
-                'driver' => config('mail.default'),
-                'host' => config('mail.mailers.smtp.host'),
-                'port' => config('mail.mailers.smtp.port'),
-                'username' => config('mail.mailers.smtp.username') ? '✓' : '✗',
-                'encryption' => config('mail.mailers.smtp.encryption'),
-                'from' => config('mail.from.address'),
-            ]
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
-    }
-})->name('test.email');
-
-// ======================
-// ROUTES DE TEST EMAIL SANS AUTHENTIFICATION
-// ======================
-
-// Test SMTP simple
-Route::get('/test-smtp', function() {
-    try {
-        $user = User::latest()->first();
-        
-        if (!$user) {
-            return "❌ Aucun utilisateur trouvé dans la base de données";
-        }
-        
-        Mail::raw('Test de connexion SMTP - ' . now(), function($message) use ($user) {
-            $message->to($user->email)
-                    ->subject('Test SMTP QuincaPro');
-        });
-        
-        return "✅ Test SMTP réussi ! Email envoyé à " . $user->email;
-        
-    } catch (\Exception $e) {
-        return "❌ Erreur SMTP : " . $e->getMessage();
-    }
-});
-
-// Test avec le Mailable
-Route::get('/test-mailable', function() {
-    try {
-        $user = User::latest()->first();
-        
-        if (!$user) {
-            return "❌ Aucun utilisateur trouvé dans la base de données";
-        }
-        
-        $plainPassword = 'TestPassword123';
-        
-        Mail::to($user->email)->send(new NewTenantWelcomeMail($user, $plainPassword));
-        
-        return "✅ Mailable envoyé avec succès à " . $user->email;
-        
-    } catch (\Exception $e) {
-        return "❌ Erreur Mailable : " . $e->getMessage() . "<br>" .
-               "Fichier : " . $e->getFile() . "<br>" .
-               "Ligne : " . $e->getLine();
-    }
-});
-
-// Test avec affichage de la vue
-Route::get('/test-email-view', function() {
-    try {
-        $user = User::latest()->first();
-        
-        if (!$user) {
-            return "❌ Aucun utilisateur trouvé";
-        }
-        
-        $plainPassword = 'TestPassword123';
-        
-        return view('emails.new-tenant-welcome', [
-            'user' => $user,
-            'plainPassword' => $plainPassword
-        ]);
-        
-    } catch (\Exception $e) {
-        return "❌ Erreur d'affichage de la vue : " . $e->getMessage();
-    }
-});
-
-// Test d'envoi direct (sans Mailable)
-Route::get('/test-email-direct', function() {
-    try {
-        $user = User::latest()->first();
-        
-        if (!$user) {
-            return "❌ Aucun utilisateur trouvé";
-        }
-        
-        $plainPassword = 'TestPassword123';
-        
-        // Construire le HTML
-        $html = view('emails.new-tenant-welcome', [
-            'user' => $user,
-            'plainPassword' => $plainPassword
-        ])->render();
-        
-        // Envoyer l'email
-        Mail::send([], [], function($message) use ($user, $html) {
-            $message->to($user->email)
-                    ->subject('Bienvenue sur QuincaPro - Test direct')
-                    ->from(config('mail.from.address'), config('mail.from.name'))
-                    ->setBody($html, 'text/html');
-        });
-        
-        return "✅ Email direct envoyé avec succès à " . $user->email;
-        
-    } catch (\Exception $e) {
-        return "❌ Erreur envoi direct : " . $e->getMessage();
-    }
-});
-
-// Test de vérification de la configuration
-Route::get('/mail-config', function() {
-    return [
-        'default' => config('mail.default'),
-        'smtp' => [
-            'host' => config('mail.mailers.smtp.host'),
-            'port' => config('mail.mailers.smtp.port'),
-            'username' => config('mail.mailers.smtp.username') ? '✓ défini' : '✗ non défini',
-            'encryption' => config('mail.mailers.smtp.encryption'),
-        ],
-        'from' => [
-            'address' => config('mail.from.address'),
-            'name' => config('mail.from.name'),
-        ],
-        'mailer_available' => Mail::mailer() ? '✓' : '✗',
-    ];
-});
-
-// ======================
-// Routes de débogage (optionnel)
-// ======================
-Route::get('/debug-categories-routes', function () {
-    $categoriesRoutes = collect(Route::getRoutes())->filter(function ($route) {
-        return str_contains($route->getName() ?? '', 'categories');
-    })->map(function ($route) {
-        return [
-            'name' => $route->getName(),
-            'uri' => $route->uri(),
-            'methods' => $route->methods(),
-        ];
-    });
-
-    return response()->json($categoriesRoutes);
-})->middleware('auth');
 
 // ======================
 // Routes d'authentification
 // ======================
 require __DIR__ . '/auth.php';
 
-// ======================
-// TEST FEDAPAY CONNECTION
-// ======================
-Route::get('/fedapay-test', function() {
-    try {
-        \FedaPay\FedaPay::setApiKey(config('services.fedapay.secret_key'));
-        \FedaPay\FedaPay::setEnvironment(config('services.fedapay.mode'));
-        
-        $customer = \FedaPay\Customer::create([
-            'firstname' => 'Test',
-            'lastname' => 'API',
-            'email' => 'test@fedapay.com',
-        ]);
-        
-        return [
-            'success' => true,
-            'message' => 'Connexion FedaPay réussie !',
-            'customer_id' => $customer->id,
-            'api_key_configured' => !empty(config('services.fedapay.secret_key')),
-            'mode' => config('services.fedapay.mode')
-        ];
-    } catch (\Exception $e) {
-        return [
-            'success' => false,
-            'error' => $e->getMessage(),
-            'api_key_configured' => !empty(config('services.fedapay.secret_key')),
-            'mode' => config('services.fedapay.mode')
-        ];
-    }
-});
-
-// Dans routes/web.php
-Route::get('/test-callback', function() {
-    return [
-        'session' => session()->all(),
-        'user' => auth()->user() ? auth()->user()->id : null,
-        'subscription_status' => auth()->user() ? auth()->user()->subscription_status : null,
-    ];
-});
-
-// ======================
-// ACTIVATION FORCÉE (pour dépannage)
-// ======================
-Route::get('/force-activation', function() {
-    $user = auth()->user();
-    
-    if (!$user) {
-        return response()->json(['error' => 'Non connecté'], 401);
-    }
-    
-    $tenant = $user->tenant;
-    $endDate = now()->addMonths(1);
-    
-    // Mettre à jour l'utilisateur
-    $user->update([
-        'subscription_status' => 'active',
-        'subscription_ends_at' => $endDate,
-        'last_payment_at' => now(),
-    ]);
-    
-    // Mettre à jour le tenant
-    if ($tenant) {
-        $tenant->update([
-            'subscription_status' => 'active',
-            'subscription_ends_at' => $endDate,
-            'last_payment_at' => now(),
-        ]);
-    }
-    
-    return [
-        'success' => true,
-        'message' => 'Abonnement activé !',
-        'user_id' => $user->id,
-        'user_email' => $user->email,
-        'subscription_status' => $user->fresh()->subscription_status,
-        'subscription_ends_at' => $endDate->format('d/m/Y'),
-        'tenant_id' => $tenant ? $tenant->id : null,
-        'tenant_status' => $tenant ? $tenant->fresh()->subscription_status : null,
-    ];
-})->middleware('auth');
-// Dans routes/web.php
-Route::get('/view-payment-logs', function() {
-    $logFile = storage_path('logs/payment_debug.log');
-    if (file_exists($logFile)) {
-        return '<pre>' . htmlspecialchars(file_get_contents($logFile)) . '</pre>';
-    }
-    return 'Aucun log trouvé. Faites un paiement d\'abord.';
-})->middleware('auth');
-
-Route::get('/api/dashboard-stats', [App\Http\Controllers\DashboardController::class, 'dashboardStats'])->middleware('auth');
 
 // Routes abonnement
 Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->group(function () {

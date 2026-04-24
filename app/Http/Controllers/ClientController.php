@@ -53,17 +53,12 @@ class ClientController extends Controller
     {
         $this->authorizeSalesAccess();
         
-        // Le scope TenantScope s'applique automatiquement !
         $clients = Client::withCount('sales')
+                        ->withSum('sales', 'total_price')
+                        ->withMax('sales', 'created_at')
                         ->latest()
                         ->paginate(10);
-        
-        // Calculer des statistiques supplémentaires
-        foreach ($clients as $client) {
-            $client->total_spent = $client->sales()->sum('total_price');
-            $client->last_purchase = $client->sales()->latest()->first()?->created_at;
-        }
-        
+
         return view('clients.index', compact('clients'));
     }
 
@@ -179,24 +174,23 @@ class ClientController extends Controller
     }
 
     /**
-     * Supprimer un client
+     * Archive (soft delete) un client
      */
     public function destroy(Client $client)
     {
         $this->authorizeAdmin();
         $this->authorizeClientAccess($client);
-        
-        // Vérifier si le client a des ventes
-        if ($client->sales()->count() > 0) {
-            return redirect()->route('clients.index')
-                ->with('warning', 
-                    "Impossible de supprimer ce client car il a {$client->sales()->count()} vente(s) associée(s).");
-        }
-        
+
+        $hasSales = $client->sales()->exists();
+
+        // Soft delete : les ventes associées restent intactes
         $client->delete();
 
-        return redirect()->route('clients.index')
-                         ->with('success', 'Client supprimé avec succès ✅');
+        $message = $hasSales
+            ? "Client archivé (ses ventes sont préservées)."
+            : "Client supprimé avec succès.";
+
+        return redirect()->route('clients.index')->with('success', $message);
     }
 
     /**
@@ -206,13 +200,15 @@ class ClientController extends Controller
     {
         $this->authorizeSalesAccess();
         
-        $term = $request->get('q');
-        
-        $clients = Client::where('name', 'LIKE', "%{$term}%")
-                        ->orWhere('email', 'LIKE', "%{$term}%")
-                        ->orWhere('phone', 'LIKE', "%{$term}%")
-                        ->limit(10)
-                        ->get();
+        $term = $request->get('q', '');
+
+        $clients = Client::where(function ($q) use ($term) {
+                        $q->where('name', 'LIKE', '%' . $term . '%')
+                          ->orWhere('email', 'LIKE', '%' . $term . '%')
+                          ->orWhere('phone', 'LIKE', '%' . $term . '%');
+                    })
+                    ->limit(10)
+                    ->get(['id', 'name', 'email', 'phone']);
         
         return response()->json($clients);
     }

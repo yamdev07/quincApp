@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTOs\CreateSaleData;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
@@ -15,43 +16,45 @@ class SaleService
      *
      * @throws \Exception si stock insuffisant ou produit invalide
      */
-    public function create(array $validated, int $tenantId, int $userId): Sale
+    public function create(CreateSaleData|array $data, int $tenantId, int $userId): Sale
     {
-        return DB::transaction(function () use ($validated, $tenantId, $userId) {
+        if (is_array($data)) {
+            $data = CreateSaleData::fromArray($data);
+        }
+
+        return DB::transaction(function () use ($data, $tenantId, $userId) {
             $sale = Sale::create([
-                'client_id'   => $validated['client_id'] ?? null,
+                'client_id'   => $data->clientId,
                 'user_id'     => $userId,
                 'total_price' => 0,
                 'tenant_id'   => $tenantId,
             ]);
 
-            $clientName = $this->resolveClientName($validated['client_id'] ?? null);
+            $clientName = $this->resolveClientName($data->clientId);
             $grandTotal = 0;
 
-            foreach ($validated['products'] as $item) {
+            foreach ($data->items as $item) {
                 /** @var Product $product */
-                $product = Product::lockForUpdate()->find($item['product_id']);
+                $product = Product::lockForUpdate()->find($item->productId);
 
                 if (!$product) {
-                    throw new \Exception("Produit introuvable : #{$item['product_id']}");
+                    throw new \Exception("Produit introuvable : #{$item->productId}");
                 }
                 if ($product->tenant_id !== $tenantId) {
                     throw new \Exception("Le produit \"{$product->name}\" n'appartient pas à votre boutique.");
                 }
-                if ($product->stock < $item['quantity']) {
-                    throw new \Exception("Stock insuffisant pour \"{$product->name}\". Disponible : {$product->stock}, demandé : {$item['quantity']}.");
+                if ($product->stock < $item->quantity) {
+                    throw new \Exception("Stock insuffisant pour \"{$product->name}\". Disponible : {$product->stock}, demandé : {$item->quantity}.");
                 }
 
-                $unitPrice    = $item['unit_price'];
-                $qty          = $item['quantity'];
-                $stockAfter   = $product->stock - $qty;
+                $stockAfter = $product->stock - $item->quantity;
 
                 StockMovement::create([
                     'product_id'         => $product->id,
                     'type'               => 'sortie',
-                    'quantity'           => $qty,
+                    'quantity'           => $item->quantity,
                     'purchase_price'     => $product->purchase_price,
-                    'sale_price'         => $unitPrice,
+                    'sale_price'         => $item->unitPrice,
                     'stock_after'        => $stockAfter,
                     'motif'              => "Vente #{$sale->id} à {$clientName}",
                     'reference_document' => "VTE-{$sale->id}",
@@ -62,19 +65,18 @@ class SaleService
                 SaleItem::create([
                     'sale_id'     => $sale->id,
                     'product_id'  => $product->id,
-                    'quantity'    => $qty,
-                    'unit_price'  => $unitPrice,
-                    'total_price' => $unitPrice * $qty,
+                    'quantity'    => $item->quantity,
+                    'unit_price'  => $item->unitPrice,
+                    'total_price' => $item->unitPrice * $item->quantity,
                     'tenant_id'   => $tenantId,
                 ]);
 
-                $product->decrement('stock', $qty);
+                $product->decrement('stock', $item->quantity);
 
-                $grandTotal += $unitPrice * $qty;
+                $grandTotal += $item->unitPrice * $item->quantity;
             }
 
-            $discount = $validated['discount'] ?? 0;
-            $sale->update(['total_price' => max(0, $grandTotal - $discount)]);
+            $sale->update(['total_price' => max(0, $grandTotal - $data->discount)]);
 
             return $sale->fresh(['items.product', 'client']);
         });
