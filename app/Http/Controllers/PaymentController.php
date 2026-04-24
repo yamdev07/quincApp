@@ -36,11 +36,13 @@ class PaymentController extends Controller
                 $currentAmount = $currentSubscription->amount;
                 $currentPlanType = $currentSubscription->plan_type;
                 $currentPlanName = match($currentSubscription->plan_type) {
-                    'monthly' => 'Mensuel',
+                    'starter'  => 'Starter',
+                    'monthly'  => 'Mensuel',
                     'quarterly' => 'Trimestriel',
                     'semester' => 'Semestriel',
-                    'yearly' => 'Annuel',
-                    default => 'Mensuel'
+                    'yearly'   => 'Annuel',
+                    'lifetime' => 'Licence à vie',
+                    default    => 'Mensuel'
                 };
             }
         }
@@ -56,6 +58,7 @@ class PaymentController extends Controller
             'quarterly' => ['name' => 'Pro Trimestriel',   'price' => 39900,  'duration' => '3 mois', 'saving' => 'Économisez 5 100 FCFA'],
             'semester'  => ['name' => 'Pro Semestriel',    'price' => 79900,  'duration' => '6 mois', 'saving' => 'Économisez 10 100 FCFA', 'popular' => true],
             'yearly'    => ['name' => 'Annuel',            'price' => 105000, 'duration' => '12 mois', 'saving' => 'Économisez 75 000 FCFA'],
+            'lifetime'  => ['name' => 'Licence à vie',     'price' => 300000, 'duration' => 'À vie',   'saving' => 'Paiement unique'],
         ];
         
         $currentPlan = $plans[$selectedPlan] ?? $plans['monthly'];
@@ -108,16 +111,19 @@ class PaymentController extends Controller
         file_put_contents($logFile, "Tenant ID: " . ($tenant ? $tenant->id : 'null') . "\n", FILE_APPEND);
         file_put_contents($logFile, "Amount: $amount, Plan: $planType, Renewal: " . ($isRenewal ? 'Yes' : 'No') . "\n", FILE_APPEND);
         
-        $duration = match($planType) {
-            'starter'   => 1,
-            'monthly'   => 1,
-            'quarterly' => 3,
-            'semester'  => 6,
-            'yearly'    => 12,
-            default     => 1
-        };
-
-        $endDate = now()->addMonths($duration);
+        if ($planType === 'lifetime') {
+            $endDate = now()->addYears(99);
+        } else {
+            $duration = match($planType) {
+                'starter'   => 1,
+                'monthly'   => 1,
+                'quarterly' => 3,
+                'semester'  => 6,
+                'yearly'    => 12,
+                default     => 1
+            };
+            $endDate = now()->addMonths($duration);
+        }
 
         $planName = match($planType) {
             'starter'   => 'Starter',
@@ -125,6 +131,7 @@ class PaymentController extends Controller
             'quarterly' => 'Pro Trimestriel',
             'semester'  => 'Pro Semestriel',
             'yearly'    => 'Annuel',
+            'lifetime'  => 'Licence à vie',
             default     => 'Business Mensuel'
         };
         

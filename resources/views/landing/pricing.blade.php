@@ -153,6 +153,33 @@
                     </a>
                 </div>
 
+                {{-- Licence à vie --}}
+                <div class="pricing-card lifetime-card">
+                    <div class="card-popular" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
+                        <span>♾️</span> Paiement unique
+                    </div>
+                    <div class="card-header">
+                        <div style="display:inline-block;background:#f5f3ff;color:#7c3aed;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.5px;">LICENCE À VIE</div>
+                        <h3 class="card-title" style="color:#7c3aed;">Lifetime</h3>
+                        <div class="card-price">
+                            <span class="price-number" style="color:#7c3aed;">300 000</span>
+                            <span class="price-period">FCFA <em style="font-style:normal;font-weight:700;color:#7c3aed;">une fois</em></span>
+                        </div>
+                        <div class="card-saving" style="background:#f5f3ff;color:#7c3aed;">Plus jamais d'abonnement</div>
+                    </div>
+                    <div class="card-features">
+                        <div class="feature-item"><span class="feature-icon" style="color:#7c3aed;">✓</span><span>Tout le plan Annuel</span></div>
+                        <div class="feature-item"><span class="feature-icon" style="color:#7c3aed;">✓</span><span>Accès illimité à vie</span></div>
+                        <div class="feature-item"><span class="feature-icon" style="color:#7c3aed;">✓</span><span>Toutes les mises à jour</span></div>
+                        <div class="feature-item"><span class="feature-icon" style="color:#7c3aed;">✓</span><span>Support à vie inclus</span></div>
+                        <div class="feature-item"><span class="feature-icon" style="color:#7c3aed;">✓</span><span>Formation + audit offerts</span></div>
+                    </div>
+                    <a href="{{ route('register.form', ['plan' => 'lifetime']) }}" class="card-button" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;color:white;box-shadow:0 10px 25px -5px rgba(124,58,237,0.35);">
+                        <span>Acquérir la licence</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </a>
+                </div>
+
             </div>
         </div>
     </section>
@@ -166,58 +193,65 @@
             </div>
             
             <div class="comparison-table">
-                <div class="table-row table-header">
+                <div class="table-row table-header" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr;">
                     <div class="table-cell">Fonctionnalité</div>
                     <div class="table-cell">Starter<br><small style="font-weight:400;opacity:.7;">10 000/mois</small></div>
                     <div class="table-cell">Business<br><small style="font-weight:400;opacity:.7;">15 000/mois</small></div>
                     <div class="table-cell">Pro Trim.<br><small style="font-weight:400;opacity:.7;">39 900/3 mois</small></div>
                     <div class="table-cell">Pro Sem.<br><small style="font-weight:400;opacity:.7;">79 900/6 mois</small></div>
                     <div class="table-cell">Annuel<br><small style="font-weight:400;opacity:.7;">105 000/an</small></div>
+                    <div class="table-cell" style="color:#7c3aed;font-weight:700;">Lifetime<br><small style="font-weight:400;opacity:.7;">300 000 unique</small></div>
                 </div>
 
-                <div class="table-row">
+                @php $r6 = 'grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr;'; @endphp
+
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Ventes & stock</div>
-                    <div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                    <div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">✓</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Nombre de produits</div>
-                    <div class="table-cell">200 max</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div>
+                    <div class="table-cell">200 max</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">Illimité</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Utilisateurs</div>
-                    <div class="table-cell">3</div><div class="table-cell">10</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div>
+                    <div class="table-cell">3</div><div class="table-cell">10</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell">Illimité</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">Illimité</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Clients & fournisseurs</div>
-                    <div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                    <div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">✓</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Rapports</div>
-                    <div class="table-cell">Basiques</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div>
+                    <div class="table-cell">Basiques</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div><div class="table-cell">Complets</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">Complets</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Analyse IA</div>
-                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">Illimitée</div><div class="table-cell">Illimitée</div><div class="table-cell">Illimitée</div>
+                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">Illimitée</div><div class="table-cell">Illimitée</div><div class="table-cell">Illimitée</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">Illimitée</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Export PDF</div>
-                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">✓</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Factures normalisées</div>
-                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">✓</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Support prioritaire</div>
-                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">À vie</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Formation offerte</div>
-                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">✓</div>
                 </div>
-                <div class="table-row">
+                <div class="table-row" style="{{ $r6 }}">
                     <div class="table-cell">Audit personnalisé</div>
-                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div>
+                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">✓</div><div class="table-cell">✓</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">✓</div>
+                </div>
+                <div class="table-row" style="{{ $r6 }}">
+                    <div class="table-cell">Accès à vie</div>
+                    <div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell">-</div><div class="table-cell" style="color:#7c3aed;font-weight:700;">♾️</div>
                 </div>
             </div>
             
@@ -630,8 +664,17 @@
 
 .table-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
     border-bottom: 1px solid var(--gray-200);
+}
+
+.lifetime-card {
+    border: 2px solid #7c3aed;
+    box-shadow: 0 10px 25px -5px rgba(124,58,237,0.2);
+}
+.lifetime-card:hover {
+    border-color: #6d28d9;
+    box-shadow: 0 15px 30px -8px rgba(124,58,237,0.3);
 }
 
 .table-row:last-child {

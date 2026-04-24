@@ -3,81 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Client;
 use App\Models\User;
-use App\Models\StockMovement;
+use App\Services\SaleService;
+use App\Http\Requests\StoreSaleRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class SaleController extends Controller
 {
-    public function __construct()
+    public function __construct(private SaleService $saleService)
     {
         $this->middleware('auth');
     }
 
-    /**
-     * Récupérer le tenant_id de l'utilisateur connecté
-     */
-    private function getTenantId()
+    private function getTenantId(): int
     {
         return Auth::user()->tenant_id;
     }
 
-    /**
-     * Vérifier que la vente appartient à la quincaillerie
-     */
-    private function authorizeSaleAccess(Sale $sale)
+    private function authorizeViewSales(): void
     {
-        if ($sale->tenant_id != $this->getTenantId()) {
-            abort(403, 'Vous n\'avez pas accès à cette vente.');
-        }
-    }
-
-    /**
-     * Vérifier les permissions de visualisation des ventes
-     */
-    private function authorizeViewSales()
-    {
-        return true;
-    }
-
-    /**
-     * Vérifier les permissions de création/modification des ventes
-     * ✅ CAISSIER MAINTENANT AUTORISÉ
-     */
-    private function authorizeManageSales()
-    {
-        $userRole = Auth::user()->role;
-        
-        // Tous les rôles qui peuvent créer/modifier des ventes
-        $allowedRoles = ['super_admin_global', 'super_admin', 'admin', 'manager', 'cashier'];
-        
-        if (!in_array($userRole, $allowedRoles)) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de créer ou modifier des ventes.');
-        }
-        
-        return true;
-    }
-
-    /**
-     * Vérifier les permissions d'annulation (admin, manager, storekeeper)
-     * ⚠️ Les caissiers ne peuvent PAS annuler les ventes
-     */
-    private function authorizeCancelSale()
-    {
-        $userRole = Auth::user()->role;
-        $allowedRoles = ['super_admin_global', 'super_admin', 'admin', 'manager', 'storekeeper'];
-        
-        if (!in_array($userRole, $allowedRoles)) {
-            abort(403, 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');
-        }
-        
-        return true;
+        // Tous les utilisateurs authentifiés peuvent voir les ventes
     }
 
     // ----------------------
@@ -85,47 +34,23 @@ class SaleController extends Controller
     // ----------------------
     public function index(Request $request)
     {
-        $this->authorizeViewSales();
-        
-        $tenantId = $this->getTenantId();
-        
-        $query = Sale::with(['items.product', 'client', 'user'])
+        $tenantId = Auth::user()->tenant_id;
+
+        $query = Sale::with(['items', 'client:id,name', 'user:id,name'])
                      ->withSum('items', 'quantity')
                      ->where('tenant_id', $tenantId);
-        
-        // Filtres optionnels
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
-        
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-        
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-        
-        if ($request->filled('min_amount')) {
-            $query->where('total_price', '>=', $request->min_amount);
-        }
-        
-        if ($request->filled('max_amount')) {
-            $query->where('total_price', '<=', $request->max_amount);
-        }
-        
-        $sales = $query->latest()->paginate(10);
-        
-        // Pour les filtres
-        $clients = Client::where('tenant_id', $tenantId)->get();
-        $users = User::where('tenant_id', $tenantId)
-                     ->where('role', '!=', 'super_admin_global')
-                     ->get();
-        
+
+        if ($request->filled('client_id'))   $query->where('client_id', $request->client_id);
+        if ($request->filled('user_id'))     $query->where('user_id', $request->user_id);
+        if ($request->filled('date_from'))   $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->filled('date_to'))     $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->filled('min_amount'))  $query->where('total_price', '>=', $request->min_amount);
+        if ($request->filled('max_amount'))  $query->where('total_price', '<=', $request->max_amount);
+
+        $sales   = $query->latest()->paginate(10);
+        $clients = Client::where('tenant_id', $tenantId)->get(['id', 'name']);
+        $users   = User::where('tenant_id', $tenantId)->where('role', '!=', 'super_admin_global')->get(['id', 'name']);
+
         return view('sales.index', compact('sales', 'clients', 'users'));
     }
 
@@ -134,16 +59,11 @@ class SaleController extends Controller
     // ----------------------
     public function create()
     {
-        $this->authorizeManageSales();
-        
-        $tenantId = $this->getTenantId();
-        
-        $products = Product::where('stock', '>', 0)
-                          ->where('tenant_id', $tenantId)
-                          ->orderBy('name')
-                          ->get();
-        
-        $clients = Client::where('tenant_id', $tenantId)->get();
+        $this->authorize('create', Sale::class);
+
+        $tenantId = Auth::user()->tenant_id;
+        $products = Product::where('stock', '>', 0)->where('tenant_id', $tenantId)->orderBy('name')->get();
+        $clients  = Client::where('tenant_id', $tenantId)->get(['id', 'name']);
 
         return view('sales.create', compact('products', 'clients'));
     }
@@ -151,102 +71,23 @@ class SaleController extends Controller
     // ----------------------
     // Enregistrer une vente
     // ----------------------
-    public function store(Request $request)
+    public function store(StoreSaleRequest $request)
     {
-        $this->authorizeManageSales();
-        
-        \Log::info('=== DÉBUT VENTE ===');
-        \Log::info('Données brutes reçues:', $request->all());
-        
-        $validated = $request->validate([
-            'client_id' => 'nullable|exists:clients,id',
-            'products' => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.quantity' => 'required|integer|min:1',
-            'products.*.unit_price' => 'required|numeric|min:0',
-        ]);
-        
-        $tenantId = $this->getTenantId();
-        $userId = Auth::id();
-        
-        // Vérifier que le client appartient à la même quincaillerie
+        $tenantId = Auth::user()->tenant_id;
+
         if ($request->client_id) {
             $client = Client::where('tenant_id', $tenantId)->find($request->client_id);
             if (!$client) {
                 return back()->with('error', 'Client invalide.')->withInput();
             }
         }
-        
-        DB::transaction(function () use ($validated, $tenantId, $userId) {
-            // Créer la vente
-            $sale = Sale::create([
-                'client_id' => $validated['client_id'],
-                'user_id' => $userId,
-                'total_price' => 0,
-                'tenant_id' => $tenantId,
-            ]);
-            
-            \Log::info("Vente créée - ID: {$sale->id}");
-            
-            $clientName = 'Client';
-            if ($validated['client_id']) {
-                $client = Client::find($validated['client_id']);
-                $clientName = $client ? $client->name : 'Client';
-            }
-            
-            $grandTotal = 0;
-            
-            foreach ($validated['products'] as $index => $productData) {
-                $product = Product::lockForUpdate()->find($productData['product_id']);
-                
-                if (!$product) {
-                    throw new \Exception("Produit non trouvé: " . $productData['product_id']);
-                }
-                
-                if ($product->tenant_id != $tenantId) {
-                    throw new \Exception("Le produit '{$product->name}' n'est pas disponible.");
-                }
-                
-                $quantityToSell = $productData['quantity'];
-                $unitPrice = $productData['unit_price'];
-                
-                if ($product->stock < $quantityToSell) {
-                    throw new \Exception("Stock insuffisant pour '{$product->name}'. Stock: {$product->stock}, Demandé: {$quantityToSell}");
-                }
-                
-                $stockAfter = $product->stock - $quantityToSell;
-                
-                StockMovement::create([
-                    'product_id' => $product->id,
-                    'type' => 'sortie',
-                    'quantity' => $quantityToSell,
-                    'purchase_price' => $product->purchase_price,
-                    'sale_price' => $unitPrice,
-                    'stock_after' => $stockAfter,
-                    'motif' => "Vente #{$sale->id} à {$clientName}",
-                    'reference_document' => 'VTE-' . $sale->id,
-                    'user_id' => $userId,
-                    'tenant_id' => $tenantId,
-                ]);
-                
-                SaleItem::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $product->id,
-                    'quantity' => $quantityToSell,
-                    'unit_price' => $unitPrice,
-                    'total_price' => $unitPrice * $quantityToSell,
-                    'tenant_id' => $tenantId,
-                ]);
-                
-                $product->decrement('stock', $quantityToSell);
-                
-                $grandTotal += ($unitPrice * $quantityToSell);
-            }
-            
-            $sale->update(['total_price' => $grandTotal]);
-        });
-        
-        return redirect()->route('sales.index')->with('success', 'Vente enregistrée avec succès !');
+
+        try {
+            $this->saleService->create($request->validated(), $tenantId, Auth::id());
+            return redirect()->route('sales.index')->with('success', 'Vente enregistrée avec succès.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        }
     }
 
     // ----------------------
@@ -254,17 +95,15 @@ class SaleController extends Controller
     // ----------------------
     public function show($id)
     {
-        $this->authorizeViewSales();
-        
-        $tenantId = $this->getTenantId();
-        
+        $tenantId = Auth::user()->tenant_id;
         $sale = Sale::with(['items.product', 'client', 'user'])
                     ->where('tenant_id', $tenantId)
                     ->findOrFail($id);
-        
-        $totalQuantity = $sale->items->sum('quantity');
-        
-        return view('sales.show', compact('sale', 'totalQuantity'));
+
+        return view('sales.show', [
+            'sale'          => $sale,
+            'totalQuantity' => $sale->items->sum('quantity'),
+        ]);
     }
 
     // ----------------------
@@ -272,48 +111,23 @@ class SaleController extends Controller
     // ----------------------
     public function cancel($id)
     {
-        $this->authorizeCancelSale();
-        
-        $tenantId = $this->getTenantId();
-        $userId = Auth::id();
-        
-        $sale = Sale::where('tenant_id', $tenantId)->findOrFail($id);
-        
-        DB::transaction(function () use ($sale, $tenantId, $userId) {
-            $clientName = $sale->client ? $sale->client->name : 'Client';
-            
-            foreach ($sale->items as $item) {
-                $product = Product::lockForUpdate()->find($item->product_id);
-                
-                if ($product) {
-                    if ($product->tenant_id != $tenantId) {
-                        throw new \Exception("Le produit '{$product->name}' ne vous appartient pas.");
-                    }
-                    
-                    $stockAfter = $product->stock + $item->quantity;
-                    
-                    StockMovement::create([
-                        'product_id' => $product->id,
-                        'type' => 'entree',
-                        'quantity' => $item->quantity,
-                        'purchase_price' => $product->purchase_price,
-                        'sale_price' => $item->unit_price,
-                        'stock_after' => $stockAfter,
-                        'motif' => "Annulation vente #{$sale->id} à {$clientName}",
-                        'reference_document' => 'ANNUL-VTE-' . $sale->id,
-                        'user_id' => $userId,
-                        'tenant_id' => $tenantId,
-                    ]);
-                    
-                    $product->increment('stock', $item->quantity);
-                }
-            }
-            
-            // Supprimer la vente
-            $sale->delete();
-        });
-        
-        return redirect()->route('sales.index')->with('success', 'Vente annulée et stock restauré.');
+        $user    = Auth::user();
+        $tenantId = $user->tenant_id;
+
+        // Vérification de permission via Policy
+        $allowedRoles = ['super_admin_global', 'super_admin', 'admin', 'manager', 'storekeeper'];
+        if (!in_array($user->role, $allowedRoles)) {
+            abort(403, 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');
+        }
+
+        $sale = Sale::with('items')->where('tenant_id', $tenantId)->findOrFail($id);
+
+        try {
+            $this->saleService->cancel($sale, $user->id);
+            return redirect()->route('sales.index')->with('success', 'Vente annulée et stock restauré.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     // ----------------------
@@ -321,18 +135,16 @@ class SaleController extends Controller
     // ----------------------
     public function invoice($id)
     {
-        $this->authorizeViewSales();
-
-        $tenantId = $this->getTenantId();
-
+        $tenantId = Auth::user()->tenant_id;
         $sale = Sale::with(['items.product', 'client', 'user'])
                     ->where('tenant_id', $tenantId)
                     ->findOrFail($id);
 
-        $totalQuantity = $sale->items->sum('quantity');
-        $tenant = Auth::user()->tenant;
-
-        return view('sales.invoice', compact('sale', 'totalQuantity', 'tenant'));
+        return view('sales.invoice', [
+            'sale'          => $sale,
+            'totalQuantity' => $sale->items->sum('quantity'),
+            'tenant'        => Auth::user()->tenant,
+        ]);
     }
 
     // ----------------------

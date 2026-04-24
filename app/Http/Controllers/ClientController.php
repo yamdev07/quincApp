@@ -7,6 +7,7 @@ use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -83,13 +84,19 @@ class ClientController extends Controller
     {
         $this->authorizeAdmin();
         
+        $tenantId = Auth::user()->tenant_id;
+
         $request->validate([
             'name'  => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => [
+                'nullable', 'email', 'max:255',
+                Rule::unique('clients', 'email')->where('tenant_id', $tenantId),
+            ],
             'phone' => 'nullable|string|max:20',
+        ], [
+            'email.unique' => 'Un client avec cet email existe déjà dans votre boutique.',
         ]);
 
-        // owner_id sera auto-assigné par le Trait TenantScope
         Client::create($request->only(['name', 'email', 'phone']));
 
         return redirect()->route('clients.index')
@@ -152,10 +159,17 @@ class ClientController extends Controller
         $this->authorizeAdmin();
         $this->authorizeClientAccess($client);
         
+        $tenantId = Auth::user()->tenant_id;
+
         $request->validate([
             'name'  => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => [
+                'nullable', 'email', 'max:255',
+                Rule::unique('clients', 'email')->where('tenant_id', $tenantId)->ignore($client->id),
+            ],
             'phone' => 'nullable|string|max:20',
+        ], [
+            'email.unique' => 'Un client avec cet email existe déjà dans votre boutique.',
         ]);
 
         $client->update($request->only(['name', 'email', 'phone']));

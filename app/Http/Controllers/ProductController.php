@@ -7,141 +7,56 @@ use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\StockMovement;
 use App\Services\PlanService;
+use App\Services\ProductService;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
-    public function __construct()
+    public function __construct(private ProductService $productService)
     {
         $this->middleware('auth');
     }
 
-    /**
-     * Vérifier les permissions pour la gestion du stock
-     */
-    private function authorizeStockManagement()
+    private function authorizeStockManagement(): void
     {
         if (!Auth::user()->canManageStock()) {
             abort(403, 'Vous n\'avez pas les droits pour gérer le stock.');
         }
     }
 
-    /**
-     * Vérifier que le produit appartient à la quincaillerie
-     */
-    private function authorizeProductAccess(Product $product)
+    private function authorizeProductAccess(Product $product): void
     {
         if (!Auth::user()->hasAccessTo($product)) {
             abort(403, 'Vous n\'avez pas accès à ce produit.');
         }
     }
 
-    // 🧱 Liste des produits AVEC RECHERCHE ET REGROUPEMENT PAR LOT
+    // 🧱 Liste des produits
     public function index(Request $request)
     {
-        $user = Auth::user();
-        
-        // Le scope TenantScope s'applique automatiquement !
-        $query = Product::with(['category', 'supplier']);
-        
-        // Recherche
-        if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('id', 'LIKE', "%{$search}%")
-                  ->orWhere('sale_price', 'LIKE', "%{$search}%")
-                  ->orWhere('purchase_price', 'LIKE', "%{$search}%")
-                  ->orWhere('stock', 'LIKE', "%{$search}%");
-            });
-        }
-        
-        // Filtres
-        if ($filter = $request->input('filter')) {
-            switch ($filter) {
-                case 'low_stock':
-                    $query->whereColumn('stock', '<=', 'stock_alert')->where('stock', '>', 0);
-                    break;
-                case 'out_of_stock':
-                    $query->where('stock', '=', 0);
-                    break;
-                case 'available':
-                    $query->where('stock', '>', 0);
-                    break;
-                case 'multiple_batches':
-                    $query->whereHas('stockMovements', function($q) {
-                        $q->where('type', 'entree')
-                          ->select(DB::raw('COUNT(DISTINCT purchase_price) as batch_count'))
-                          ->groupBy('product_id')
-                          ->having('batch_count', '>', 1);
-                    });
-                    break;
-                case 'cumulated':
-                    if (Schema::hasColumn('products', 'is_cumulated')) {
-                        $query->where('is_cumulated', true);
-                    }
-                    break;
-                case 'non_cumulated':
-                    if (Schema::hasColumn('products', 'has_been_cumulated')) {
-                        $query->where('has_been_cumulated', false);
-                    }
-                    break;
-            }
-        }
-        
-        // Tri
-        $sortBy = $request->input('sort_by', 'created_at');
-        switch ($sortBy) {
-            case 'name':
-                $query->orderBy('name', 'asc');
-                break;
-            case 'stock':
-                $query->orderBy('stock', 'asc');
-                break;
-            case 'sale_price':
-                $query->orderBy('sale_price', 'asc');
-                break;
-            case 'profit_margin':
-                $query->orderByRaw('((sale_price - purchase_price) / purchase_price * 100) DESC');
-                break;
-            default:
-                $query->orderBy('created_at', 'desc');
-                break;
-        }
-        
-        $products = $query->paginate(10);
-        
-        // Calcul des totaux par lot
+        $products = $this->productService->applyFilters($request)->paginate(10);
+
         foreach ($products as $product) {
-            $stockTotals = $product->getStockTotals();
-            $product->stock_summary = $stockTotals;
+            $product->stock_summary       = $product->getStockTotals();
             $product->has_multiple_batches = $product->hasMultipleBatches();
         }
-        
-        // Calcul des statistiques (filtrées par quincaillerie)
-        $totalProductsGlobal = Product::count();
-        $totalStockGlobal = Product::sum('stock');
-        $totalValueGlobal = Product::sum(DB::raw('sale_price * stock'));
-        
-        $productsWithMultipleBatches = Product::withMultipleBatches()->count();
-        
-        $totalStockFiltered = $products->sum('stock');
-        $totalValueFiltered = $products->sum(function($product) {
-            return ($product->sale_price ?? 0) * ($product->stock ?? 0);
-        });
-        
-        return view('products.index', compact(
-            'products',
-            'totalProductsGlobal',
-            'totalStockGlobal', 
-            'totalValueGlobal',
-            'productsWithMultipleBatches',
-            'totalStockFiltered',
-            'totalValueFiltered'
-        ));
+
+        $stats = $this->productService->globalStats();
+
+        return view('products.index', [
+            'products'                  => $products,
+            'totalProductsGlobal'       => $stats['total'],
+            'totalStockGlobal'          => $stats['total_stock'],
+            'totalValueGlobal'          => $stats['total_value'],
+            'productsWithMultipleBatches' => $stats['multi_batches'],
+            'totalStockFiltered'        => $products->sum('stock'),
+            'totalValueFiltered'        => $products->sum(fn($p) => ($p->sale_price ?? 0) * ($p->stock ?? 0)),
+        ]);
     }
     
     public function search(Request $request)
@@ -160,13 +75,12 @@ class ProductController extends Controller
         return view('products.create', compact('categories', 'suppliers'));
     }
 
-    // 💾 Enregistrement d'un nouveau produit - CORRIGÉ
-    public function store(Request $request)
+    // 💾 Enregistrement d'un nouveau produit
+    public function store(StoreProductRequest $request)
     {
-        $this->authorizeStockManagement();
-
         $user   = Auth::user();
         $tenant = $user->tenant;
+
         if (!$user->isSuperAdminGlobal() && $tenant) {
             $plan = PlanService::for($tenant);
             $currentCount = Product::where('tenant_id', $tenant->id)->count();
@@ -175,207 +89,29 @@ class ProductController extends Controller
             }
         }
 
-        $request->validate([
-            'name'           => 'required|string|max:255',
-            'stock'          => 'required|integer|min:0',
-            'stock_alert'    => 'nullable|integer|min:0',
-            'purchase_price' => 'required|numeric|min:0',
-            'sale_price'     => 'required|numeric|min:0',
-            'description'    => 'nullable|string|max:1000',
-            'category_id'    => 'required|exists:categories,id',
-            'supplier_id'    => 'required|exists:suppliers,id',
-        ]);
-
-        // Vérifier que la catégorie appartient à la même quincaillerie
-        $category = Category::sameCompany()->find($request->category_id);
-        if (!$category) {
+        if (!Category::sameCompany()->find($request->category_id)) {
             return back()->with('error', 'Catégorie invalide.');
         }
-
-        // Vérifier que le fournisseur appartient à la même quincaillerie
-        $supplier = Supplier::sameCompany()->find($request->supplier_id);
-        if (!$supplier) {
+        if (!Supplier::sameCompany()->find($request->supplier_id)) {
             return back()->with('error', 'Fournisseur invalide.');
         }
 
-        $existingProduct = Product::where('name', $request->name)
-            ->where('category_id', $request->category_id)
-            ->where('supplier_id', $request->supplier_id)
-            ->first();
-
-        DB::beginTransaction();
         try {
-            if ($existingProduct) {
-                // Vérifier que le produit existant appartient à la même quincaillerie
-                $this->authorizeProductAccess($existingProduct);
-                
-                // ✅ PRODUIT EXISTANT : Créer une ligne cumulée
-                $oldStock = $existingProduct->stock;
-                $newStock = $oldStock + $request->stock;
-                
-                $productData = [
-                    'name'           => $request->name,
-                    'stock'          => $newStock,
-                    'quantity'       => $newStock,
-                    'purchase_price' => ($existingProduct->purchase_price + $request->purchase_price) / 2,
-                    'sale_price'     => ($existingProduct->sale_price + $request->sale_price) / 2,
-                    'description'    => $request->description ?? $existingProduct->description,
-                    'category_id'    => $request->category_id,
-                    'supplier_id'    => $request->supplier_id,
-                    'batch_number'   => 'CUMUL-' . time() . '-' . Str::random(4),
-                ];
-                
-                if (Schema::hasColumn('products', 'parent_id')) {
-                    $productData['parent_id'] = $existingProduct->id;
-                }
-                if (Schema::hasColumn('products', 'is_cumulated')) {
-                    $productData['is_cumulated'] = true;
-                }
-                if (Schema::hasColumn('products', 'cumulated_from')) {
-                    $productData['cumulated_from'] = $existingProduct->id;
-                }
-                
-                $cumulatedProduct = Product::create($productData);
-                
-                // Enregistrer les mouvements de stock - CORRIGÉ : on utilise la méthode directe
-                // 1. Sortie de l'ancien produit
-                if ($oldStock > 0) {
-                    $this->addStockMovementDirect(
-                        $existingProduct,
-                        'sortie',
-                        $oldStock,
-                        $existingProduct->purchase_price,
-                        $existingProduct->sale_price,
-                        'Transfert vers ligne cumulée',
-                        'CUMUL-' . $cumulatedProduct->id
-                    );
-                }
-                
-                // 2. Entrée du nouveau stock dans le produit cumulé
-                $this->addStockMovementDirect(
-                    $cumulatedProduct,
-                    'entree',
-                    $request->stock,
-                    $request->purchase_price,
-                    $request->sale_price,
-                    'Stock initial (cumul)',
-                    'INITIAL-CUMUL-' . $cumulatedProduct->id
-                );
-                
-                if ($oldStock > 0) {
-                    $this->addStockMovementDirect(
-                        $cumulatedProduct,
-                        'entree',
-                        $oldStock,
-                        $existingProduct->purchase_price,
-                        $existingProduct->sale_price,
-                        'Ajout du stock existant',
-                        'FROM-' . $existingProduct->id
-                    );
-                }
-                
-                // Mettre à jour l'ancien produit
-                $updateData = [
-                    'stock' => 0,
-                    'quantity' => 0
-                ];
-                if (Schema::hasColumn('products', 'has_been_cumulated')) {
-                    $updateData['has_been_cumulated'] = true;
-                }
-                if (Schema::hasColumn('products', 'cumulated_to')) {
-                    $updateData['cumulated_to'] = $cumulatedProduct->id;
-                }
-                
-                $existingProduct->update($updateData);
-                
-                DB::commit();
-                
-                return redirect()->route('products.index')
-                    ->with('success', 'Produit existant détecté. Une nouvelle ligne cumulée a été créée avec le stock total ✅');
-                    
-            } else {
-                // ✅ NOUVEAU PRODUIT : Création normale - CORRIGÉ
-                $productData = [
-                    'name'           => $request->name,
-                    'stock'          => $request->stock,
-                    'quantity'       => $request->stock,
-                    'purchase_price' => $request->purchase_price,
-                    'sale_price'     => $request->sale_price,
-                    'description'    => $request->description,
-                    'category_id'    => $request->category_id,
-                    'supplier_id'    => $request->supplier_id,
-                ];
-                
-                if (Schema::hasColumn('products', 'is_cumulated')) {
-                    $productData['is_cumulated'] = false;
-                }
-                
-                $product = Product::create($productData);
+            $result = $this->productService->createOrCumulate(
+                $request->validated(),
+                $user->tenant_id,
+                $user->id
+            );
 
-                // 🔧 CORRECTION: Créer le mouvement SANS ajouter de nouveau stock
-                if ($request->stock > 0) {
-                    // On crée directement le mouvement avec le stock final
-                    StockMovement::create([
-                        'product_id' => $product->id,
-                        'type' => 'entree',
-                        'quantity' => $request->stock,
-                        'purchase_price' => $request->purchase_price,
-                        'sale_price' => $request->sale_price,
-                        'stock_after' => $request->stock, // Le stock final est la valeur initiale
-                        'motif' => 'Stock initial',
-                        'reference_document' => 'INITIAL-' . $product->id,
-                        'user_id' => auth()->id()
-                    ]);
-                }
-                
-                DB::commit();
-                
-                return redirect()->route('products.index')
-                    ->with('success', 'Nouveau produit ajouté avec succès ✅');
-            }
-            
+            $message = $result['type'] === 'restocked'
+                ? 'Produit existant mis à jour : stock et prix réapprovisionnés.'
+                : 'Nouveau produit ajouté avec succès.';
+
+            return redirect()->route('products.index')->with('success', $message);
+
         } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Erreur lors de l\'ajout du produit: ' . $e->getMessage())
-                ->withInput();
+            return back()->with('error', 'Erreur : ' . $e->getMessage())->withInput();
         }
-    }
-
-    // Nouvelle méthode utilitaire pour ajouter un mouvement sans modifier le stock
-    private function addStockMovementDirect(Product $product, $type, $quantity, $purchase_price, $sale_price, $motif = null, $reference = null)
-    {
-        $this->authorizeProductAccess($product);
-        $this->authorizeStockManagement();
-        
-        if ($type === 'sortie' && $product->stock < $quantity) {
-            throw new \Exception("Stock insuffisant. Stock actuel: {$product->stock}");
-        }
-        
-        $newStock = $type === 'entree' 
-            ? $product->stock + $quantity 
-            : $product->stock - $quantity;
-        
-        // Créer le mouvement
-        $movement = StockMovement::create([
-            'product_id' => $product->id,
-            'type' => $type,
-            'quantity' => $quantity,
-            'purchase_price' => $purchase_price,
-            'sale_price' => $sale_price,
-            'stock_after' => $newStock,
-            'motif' => $motif,
-            'reference_document' => $reference,
-            'user_id' => auth()->id()
-        ]);
-        
-        // Mettre à jour le stock du produit
-        $product->update([
-            'stock' => $newStock,
-            'quantity' => $newStock
-        ]);
-        
-        return $movement;
     }
 
     // 👁️ Détails d'un produit AVEC STOCKS GROUPÉS
@@ -584,11 +320,13 @@ class ProductController extends Controller
             }
         }
         
-        if ($product->stock < $product->quantity) {
+        if ($product->saleItems()->exists()) {
+            $count = $product->saleItems()->count();
             return redirect()->route('products.index')
-                ->with('warning', 'Impossible de supprimer ce produit car des ventes sont associées.');
+                ->with('warning', "Impossible de supprimer « {$product->name} » : il apparaît dans {$count} ligne(s) de vente. Archivez-le ou mettez son stock à 0.");
         }
-        
+
+        $product->stockMovements()->delete();
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Produit supprimé avec succès.');

@@ -18,6 +18,8 @@ class Tenant extends Model
 
             if ($cycle === 'starter' || $price <= 10000) {
                 $tenant->plan = 'starter';
+            } elseif ($cycle === 'lifetime' || $price >= 300000) {
+                $tenant->plan = 'pro';
             } elseif ($price <= 15000) {
                 $tenant->plan = 'business';
             } else {
